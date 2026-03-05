@@ -43,7 +43,6 @@ export function PinScreen({ onLogin }: PinScreenProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-900 p-4">
-      <h1 className="text-xl font-bold text-white mb-1">Горчев-В</h1>
       <p className="text-zinc-400 text-sm mb-5">Введите PIN-код</p>
 
       <div className="flex gap-2 mb-4">

@@ -35,6 +35,7 @@
 
 - Все изменения — только локально. Не редактировать код на сервере.
 - GitHub: chekulaev14/Gorchev-V (публичный)
+- GitHub Pages: https://chekulaev14.github.io/Gorchev-V/
 - VPS: 82.22.47.114, папка /root/gorchev-v/, порт 8080
 - Автодеплой: push в main → webhook → билд и перезапуск на VPS
 - pm2 процесс: gorchev-v (порт 3000), nginx проксирует 8080 → 3000
