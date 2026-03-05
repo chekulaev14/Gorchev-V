@@ -127,9 +127,9 @@ export function OperationsTab({ items, balances, onRefresh }: Props) {
     : [];
 
   return (
-    <div className="space-y-4 max-w-lg">
+    <div className="space-y-4 max-w-lg w-full">
       {/* Выбор типа операции */}
-      <div className="flex gap-1">
+      <div className="flex flex-wrap gap-1">
         {(["supplier", "production", "assembly"] as const).map((t) => (
           <Button
             key={t}

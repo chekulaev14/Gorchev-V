@@ -16,13 +16,13 @@ function WarehouseLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="px-4 py-3 bg-card border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <header className="px-4 py-3 bg-card border-b border-border">
+        <div className="flex items-center justify-between mb-2">
           <h1 className="text-foreground text-base font-semibold">Склад</h1>
-          <WarehouseNav />
+          <ThemeToggle />
         </div>
-        <ThemeToggle />
+        <WarehouseNav />
       </header>
       <div className="p-4">
         {children}

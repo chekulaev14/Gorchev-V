@@ -104,7 +104,7 @@ export function StockTab({ items, balances, onRefresh }: Props) {
           placeholder="Поиск по названию..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-card border-border text-foreground placeholder:text-muted-foreground text-sm h-9 max-w-xs"
+          className="bg-card border-border text-foreground placeholder:text-muted-foreground text-sm h-9 w-full sm:max-w-xs"
         />
 
         <Button

@@ -54,7 +54,7 @@ export function BomView({ item, balances }: Props) {
     : null;
 
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div className="space-y-4 max-w-2xl w-full">
       {/* Карточка позиции */}
       <div className="bg-card rounded-lg border border-border p-4">
         <div className="flex items-start gap-3">
@@ -76,7 +76,7 @@ export function BomView({ item, balances }: Props) {
             {item.description && (
               <p className="text-muted-foreground text-sm">{item.description}</p>
             )}
-            <div className="flex items-center gap-4 mt-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
               <div>
                 <span className="text-muted-foreground text-xs">На складе:</span>
                 <span className="text-foreground text-base font-semibold ml-1">
@@ -125,25 +125,25 @@ export function BomView({ item, balances }: Props) {
                   return (
                     <div
                       key={child.item.id}
-                      className="bg-card/60 rounded border border-border/50 px-3 py-2 flex items-center justify-between"
+                      className="bg-card/60 rounded border border-border/50 px-3 py-2"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 mb-1">
                         <Badge variant="outline" className={`text-xs px-2 py-0.5 shrink-0 ${typeColors[child.item.type]}`}>
                           {itemTypeLabels[child.item.type]}
                         </Badge>
                         <span className="text-foreground text-sm truncate">{child.item.name}</span>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0 ml-3">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-mono">
                         {childCanAssemble !== null && (
-                          <span className={`text-xs font-mono ${childCanAssemble > 0 ? "text-emerald-600" : "text-destructive"}`}>
+                          <span className={`text-xs ${childCanAssemble > 0 ? "text-emerald-600" : "text-destructive"}`}>
                             собрать: {childCanAssemble}
                           </span>
                         )}
-                        <span className="text-muted-foreground text-sm font-mono">
+                        <span className="text-muted-foreground">
                           ×{formatNumber(child.quantity)} {unitLabels[child.item.unit]}
                         </span>
-                        <span className={`text-sm font-mono ${childBalance > 0 ? "text-muted-foreground" : "text-destructive"}`}>
-                          (ост: {formatNumber(childBalance)})
+                        <span className={`${childBalance > 0 ? "text-muted-foreground" : "text-destructive"}`}>
+                          ост: {formatNumber(childBalance)}
                         </span>
                       </div>
                     </div>
@@ -163,15 +163,15 @@ export function BomView({ item, balances }: Props) {
                 {parents.map((parent) => (
                   <div
                     key={parent.item.id}
-                    className="bg-card/60 rounded border border-border/50 px-3 py-2 flex items-center justify-between"
+                    className="bg-card/60 rounded border border-border/50 px-3 py-2"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 mb-1">
                       <Badge variant="outline" className={`text-xs px-2 py-0.5 shrink-0 ${typeColors[parent.item.type]}`}>
                         {itemTypeLabels[parent.item.type]}
                       </Badge>
                       <span className="text-foreground text-sm truncate">{parent.item.name}</span>
                     </div>
-                    <span className="text-muted-foreground text-sm font-mono shrink-0 ml-3">
+                    <span className="text-muted-foreground text-sm font-mono">
                       нужно ×{formatNumber(parent.quantity)} {unitLabels[item.unit]}
                     </span>
                   </div>

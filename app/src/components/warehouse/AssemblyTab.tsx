@@ -134,9 +134,9 @@ export function AssemblyTab({ items, balances }: Props) {
                       className="rounded border border-border/50 p-3 cursor-pointer hover:bg-accent/30 transition-colors"
                       onClick={() => router.push(`/warehouse/nomenclature/${item.id}`)}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-foreground text-sm font-medium">{item.name}</span>
-                        <div className="flex items-center gap-3">
+                      <div className="mb-1">
+                        <span className="text-foreground text-sm font-medium block">{item.name}</span>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                           <span className="text-muted-foreground text-sm">
                             На складе: <span className="text-foreground font-mono">{stock}</span>
                           </span>

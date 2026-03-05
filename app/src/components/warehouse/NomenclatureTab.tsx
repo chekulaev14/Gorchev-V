@@ -107,18 +107,18 @@ export function NomenclatureTab({ items, balances }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           placeholder="Поиск по названию, ID, описанию..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-card border-border text-foreground placeholder:text-muted-foreground text-sm h-9 max-w-xs"
+          className="bg-card border-border text-foreground placeholder:text-muted-foreground text-sm h-9 w-full sm:max-w-xs"
         />
 
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="bg-card border border-border text-foreground text-sm rounded px-2 h-9"
+          className="bg-card border border-border text-foreground text-sm rounded px-2 h-9 w-full sm:w-auto"
         >
           <option value="all">Все категории</option>
           {categories.map((c) => (
@@ -175,7 +175,7 @@ export function NomenclatureTab({ items, balances }: Props) {
                           <div>
                             <p className="text-foreground text-sm font-medium">{item.name}</p>
                             {item.description && (
-                              <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1 max-w-md">
+                              <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">
                                 {item.description}
                               </p>
                             )}
