@@ -1,7 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { type ItemType, itemTypeLabels, unitLabels } from "@/data/nomenclature";
+import type { ItemType } from "@/lib/types";
+import { itemTypeLabels, unitLabels, typeColors } from "@/lib/constants";
 import type { ConstructorItem } from "./ConstructorWizard";
 
 interface ProductData {
@@ -9,12 +10,6 @@ interface ProductData {
   unit: string;
   description: string;
 }
-
-const typeColors: Record<ItemType, string> = {
-  material: "bg-amber-100 text-amber-800 border-amber-300",
-  blank: "bg-orange-100 text-orange-800 border-orange-300",
-  product: "bg-emerald-100 text-emerald-800 border-emerald-300",
-};
 
 interface TreeNode {
   tempId: string;

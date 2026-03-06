@@ -516,6 +516,35 @@ export const categories: Category[] = [
       },
     ],
   },
+  {
+    id: "products",
+    name: "Изделия",
+    image: img("body-cat.jpg"),
+    products: [
+      {
+        id: "product-1",
+        name: "Изделие 1",
+        description: "Изделие 1 — парное (левое/правое). Выберите сторону и укажите количество.",
+        images: [img("body-cat.jpg")],
+        parts: [
+          {
+            id: "59c51dfb-b45f-429a-bf8f-fb5048d7377f",
+            name: "Изделие 1 левое",
+            description: "Изделие 1, левая сторона",
+            images: [img("body-cat.jpg")],
+            pricePerUnit: 0,
+          },
+          {
+            id: "a51a4918-1391-4c68-9b7e-39d0768433ee",
+            name: "Изделие 1 правое",
+            description: "Изделие 1, правая сторона",
+            images: [img("body-cat.jpg")],
+            pricePerUnit: 0,
+          },
+        ],
+      },
+    ],
+  },
 ];
 
 export const workers = [

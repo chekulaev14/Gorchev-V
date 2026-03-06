@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { api, ApiError } from "@/lib/api-client";
 
 interface PinScreenProps {
   onLogin: (workerId: string, workerName: string, role: string) => void;
@@ -22,23 +23,13 @@ export function PinScreen({ onLogin }: PinScreenProps) {
       if (newPin.length === 4) {
         setLoading(true);
         try {
-          const res = await fetch("/api/terminal/auth", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pin: newPin }),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            onLogin(data.id, data.name, data.role);
-          } else {
-            setError("Неверный PIN-код");
-            setTimeout(() => {
-              setPin("");
-              setError("");
-            }, 1500);
-          }
-        } catch {
-          setError("Ошибка связи");
+          const data = await api.post<{ id: string; name: string; role: string }>(
+            "/api/terminal/auth", { pin: newPin }, { silent: true },
+          );
+          onLogin(data.id, data.name, data.role);
+        } catch (err) {
+          const msg = err instanceof ApiError ? "Неверный PIN-код" : "Ошибка связи";
+          setError(msg);
           setTimeout(() => {
             setPin("");
             setError("");

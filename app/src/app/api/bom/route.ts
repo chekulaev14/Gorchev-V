@@ -1,54 +1,41 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import * as bomService from "@/services/bom.service";
+import { addEntrySchema, updateEntrySchema, deleteEntrySchema } from "@/lib/schemas/bom.schema";
+import { parseBody } from "@/lib/schemas/helpers";
 
-// Добавить BOM-связь
-export async function POST(request: Request) {
-  const { parentId, childId, quantity } = await request.json();
-
-  if (!parentId || !childId || !quantity) {
-    return NextResponse.json({ error: "parentId, childId и quantity обязательны" }, { status: 400 });
-  }
-
-  if (parentId === childId) {
-    return NextResponse.json({ error: "Позиция не может быть компонентом самой себя" }, { status: 400 });
-  }
-
-  const entry = await prisma.bomEntry.upsert({
-    where: { parentId_childId: { parentId, childId } },
-    update: { quantity: Number(quantity) },
-    create: { parentId, childId, quantity: Number(quantity) },
-  });
-
-  return NextResponse.json(entry, { status: 201 });
+export async function GET() {
+  const entries = await bomService.getAllEntries();
+  return NextResponse.json(entries);
 }
 
-// Изменить количество
-export async function PUT(request: Request) {
-  const { parentId, childId, quantity } = await request.json();
+export async function POST(request: Request) {
+  const body = await request.json();
+  const parsed = parseBody(addEntrySchema, body);
+  if (!parsed.success) return parsed.response;
 
-  if (!parentId || !childId || quantity === undefined) {
-    return NextResponse.json({ error: "parentId, childId и quantity обязательны" }, { status: 400 });
+  try {
+    const entry = await bomService.addEntry(parsed.data.parentId, parsed.data.childId, parsed.data.quantity);
+    return NextResponse.json(entry, { status: 201 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Ошибка";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
+}
 
-  const entry = await prisma.bomEntry.update({
-    where: { parentId_childId: { parentId, childId } },
-    data: { quantity: Number(quantity) },
-  });
+export async function PUT(request: Request) {
+  const body = await request.json();
+  const parsed = parseBody(updateEntrySchema, body);
+  if (!parsed.success) return parsed.response;
 
+  const entry = await bomService.updateEntry(parsed.data.parentId, parsed.data.childId, parsed.data.quantity);
   return NextResponse.json(entry);
 }
 
-// Удалить BOM-связь
 export async function DELETE(request: Request) {
-  const { parentId, childId } = await request.json();
+  const body = await request.json();
+  const parsed = parseBody(deleteEntrySchema, body);
+  if (!parsed.success) return parsed.response;
 
-  if (!parentId || !childId) {
-    return NextResponse.json({ error: "parentId и childId обязательны" }, { status: 400 });
-  }
-
-  await prisma.bomEntry.delete({
-    where: { parentId_childId: { parentId, childId } },
-  });
-
+  await bomService.deleteEntry(parsed.data.parentId, parsed.data.childId);
   return NextResponse.json({ ok: true });
 }

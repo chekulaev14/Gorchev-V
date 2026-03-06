@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       summary[log.workerId] = { name: log.worker.name, count: 0, total: 0 };
     }
     summary[log.workerId].count += log.quantity;
-    summary[log.workerId].total += log.total;
+    summary[log.workerId].total += Number(log.total);
   }
 
   return NextResponse.json({
@@ -36,8 +36,8 @@ export async function GET(request: Request) {
       workerName: l.worker.name,
       itemName: l.itemName,
       quantity: l.quantity,
-      pricePerUnit: l.pricePerUnit,
-      total: l.total,
+      pricePerUnit: Number(l.pricePerUnit),
+      total: Number(l.total),
       createdAt: l.createdAt,
     })),
     summary: Object.entries(summary).map(([id, s]) => ({

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { PinScreen } from "./PinScreen";
 import { CatalogScreen } from "./CatalogScreen";
+import { api, ApiError } from "@/lib/api-client";
 
 const INACTIVITY_TIMEOUT = 60_000; // 60 секунд
 
@@ -21,6 +22,7 @@ export function Terminal() {
 
   const handleLogout = useCallback(() => {
     setSession(null);
+    api.post("/api/auth/logout", undefined, { silent: true }).catch(() => {});
   }, []);
 
   // Автовыход по таймауту бездействия
@@ -48,8 +50,7 @@ export function Terminal() {
   }, [session, resetActivity]);
 
   const handleLogin = (workerId: string, workerName: string, role: string) => {
-    if (role === "director" || role === "warehouse") {
-      sessionStorage.setItem("warehouse_session", JSON.stringify({ id: workerId, name: workerName, role }));
+    if (role === "DIRECTOR" || role === "WAREHOUSE") {
       router.push("/warehouse");
       return;
     }
@@ -62,22 +63,19 @@ export function Terminal() {
     partName: string,
     quantity: number,
     pricePerUnit: number
-  ) => {
+  ): Promise<string | null> => {
     resetActivity();
     try {
-      await fetch("/api/terminal/output", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          workerId: session?.workerId,
-          itemId: partId,
-          itemName: partName,
-          quantity,
-          pricePerUnit,
-        }),
-      });
+      await api.post("/api/terminal/output", {
+        itemId: partId,
+        itemName: partName,
+        quantity,
+        pricePerUnit,
+      }, { silent: true });
+      return null;
     } catch (err) {
-      console.error("Ошибка отправки выработки:", err);
+      if (err instanceof ApiError) return err.data.error || "Ошибка отправки";
+      return "Ошибка связи с сервером";
     }
   };
 

@@ -1,0 +1,156 @@
+# Архитектура Gorchev-V
+
+Последнее обновление: после Фазы 7 (DB-EVOLUTION) + Фазы F4 (FRONTEND-EVOLUTION).
+
+## Правила ведения этого файла
+
+Обновляется после каждой завершённой фазы из DB-EVOLUTION.md или FRONTEND-EVOLUTION.md. Записывать только то, что нельзя понять из кода за секунды: архитектурные решения, конвенции, неочевидные правила. Не дублировать списки методов, endpoints, файлов — это видно через код напрямую.
+
+---
+
+## Слои приложения
+
+services/ — бизнес-логика (stock, assembly, nomenclature, bom, product, process, production-order, auth, user). Route-файлы только парсят запрос, вызывают сервис, возвращают ответ. Prisma напрямую из routes не вызывается.
+
+lib/ — shared: типы (types.ts), константы (constants.ts, включая typeColors и formatNumber), item-field-config.ts (реестр UI-полей Item), prisma client, auth (auth.ts — JWT/RBAC, auth-helper.ts — извлечение контекста в routes).
+
+components/ — terminal/, warehouse/, ui/ (shadcn). Модули не импортируют друг друга напрямую.
+
+data/ — статика только для seed. Компоненты загружают данные через API.
+
+---
+
+## Типы и конвенции
+
+ItemType: material, blank, product. Unit: kg, pcs, m.
+
+Item.code: бизнес-артикул (MAT-001, BLK-001, PRD-001). @unique. Автогенерация в nomenclature.service и product.service. id остаётся техническим UUID.
+
+Типы движений: enum MovementType (PostgreSQL enum). SUPPLIER_INCOME, PRODUCTION_INCOME, ASSEMBLY_INCOME, ADJUSTMENT_INCOME — прибавляют к балансу. ASSEMBLY_WRITE_OFF, ADJUSTMENT_WRITE_OFF — вычитают. Все значения UPPER_CASE.
+
+Роли терминала: enum WorkerRole (PostgreSQL enum). WORKER, WAREHOUSE, DIRECTOR. UPPER_CASE.
+
+Роли веба: таблица Role (id: admin/director/warehouse). User.roleId FK→Role. В JWT и RBAC роль приходит как UPPER_CASE (ADMIN, DIRECTOR, WAREHOUSE).
+
+Числовые поля: Decimal вместо Float. BomEntry.quantity и StockMovement.quantity — Decimal(10,4). Item.pricePerUnit, ProductionLog.pricePerUnit/total — Decimal(10,2). Сервисы конвертируют через toNumber() (services/helpers/serialize.ts) при отдаче в API.
+
+Quantity convention: quantity всегда положительное число (CHECK > 0). Направление определяется MovementType, не знаком. Баланс считается raw SQL с CASE.
+
+---
+
+## Защита данных
+
+FK RESTRICT: нельзя удалить Item, если есть StockMovement, BomEntry или ProductionLog. Soft delete через deletedAt — сервис проверяет наличие связей перед удалением.
+
+CHECK constraints: bom_entries.quantity > 0, stock_movements.quantity > 0, items.price_per_unit >= 0.
+
+Cycle check: addEntry/updateEntry проверяют parentId != childId + рекурсивный обход вверх.
+
+Worker: поле performed_by удалено, вместо него workerId (FK на Worker, nullable). Имя — через join.
+
+---
+
+## Auth & RBAC
+
+Гибридная auth: два способа входа, единый JWT.
+
+Терминал: Worker + PIN → /api/terminal/auth. Если Worker связан с User (worker.userId), роль берётся из User.role; иначе WORKER.
+
+Веб (склад): User + email/password → /api/auth/login. Фронтенд: LoginForm (email+password) в warehouse/layout.tsx.
+
+JWT в httpOnly cookie через jose (Edge Runtime compatible). Auth context: { actorId, role, workerId }. Для User: actorId = user.id, workerId = связанный worker.id или null. Для Worker без User: actorId = worker.id, workerId = worker.id.
+
+middleware.ts — перехватывает /api/*, public routes без проверки. RBAC в lib/auth.ts.
+
+Роли: WORKER (терминал), WAREHOUSE (склад), DIRECTOR (всё), ADMIN (всё + пользователи + конфиг). TTL: WORKER 15 мин, остальные 10 ч.
+
+Пароли: bcryptjs (чистый JS, совместим с Node runtime route handlers).
+
+Управление пользователями: /api/users (CRUD, ADMIN only). user.service.ts — CRUD, хеширование паролей. Удаление — soft (isActive = false).
+
+---
+
+## Производственные заказы
+
+ProductionOrder — заказ на производство изделия. Статусы: PLANNED → IN_PROGRESS → COMPLETED (или CANCELLED на любом этапе, кроме COMPLETED). Enum OrderStatus в PostgreSQL.
+
+Snapshot BOM: при создании заказа текущий состав (BomEntry) копируется в ProductionOrderItem. Изменения BOM после создания заказа не влияют на уже созданные заказы. Это упрощённая замена BOM versioning (5.7 отложен).
+
+Завершение заказа: в одной транзакции списываются компоненты (ASSEMBLY_WRITE_OFF) и создаётся приход продукции (PRODUCTION_INCOME). Все StockMovement привязаны к заказу через orderId. Перед завершением проверяются остатки — если компонентов не хватает, возвращается список shortages.
+
+ProductionLog и StockMovement имеют nullable orderId (FK на ProductionOrder) — позволяет привязать выработку и движения к конкретному заказу. Старые записи без привязки сохраняются.
+
+Workflow: заказ создаёт warehouse/director через UI (/warehouse/orders). API: action-based POST на /api/production-orders (CREATE/START/COMPLETE/CANCEL). RBAC: WAREHOUSE и DIRECTOR.
+
+---
+
+## Audit trail
+
+Nullable FK на User в ключевых таблицах: Item (createdById, updatedById), StockMovement (createdById), ProductionOrder (createdByUserId). Старые записи без привязки сохраняются (nullable). BomEntry — без audit (BOM versioning отложен).
+
+---
+
+## AppConfig
+
+Модель AppConfig: key (PK) → value. Конфигурация клиента (название, логотип и т.д.). API: GET /api/config (WAREHOUSE+), PUT /api/config (ADMIN). Seed: companyName, companyLogo.
+
+---
+
+## Docker
+
+Dockerfile: multi-stage build (deps → builder → runner), Node 20 Alpine, standalone output. docker-compose.yml в корне проекта: app + PostgreSQL 16. .env.example с переменными. next.config.ts: output "standalone" для production, "export" для GitHub Pages.
+
+---
+
+## Фронтенд-архитектура
+
+Последнее обновление: после Фазы F4.
+
+### Валидация
+
+zod 4 — валидация write-endpoints. Схемы в lib/schemas/: nomenclature.schema.ts, stock.schema.ts, bom.schema.ts. Helper parseBody() (lib/schemas/helpers.ts) — единый парсинг body + формат ошибок { error, details?: ZodIssue[] }. Inferred типы (CreateItemInput, UpdateItemInput, CreateMovementInput, AddEntryInput и т.д.) экспортируются из схем. Ручные if-проверки в валидируемых routes удалены.
+
+### Типы
+
+Единый источник shared-типов: lib/types.ts (NomenclatureItem, BomEntry, StockMovement, MovementType, Worker, WorkerRole, WarehouseRole, BomChildEntry).
+
+WorkerRole — единственный тип роли в системе. auth.ts импортирует его из types.ts. WarehouseRole = Exclude<WorkerRole, "WORKER"> — подмножество для веб-интерфейса склада.
+
+Типы терминала (Part, Product, Category) — в components/terminal/types.ts, не в shared. Используются только терминальным модулем.
+
+### Helpers
+
+services/helpers/map-item.ts — единый маппинг DB Item → UI NomenclatureItem. Все сервисы (nomenclature, bom) используют его. Добавление нового поля в Item = изменить mapItem в одном месте.
+
+services/helpers/serialize.ts — toNumber() для конверсии Prisma Decimal → number. Используется во всех сервисах вместо ручных Number() вызовов.
+
+### Модули
+
+terminal/ и warehouse/ — изолированные модули. Не импортируют друг друга. Общие вещи — через lib/ и components/ui/.
+
+WarehouseContext.tsx — центральный контекст склада: данные (items, balances, bomChildren, workers), auth (session, login, logout), UI state (editMode). Типы импортируются из lib/types.ts, дублей нет.
+
+### UI-примитивы (F3)
+
+4 переиспользуемых компонента в components/ui/:
+
+Toast — sonner. Toaster в root layout.tsx. Все уведомления через toast.success/toast.error/toast.warning. Запрещено: локальные useState для error/result сообщений.
+
+SearchableSelect — generic<T> компонент для поиска по спискам (searchable-select.tsx). Props: items, value, onChange, getKey, getLabel, renderItem?, renderSelected?, filterFn?. Для маленьких списков (тип, единица, категория) — shadcn Select. Запрещено: ручные dropdown с showDropdown/filteredItems.
+
+GroupedAccordion — группировка и аккордеон (grouped-accordion.tsx). Props: items, groupBy, groupOrder, renderGroupHeader, renderGroupContent, searchQuery? (авто-раскрытие). Используется в NomenclatureTab, StockTab, AssemblyTab. Запрещено: дублирование expandedTypes + toggleType.
+
+ConfirmDialog — модалка подтверждения (confirm-dialog.tsx). Render-prop: children(open). Props: title, description, confirmLabel, variant, onConfirm. Запрещено: браузерный confirm().
+
+### Декомпозиция компонентов (F4)
+
+ItemForm — единая форма Item (create/edit) в components/warehouse/ItemForm.tsx. Строится по field config (lib/item-field-config.ts). Экспортирует: ItemForm, ItemFormValues, emptyItemFormValues, itemFormValuesFromItem. Запрещено: отдельные ItemAddForm/ItemEditForm.
+
+Field config — lib/item-field-config.ts. Реестр UI-полей Item: key, label, type, visible/editable по режиму, options, numberProps. Добавление нового поля = добавить в конфиг.
+
+BomView — оркестратор (components/warehouse/BomView.tsx). Загрузка данных, state, derived state (canAssemble), карточка view-mode. Делегирует:
+- BomTree (bom/BomTree.tsx) — рекурсивный view-mode + edit-mode строки. Презентационный.
+- BomEntryForm (bom/BomEntryForm.tsx) — форма добавления BOM-связи с SearchableSelect.
+- ItemForm — форма редактирования позиции.
+
+constants.ts — typeColors (цвета по ItemType) и formatNumber вынесены из компонентов в единый источник. Запрещено: локальные const typeColors / function formatNumber в компонентах.

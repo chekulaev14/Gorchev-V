@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   experimental: {
     turbopackFileSystemCacheForDev: false,
   },
-  output: isGhPages ? "export" : undefined,
+  output: isGhPages ? "export" : isProd ? "standalone" : undefined,
   basePath: isGhPages ? "/Gorchev-V" : "",
   assetPrefix: isGhPages ? "/Gorchev-V/" : undefined,
   images: {

@@ -6,67 +6,31 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { GroupedAccordion } from "@/components/ui/grouped-accordion";
 import { useWarehouse } from "@/components/warehouse/WarehouseContext";
-import {
-  type NomenclatureItem,
-  type ItemType,
-  itemTypeLabels,
-  unitLabels,
-  categories,
-} from "@/data/nomenclature";
+import { ItemForm, emptyItemFormValues, type ItemFormValues } from "@/components/warehouse/ItemForm";
+import type { NomenclatureItem, ItemType } from "@/lib/types";
+import { itemTypeLabels, unitLabels, typeColors, formatNumber } from "@/lib/constants";
+import { api } from "@/lib/api-client";
+import { createItemSchema } from "@/lib/schemas/nomenclature.schema";
+import { toast } from "sonner";
 
 interface Props {
   items: NomenclatureItem[];
   balances: Record<string, number>;
 }
 
-const typeColors: Record<ItemType, string> = {
-  material: "bg-amber-100 text-amber-800 border-amber-300",
-  blank: "bg-orange-100 text-orange-800 border-orange-300",
-  product: "bg-emerald-100 text-emerald-800 border-emerald-300",
-};
-
-// От сырья к изделию
 const typeOrder: ItemType[] = ["material", "blank", "product"];
-
-const emptyForm = {
-  name: "",
-  description: "",
-  typeId: "material" as string,
-  unitId: "pcs" as string,
-  categoryId: "",
-  pricePerUnit: "",
-  quantity: "",
-};
 
 export function NomenclatureTab({ items, balances }: Props) {
   const router = useRouter();
   const { editMode, refresh } = useWarehouse();
   const [search, setSearch] = useState("");
-  const [expandedTypes, setExpandedTypes] = useState<Set<ItemType>>(new Set());
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState({ ...emptyForm });
+  const [addForm, setAddForm] = useState<ItemFormValues>({ ...emptyItemFormValues });
   const [addSaving, setAddSaving] = useState(false);
-  const [addError, setAddError] = useState("");
-
-  const toggleType = (type: ItemType) => {
-    setExpandedTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      return next;
-    });
-  };
 
   const filtered = useMemo(() => {
     if (!search) return items;
@@ -79,76 +43,49 @@ export function NomenclatureTab({ items, balances }: Props) {
     );
   }, [items, search]);
 
-  // Группировка по типам
-  const grouped = useMemo(() => {
-    const groups: Record<ItemType, NomenclatureItem[]> = {
-      material: [],
-      blank: [],
-      product: [],
-    };
-    for (const item of filtered) {
-      if (groups[item.type]) groups[item.type].push(item);
-    }
-    // Сортировка внутри каждой группы
-    for (const type of typeOrder) {
-      groups[type].sort((a, b) => a.name.localeCompare(b.name, "ru"));
-    }
-    return groups;
+  const sortedFiltered = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      if (a.type !== b.type) return typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
+      return a.name.localeCompare(b.name, "ru");
+    });
   }, [filtered]);
-
-  // Если есть поиск — раскрыть все группы с результатами
-  const effectiveExpanded = useMemo(() => {
-    if (search) {
-      const all = new Set<ItemType>();
-      for (const type of typeOrder) {
-        if (grouped[type].length > 0) all.add(type);
-      }
-      return all;
-    }
-    return expandedTypes;
-  }, [search, expandedTypes, grouped]);
 
   const handleAdd = async () => {
     if (!addForm.name.trim()) return;
+
+    const { quantity, ...nomData } = addForm;
+    const parsed = createItemSchema.safeParse({
+      ...nomData,
+      pricePerUnit: nomData.pricePerUnit ? Number(nomData.pricePerUnit) : null,
+      categoryId: nomData.categoryId || null,
+      description: nomData.description || null,
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message || "Ошибка валидации");
+      return;
+    }
+
     setAddSaving(true);
-    setAddError("");
     try {
-      const { quantity, ...nomData } = addForm;
-      const res = await fetch("/api/nomenclature", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nomData),
-      });
-      if (res.ok) {
-        const created = await res.json();
-        // Если указано количество — записать начальный остаток
-        const qty = Number(quantity);
-        if (qty > 0) {
-          await fetch("/api/stock", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "supplier_income",
-              itemId: created.id,
-              quantity: qty,
-              comment: "Начальный остаток",
-            }),
-          });
-        }
-        setShowAddForm(false);
-        setAddForm({ ...emptyForm });
-        refresh();
-      } else {
-        const data = await res.json();
-        setAddError(data.error || "Ошибка создания");
+      const created = await api.post<{ id: string }>("/api/nomenclature", parsed.data);
+      const qty = Number(quantity);
+      if (qty > 0) {
+        await api.post("/api/stock", {
+          action: "SUPPLIER_INCOME",
+          itemId: created.id,
+          quantity: qty,
+          comment: "Начальный остаток",
+        });
       }
+      setShowAddForm(false);
+      setAddForm({ ...emptyItemFormValues });
+      refresh();
+    } catch {
+      // toast shown by api-client
     } finally {
       setAddSaving(false);
     }
   };
-
-  const typeOptions: ItemType[] = ["material", "blank", "product"];
-  const unitOptions = Object.keys(unitLabels) as Array<keyof typeof unitLabels>;
 
   return (
     <div className="space-y-3">
@@ -173,171 +110,72 @@ export function NomenclatureTab({ items, balances }: Props) {
       </div>
 
       {showAddForm && (
-        <div className="bg-card rounded-lg border border-border p-4 space-y-3">
-          <p className="text-foreground text-sm font-medium">Новая позиция</p>
-          <div>
-            <label className="text-muted-foreground text-xs block mb-1">Название</label>
-            <Input
-              value={addForm.name}
-              onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-              className="h-9 text-sm"
-              placeholder="Лист стали 3мм"
-            />
-          </div>
-          <div>
-            <label className="text-muted-foreground text-xs block mb-1">Описание</label>
-            <textarea
-              value={addForm.description}
-              onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
-              className="w-full bg-card border border-border text-foreground text-sm rounded px-3 py-2 min-h-[60px] resize-y"
-            />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <div>
-              <label className="text-muted-foreground text-xs block mb-1">Тип</label>
-              <select
-                value={addForm.typeId}
-                onChange={(e) => setAddForm({ ...addForm, typeId: e.target.value })}
-                className="bg-card border border-border text-foreground text-sm rounded px-2 h-9"
-              >
-                {typeOptions.map((t) => (
-                  <option key={t} value={t}>{itemTypeLabels[t]}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-muted-foreground text-xs block mb-1">Единица</label>
-              <select
-                value={addForm.unitId}
-                onChange={(e) => setAddForm({ ...addForm, unitId: e.target.value })}
-                className="bg-card border border-border text-foreground text-sm rounded px-2 h-9"
-              >
-                {unitOptions.map((u) => (
-                  <option key={u} value={u}>{unitLabels[u]}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-muted-foreground text-xs block mb-1">Категория</label>
-              <select
-                value={addForm.categoryId}
-                onChange={(e) => setAddForm({ ...addForm, categoryId: e.target.value })}
-                className="bg-card border border-border text-foreground text-sm rounded px-2 h-9"
-              >
-                <option value="">Без категории</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-muted-foreground text-xs block mb-1">Расценка, ₽</label>
-              <Input
-                type="number"
-                step="0.01"
-                value={addForm.pricePerUnit}
-                onChange={(e) => setAddForm({ ...addForm, pricePerUnit: e.target.value })}
-                className="h-9 text-sm w-28"
-                placeholder="—"
-              />
-            </div>
-            <div>
-              <label className="text-muted-foreground text-xs block mb-1">Количество</label>
-              <Input
-                type="number"
-                step="0.01"
-                value={addForm.quantity}
-                onChange={(e) => setAddForm({ ...addForm, quantity: e.target.value })}
-                className="h-9 text-sm w-28"
-                placeholder="0"
-              />
-            </div>
-          </div>
-          {addError && <p className="text-destructive text-xs">{addError}</p>}
-          <div className="flex gap-2">
-            <Button size="sm" className="h-8 text-xs" onClick={handleAdd} disabled={addSaving || !addForm.name.trim()}>
-              {addSaving ? "Создание..." : "Создать"}
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setShowAddForm(false); setAddForm({ ...emptyForm }); setAddError(""); }} disabled={addSaving}>
-              Отмена
-            </Button>
-          </div>
-        </div>
+        <ItemForm
+          mode="create"
+          values={addForm}
+          onChange={setAddForm}
+          onSubmit={handleAdd}
+          onCancel={() => { setShowAddForm(false); setAddForm({ ...emptyItemFormValues }); }}
+          saving={addSaving}
+          title="Новая позиция"
+        />
       )}
 
       <p className="text-muted-foreground text-sm">{filtered.length} позиций</p>
 
-      <div className="space-y-1">
-        {typeOrder.map((type) => {
-          const group = grouped[type];
-          if (group.length === 0) return null;
-          const isExpanded = effectiveExpanded.has(type);
-
-          return (
-            <div key={type} className="rounded-lg border border-border overflow-hidden">
-              <button
-                className="w-full flex items-center justify-between px-3 py-2.5 bg-card hover:bg-accent/30 transition-colors"
-                onClick={() => toggleType(type)}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground text-sm w-4">
-                    {isExpanded ? "−" : "+"}
-                  </span>
-                  <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${typeColors[type]}`}>
-                    {itemTypeLabels[type]}
-                  </Badge>
-                  <span className="text-muted-foreground text-sm">{group.length} поз.</span>
-                </div>
-              </button>
-
-              {isExpanded && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="text-muted-foreground text-sm font-medium h-8 pl-10">Наименование</TableHead>
-                      <TableHead className="text-muted-foreground text-sm font-medium h-8 w-20 text-right">Остаток</TableHead>
-                      <TableHead className="text-muted-foreground text-sm font-medium h-8 w-12 text-right">Ед.</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {group.map((item) => (
-                      <TableRow
-                        key={item.id}
-                        className="border-border/50 cursor-pointer hover:bg-accent/50"
-                        onClick={() => router.push(`/warehouse/nomenclature/${item.id}`)}
-                      >
-                        <TableCell className="py-2 pl-10">
-                          <div>
-                            <p className="text-foreground text-sm font-medium">{item.name}</p>
-                            {item.description && (
-                              <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">
-                                {item.description}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2 text-right">
-                          <span className="text-foreground text-sm font-mono">
-                            {formatNumber(balances[item.id] ?? 0)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="py-2 text-right">
-                          <span className="text-muted-foreground text-sm">{unitLabels[item.unit]}</span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <GroupedAccordion
+        items={sortedFiltered}
+        groupBy={(item) => item.type}
+        groupOrder={typeOrder}
+        searchQuery={search || undefined}
+        renderGroupHeader={(type, group) => (
+          <>
+            <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${typeColors[type]}`}>
+              {itemTypeLabels[type]}
+            </Badge>
+            <span className="text-muted-foreground text-sm">{group.length} поз.</span>
+          </>
+        )}
+        renderGroupContent={(_type, group) => (
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-sm font-medium h-8 pl-10">Наименование</TableHead>
+                <TableHead className="text-muted-foreground text-sm font-medium h-8 w-20 text-right">Остаток</TableHead>
+                <TableHead className="text-muted-foreground text-sm font-medium h-8 w-12 text-right">Ед.</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {group.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className="border-border/50 cursor-pointer hover:bg-accent/50"
+                  onClick={() => router.push(`/warehouse/nomenclature/${item.id}`)}
+                >
+                  <TableCell className="py-2 pl-10">
+                    <div>
+                      <p className="text-foreground text-sm font-medium">{item.name}</p>
+                      {item.description && (
+                        <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="py-2 text-right">
+                    <span className="text-foreground text-sm font-mono">
+                      {formatNumber(balances[item.id] ?? 0)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2 text-right">
+                    <span className="text-muted-foreground text-sm">{unitLabels[item.unit]}</span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      />
     </div>
   );
-}
-
-function formatNumber(n: number): string {
-  if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
-  return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
 }

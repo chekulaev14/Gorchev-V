@@ -35,11 +35,10 @@ export interface BomEntry {
 
 export interface StockMovement {
   id: string;
-  type: "supplier_income" | "production_income" | "assembly_write_off" | "assembly_income" | "adjustment";
+  type: "SUPPLIER_INCOME" | "PRODUCTION_INCOME" | "ASSEMBLY_WRITE_OFF" | "ASSEMBLY_INCOME" | "ADJUSTMENT_INCOME" | "ADJUSTMENT_WRITE_OFF";
   itemId: string;
   quantity: number;
   date: string;
-  performedBy?: string;
   workerId?: string;
   comment?: string;
 }
@@ -463,29 +462,3 @@ export const allItems: NomenclatureItem[] = [
   ...products,
 ];
 
-// Хелперы
-export function getItem(id: string): NomenclatureItem | undefined {
-  return allItems.find((i) => i.id === id);
-}
-
-export function getChildren(parentId: string): { item: NomenclatureItem; quantity: number }[] {
-  return bom
-    .filter((b) => b.parentId === parentId)
-    .map((b) => ({ item: getItem(b.childId)!, quantity: b.quantity }))
-    .filter((b) => b.item);
-}
-
-export function getParents(childId: string): { item: NomenclatureItem; quantity: number }[] {
-  return bom
-    .filter((b) => b.childId === childId)
-    .map((b) => ({ item: getItem(b.parentId)!, quantity: b.quantity }))
-    .filter((b) => b.item);
-}
-
-export function getItemsByType(type: ItemType): NomenclatureItem[] {
-  return allItems.filter((i) => i.type === type);
-}
-
-export function getItemsByCategory(categoryId: string): NomenclatureItem[] {
-  return allItems.filter((i) => i.category === categoryId);
-}

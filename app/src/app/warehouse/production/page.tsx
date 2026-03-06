@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useWarehouse } from "@/components/warehouse/WarehouseContext";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api-client";
 
 interface LogEntry {
   id: string;
@@ -29,18 +30,18 @@ export default function ProductionPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.role !== "director") return;
+    if (session?.role !== "DIRECTOR") return;
     setLoading(true);
-    fetch(`/api/terminal/logs?days=${days}`)
-      .then((r) => r.json())
+    api.get<{ logs: LogEntry[]; summary: WorkerSummary[] }>(`/api/terminal/logs?days=${days}`, { silent: true })
       .then((data) => {
         setLogs(data.logs);
         setSummary(data.summary);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [days, session]);
 
-  if (session?.role !== "director") {
+  if (session?.role !== "DIRECTOR") {
     return <p className="text-muted-foreground text-sm">Нет доступа</p>;
   }
 

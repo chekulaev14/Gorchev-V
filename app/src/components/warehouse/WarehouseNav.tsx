@@ -9,13 +9,15 @@ const baseItems = [
   { href: "/warehouse/stock", label: "Остатки" },
   { href: "/warehouse/assembly", label: "Сборка" },
   { href: "/warehouse/operations", label: "Операции" },
+  { href: "/warehouse/processes", label: "Процессы" },
+  { href: "/warehouse/orders", label: "Заказы" },
 ];
 
 export function WarehouseNav() {
   const pathname = usePathname();
   const { session } = useWarehouse();
 
-  const navItems = session?.role === "director"
+  const navItems = session?.role === "DIRECTOR"
     ? [...baseItems, { href: "/warehouse/production", label: "Выработка" }]
     : baseItems;
 

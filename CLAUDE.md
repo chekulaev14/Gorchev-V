@@ -10,6 +10,11 @@
 - [GUIDE.md](GUIDE.md) — грабли и решения (Next.js, Turbopack)
 - [PROCESSES.html](PROCESSES.html) — блок-схема процессов по ролям
 - [RECIPES.md](RECIPES.md) — логика рецептов (BOM), цепочки производства
+- [DB-EVOLUTION.md](DB-EVOLUTION.md) — план эволюции БД, приоритеты, целевая архитектура
+- [ARCHITECTURE.md](ARCHITECTURE.md) — текущее состояние архитектуры (сервисы, API, типы, модели)
+- [BACKEND-PRINCIPLES.md](BACKEND-PRINCIPLES.md) — правила разработки backend (БД, слои, auth, аудит)
+- [FRONTEND-PRINCIPLES.md](FRONTEND-PRINCIPLES.md) — правила разработки frontend (компоненты, состояние, архитектура)
+- [FRONTEND-EVOLUTION.md](FRONTEND-EVOLUTION.md) — план эволюции фронтенда
 
 ## Архитектура — модульность
 
@@ -43,7 +48,10 @@
 - [app/src/components/warehouse/](app/src/components/warehouse/) — модуль склада (номенклатура, остатки, сборка, операции)
 - [app/src/components/warehouse/constructor/](app/src/components/warehouse/constructor/) — конструктор изделия
 - [app/src/components/ui/](app/src/components/ui/) — shared: shadcn/ui компоненты
-- [app/src/lib/](app/src/lib/) — shared: prisma client, утилиты
-- [app/src/data/](app/src/data/) — статические данные (каталог терминала — планируется перенос в БД)
-- [app/src/app/api/](app/src/app/api/) — API routes по модулям (terminal/, nomenclature/, stock/, bom/)
+- [app/src/services/](app/src/services/) — бизнес-логика (auth, user, stock, assembly, bom, nomenclature, product, process, production-order)
+- [app/src/lib/](app/src/lib/) — shared: prisma client, auth (JWT/RBAC), типы, утилиты
+- [app/src/data/](app/src/data/) — статические данные (только для seed)
+- [app/src/app/api/](app/src/app/api/) — API routes по модулям (auth/, users/, config/, terminal/, nomenclature/, stock/, bom/)
 - [app/prisma/](app/prisma/) — Prisma schema и миграции
+- [docker-compose.yml](docker-compose.yml) — app + PostgreSQL для деплоя
+- [.env.example](.env.example) — шаблон переменных окружения

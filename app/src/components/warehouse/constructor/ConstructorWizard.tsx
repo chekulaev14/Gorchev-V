@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TreePreview } from "./TreePreview";
-import {
-  type ItemType,
-  itemTypeLabels,
-  unitLabels,
-} from "@/data/nomenclature";
+import type { ItemType } from "@/lib/types";
+import { itemTypeLabels, unitLabels, typeColors } from "@/lib/constants";
 
 export interface ConstructorItem {
   tempId: string;
@@ -57,22 +56,15 @@ const STEPS: { type: ItemType; label: string; componentsFrom: string }[] = [
   { type: "product", label: "Изделие", componentsFrom: "заготовок и сырья" },
 ];
 
-const typeColors: Record<ItemType, string> = {
-  material: "bg-amber-100 text-amber-800 border-amber-300",
-  blank: "bg-orange-100 text-orange-800 border-orange-300",
-  product: "bg-emerald-100 text-emerald-800 border-emerald-300",
-};
-
 let tempIdCounter = 0;
 function nextTempId() {
-  return `temp-${++tempIdCounter}`;
+  return `temp-${Date.now()}-${++tempIdCounter}`;
 }
 
 export function ConstructorWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState("");
 
   const [materials, setMaterials] = useState<ConstructorItem[]>([]);
   const [blanks, setBlanks] = useState<ConstructorItem[]>([]);
@@ -267,7 +259,6 @@ export function ConstructorWizard() {
 
   const handleCreate = async () => {
     setCreating(true);
-    setError("");
 
     const allComponents = [
       ...materials.filter((i) => i.name.trim()),
@@ -295,26 +286,16 @@ export function ConstructorWizard() {
         description: c.description || undefined,
         pricePerUnit: c.pricePerUnit ? Number(c.pricePerUnit) : undefined,
         quantity: Number(c.quantity) || 1,
-        stockQuantity: c.stockQuantity ? Number(c.stockQuantity) : undefined,
         isPaired: c.isPaired,
       })),
     };
 
     try {
-      const res = await fetch("/api/product-create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Ошибка сервера");
-      }
-
+      await api.post("/api/product-create", payload);
+      toast.success("Изделие создано");
       router.push("/warehouse");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Неизвестная ошибка");
+    } catch {
+      // toast shown by api-client
     } finally {
       setCreating(false);
     }
@@ -431,12 +412,6 @@ export function ConstructorWizard() {
         </div>
       </div>
 
-      {error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           {/* Шаги 0-1: Сырье, Заготовки */}
@@ -518,17 +493,14 @@ function useDbSearch() {
     if (loaded) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/nomenclature");
-      if (res.ok) {
-        const data = await res.json();
-        const sorted = (data.items || []).sort((a: DbItem, b: DbItem) =>
-          a.name.localeCompare(b.name, "ru")
-        );
-        setAllItems(sorted);
-        setLoaded(true);
-      }
+      const data = await api.get<{ items: DbItem[] }>("/api/nomenclature", { silent: true });
+      const sorted = (data.items || []).sort((a: DbItem, b: DbItem) =>
+        a.name.localeCompare(b.name, "ru")
+      );
+      setAllItems(sorted);
+      setLoaded(true);
     } catch {
-      // ignore
+      // silent
     } finally {
       setLoading(false);
     }
@@ -617,6 +589,7 @@ function ComponentsSection({
             {itemTypeLabels[comp.type].slice(0, 3)}
           </Badge>
           <span className="text-xs text-foreground truncate flex-1">{comp.name}</span>
+          <span className="text-[10px] text-muted-foreground shrink-0">расход:</span>
           <Input
             type="number"
             value={comp.quantity}
@@ -1031,6 +1004,7 @@ function ItemCard({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="sm:col-span-2">
+            <label className="text-xs text-muted-foreground mb-1 block">Название</label>
             <Input
               value={item.name}
               onChange={(e) => onUpdate(item.tempId, "name", e.target.value)}
@@ -1040,6 +1014,7 @@ function ItemCard({
           </div>
 
           <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Единица</label>
             <Select
               value={item.unit}
               onValueChange={(v) => onUpdate(item.tempId, "unit", v)}
@@ -1056,10 +1031,12 @@ function ItemCard({
           </div>
 
           <div>
+            <label className="text-xs text-muted-foreground mb-1 block">
+              {isMaterial ? "Закупочная цена, руб" : "Расценка, руб"}
+            </label>
             <Input
               value={item.pricePerUnit}
               onChange={(e) => onUpdate(item.tempId, "pricePerUnit", e.target.value)}
-              placeholder={isMaterial ? "Закупочная цена, руб" : "Расценка, руб"}
               className="h-8 text-sm"
               type="number"
               min="0"
@@ -1068,25 +1045,41 @@ function ItemCard({
           </div>
 
           <div>
-            <Input
-              value={item.stockQuantity}
-              onChange={(e) => onUpdate(item.tempId, "stockQuantity", e.target.value)}
-              placeholder="Количество"
-              className="h-8 text-sm"
-              type="number"
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Описание</label>
             <Input
               value={item.description}
               onChange={(e) => onUpdate(item.tempId, "description", e.target.value)}
-              placeholder="Описание"
               className="h-8 text-sm"
             />
           </div>
+
+          {isMaterial && (
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Расход на изделие</label>
+              <Input
+                value={item.quantity}
+                onChange={(e) => onUpdate(item.tempId, "quantity", e.target.value)}
+                className="h-8 text-sm"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          )}
+
+          {isMaterial && (
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Кол-во на складе</label>
+              <Input
+                value={item.stockQuantity}
+                onChange={(e) => onUpdate(item.tempId, "stockQuantity", e.target.value)}
+                className="h-8 text-sm"
+                type="number"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          )}
         </div>
       )}
 

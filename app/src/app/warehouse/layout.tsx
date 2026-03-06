@@ -1,87 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { WarehouseProvider, useWarehouse } from "@/components/warehouse/WarehouseContext";
 import { WarehouseNav } from "@/components/warehouse/WarehouseNav";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 
-function PinGate() {
+function LoginGate() {
   const { login } = useWarehouse();
-  const [pin, setPin] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleDigit = async (digit: string) => {
-    if (pin.length < 4) {
-      const newPin = pin + digit;
-      setPin(newPin);
-      setError("");
-
-      if (newPin.length === 4) {
-        setLoading(true);
-        const err = await login(newPin);
-        if (err) {
-          setError(err);
-          setTimeout(() => { setPin(""); setError(""); }, 1500);
-        }
-        setLoading(false);
-      }
-    }
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    setLoading(true);
+    setError("");
+    const err = await login(email, password);
+    if (err) setError(err);
+    setLoading(false);
   };
-
-  const handleDelete = () => { setPin(pin.slice(0, -1)); setError(""); };
-
-  const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <p className="text-muted-foreground text-xs mb-1">Склад</p>
-      <p className="text-muted-foreground text-sm mb-5">Введите PIN-код</p>
+      <div className="w-full max-w-xs">
+        <p className="text-muted-foreground text-xs mb-1 text-center">Склад</p>
+        <p className="text-muted-foreground text-sm mb-5 text-center">Вход в систему</p>
 
-      <div className="flex gap-2 mb-4">
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className={`w-3 h-3 rounded-full border-2 transition-all ${
-              i < pin.length
-                ? error ? "bg-destructive border-destructive" : "bg-foreground border-foreground"
-                : "border-muted-foreground/50"
-            }`}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full h-10 px-3 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            autoComplete="email"
+            autoFocus
           />
-        ))}
-      </div>
+          <input
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full h-10 px-3 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            autoComplete="current-password"
+          />
 
-      {error && <p className="text-destructive text-sm mb-2 animate-pulse">{error}</p>}
-      {loading && <p className="text-muted-foreground text-sm mb-2">Проверка...</p>}
+          {error && <p className="text-destructive text-sm animate-pulse">{error}</p>}
 
-      <div className="grid grid-cols-3 gap-2">
-        {digits.map((digit, i) => {
-          if (digit === "") return <div key={i} />;
-          if (digit === "⌫") {
-            return (
-              <Button key={i} variant="outline" disabled={loading}
-                className="w-12 h-12 text-lg rounded-xl border-border bg-card text-muted-foreground"
-                onClick={handleDelete}>⌫</Button>
-            );
-          }
-          return (
-            <Button key={i} variant="outline" disabled={loading}
-              className="w-12 h-12 text-xl font-semibold rounded-xl border-border bg-card text-foreground"
-              onClick={() => handleDigit(digit)}>{digit}</Button>
-          );
-        })}
+          <Button type="submit" disabled={loading || !email || !password} className="w-full h-10">
+            {loading ? "Вход..." : "Войти"}
+          </Button>
+        </form>
       </div>
     </div>
   );
 }
 
 function WarehouseLayout({ children }: { children: React.ReactNode }) {
-  const { loading, editMode, setEditMode, session, logout } = useWarehouse();
+  const { loading, authChecked, editMode, setEditMode, session, logout } = useWarehouse();
   const router = useRouter();
 
-  if (!session) return <PinGate />;
+  if (!authChecked) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <p className="text-muted-foreground">Загрузка...</p>
+      </div>
+    );
+  }
+
+  if (!session) return <LoginGate />;
 
   if (loading) {
     return (

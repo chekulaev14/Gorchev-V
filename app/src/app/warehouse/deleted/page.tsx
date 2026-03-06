@@ -12,18 +12,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useWarehouse } from "@/components/warehouse/WarehouseContext";
-import {
-  type NomenclatureItem,
-  type ItemType,
-  itemTypeLabels,
-  unitLabels,
-} from "@/data/nomenclature";
-
-const typeColors: Record<ItemType, string> = {
-  material: "bg-amber-100 text-amber-800 border-amber-300",
-  blank: "bg-orange-100 text-orange-800 border-orange-300",
-  product: "bg-emerald-100 text-emerald-800 border-emerald-300",
-};
+import type { NomenclatureItem, ItemType } from "@/lib/types";
+import { itemTypeLabels, unitLabels, typeColors } from "@/lib/constants";
+import { api } from "@/lib/api-client";
 
 export default function DeletedPage() {
   const { refresh } = useWarehouse();
@@ -33,9 +24,9 @@ export default function DeletedPage() {
 
   const load = () => {
     setLoading(true);
-    fetch("/api/nomenclature?deleted=1")
-      .then((r) => r.json())
+    api.get<{ items: NomenclatureItem[] }>("/api/nomenclature?deleted=1", { silent: true })
       .then((data) => setItems(data.items || []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   };
 
@@ -46,11 +37,11 @@ export default function DeletedPage() {
   const handleRestore = async (id: string) => {
     setRestoring(id);
     try {
-      const res = await fetch(`/api/nomenclature/${id}`, { method: "PATCH" });
-      if (res.ok) {
-        load();
-        refresh();
-      }
+      await api.patch(`/api/nomenclature/${id}`);
+      load();
+      refresh();
+    } catch {
+      // toast shown by api-client
     } finally {
       setRestoring(null);
     }

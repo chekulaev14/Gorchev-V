@@ -6,7 +6,8 @@ import { NomenclatureTab } from "./NomenclatureTab";
 import { StockTab } from "./StockTab";
 import { OperationsTab } from "./OperationsTab";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import type { NomenclatureItem } from "@/data/nomenclature";
+import type { NomenclatureItem } from "@/lib/types";
+import { api } from "@/lib/api-client";
 
 export function WarehousePanel() {
   const [items, setItems] = useState<NomenclatureItem[]>([]);
@@ -15,16 +16,14 @@ export function WarehousePanel() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [nomRes, stockRes] = await Promise.all([
-        fetch("/api/nomenclature"),
-        fetch("/api/stock"),
+      const [nomData, stockData] = await Promise.all([
+        api.get<{ items: NomenclatureItem[] }>("/api/nomenclature", { silent: true }),
+        api.get<{ balances: Record<string, number> }>("/api/stock", { silent: true }),
       ]);
-      const nomData = await nomRes.json();
-      const stockData = await stockRes.json();
       setItems(nomData.items);
       setBalances(stockData.balances);
-    } catch (e) {
-      console.error("Ошибка загрузки данных:", e);
+    } catch {
+      // silent
     } finally {
       setLoading(false);
     }

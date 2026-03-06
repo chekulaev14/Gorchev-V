@@ -1,0 +1,374 @@
+[  605469ms] [ERROR] ./src/components/warehouse/BomView.tsx:611:10
+Ecmascript file had an error
+  609 | }
+  610 |
+> 611 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  612 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  613 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  614 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/BomView.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/BomView.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  605469ms] [ERROR] ./src/components/warehouse/BomView.tsx:27:7
+Ecmascript file had an error
+  25 | }
+  26 |
+> 27 | const typeColors: Record<ItemType, string> = {
+     |       ^^^^^^^^^^
+  28 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  29 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  30 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/BomView.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/BomView.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  611088ms] [ERROR] ./src/components/warehouse/BomView.tsx:605:10
+Ecmascript file had an error
+  603 | }
+  604 |
+> 605 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  606 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  607 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  608 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/BomView.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/BomView.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  620045ms] [ERROR] ./src/components/warehouse/NomenclatureTab.tsx:286:10
+Ecmascript file had an error
+  284 | }
+  285 |
+> 286 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  287 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  288 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  289 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/NomenclatureTab.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/page.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/NomenclatureTab.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/page.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  620045ms] [ERROR] ./src/components/warehouse/NomenclatureTab.tsx:25:7
+Ecmascript file had an error
+  23 | }
+  24 |
+> 25 | const typeColors: Record<ItemType, string> = {
+     |       ^^^^^^^^^^
+  26 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  27 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  28 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/NomenclatureTab.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/page.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/NomenclatureTab.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/page.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  625026ms] [ERROR] ./src/components/warehouse/NomenclatureTab.tsx:280:10
+Ecmascript file had an error
+  278 | }
+  279 |
+> 280 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  281 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  282 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  283 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/NomenclatureTab.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/page.tsx [Client Component Browser]
+    ./src/app/warehouse/nomenclature/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/NomenclatureTab.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/page.tsx [Client Component SSR]
+    ./src/app/warehouse/nomenclature/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  673721ms] [ERROR] ./src/components/warehouse/AssemblyTab.tsx:127:10
+Ecmascript file had an error
+  125 | }
+  126 |
+> 127 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  128 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  129 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  130 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/AssemblyTab.tsx [Client Component Browser]
+    ./src/app/warehouse/assembly/page.tsx [Client Component Browser]
+    ./src/app/warehouse/assembly/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/AssemblyTab.tsx [Client Component SSR]
+    ./src/app/warehouse/assembly/page.tsx [Client Component SSR]
+    ./src/app/warehouse/assembly/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  673722ms] [ERROR] ./src/components/warehouse/AssemblyTab.tsx:16:7
+Ecmascript file had an error
+  14 | }
+  15 |
+> 16 | const typeColors: Record<ItemType, string> = {
+     |       ^^^^^^^^^^
+  17 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  18 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  19 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/AssemblyTab.tsx [Client Component Browser]
+    ./src/app/warehouse/assembly/page.tsx [Client Component Browser]
+    ./src/app/warehouse/assembly/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/AssemblyTab.tsx [Client Component SSR]
+    ./src/app/warehouse/assembly/page.tsx [Client Component SSR]
+    ./src/app/warehouse/assembly/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  675584ms] [ERROR] ./src/components/warehouse/AssemblyTab.tsx:121:10
+Ecmascript file had an error
+  119 | }
+  120 |
+> 121 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  122 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  123 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  124 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/AssemblyTab.tsx [Client Component Browser]
+    ./src/app/warehouse/assembly/page.tsx [Client Component Browser]
+    ./src/app/warehouse/assembly/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/AssemblyTab.tsx [Client Component SSR]
+    ./src/app/warehouse/assembly/page.tsx [Client Component SSR]
+    ./src/app/warehouse/assembly/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  682946ms] [ERROR] ./src/components/warehouse/StockTab.tsx:122:10
+Ecmascript file had an error
+  120 | }
+  121 |
+> 122 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  123 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  124 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  125 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/StockTab.tsx [Client Component Browser]
+    ./src/app/warehouse/stock/page.tsx [Client Component Browser]
+    ./src/app/warehouse/stock/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/StockTab.tsx [Client Component SSR]
+    ./src/app/warehouse/stock/page.tsx [Client Component SSR]
+    ./src/app/warehouse/stock/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  682946ms] [ERROR] ./src/components/warehouse/StockTab.tsx:21:7
+Ecmascript file had an error
+  19 | }
+  20 |
+> 21 | const typeColors: Record<ItemType, string> = {
+     |       ^^^^^^^^^^
+  22 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  23 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  24 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/StockTab.tsx [Client Component Browser]
+    ./src/app/warehouse/stock/page.tsx [Client Component Browser]
+    ./src/app/warehouse/stock/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/StockTab.tsx [Client Component SSR]
+    ./src/app/warehouse/stock/page.tsx [Client Component SSR]
+    ./src/app/warehouse/stock/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  684519ms] [ERROR] ./src/components/warehouse/StockTab.tsx:116:10
+Ecmascript file had an error
+  114 | }
+  115 |
+> 116 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  117 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  118 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  119 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/StockTab.tsx [Client Component Browser]
+    ./src/app/warehouse/stock/page.tsx [Client Component Browser]
+    ./src/app/warehouse/stock/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/StockTab.tsx [Client Component SSR]
+    ./src/app/warehouse/stock/page.tsx [Client Component SSR]
+    ./src/app/warehouse/stock/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  691151ms] [ERROR] ./src/components/warehouse/OperationsTab.tsx:244:10
+Ecmascript file had an error
+  242 | };
+  243 |
+> 244 | function formatNumber(n: number): string {
+      |          ^^^^^^^^^^^^
+  245 |   if (Number.isInteger(n)) return n.toLocaleString("ru-RU");
+  246 |   return n.toLocaleString("ru-RU", { maximumFractionDigits: 3 });
+  247 | }
+
+the name `formatNumber` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/OperationsTab.tsx [Client Component Browser]
+    ./src/app/warehouse/operations/page.tsx [Client Component Browser]
+    ./src/app/warehouse/operations/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/OperationsTab.tsx [Client Component SSR]
+    ./src/app/warehouse/operations/page.tsx [Client Component SSR]
+    ./src/app/warehouse/operations/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  691151ms] [ERROR] ./src/components/warehouse/OperationsTab.tsx:238:7
+Ecmascript file had an error
+  236 | }
+  237 |
+> 238 | const typeColors: Record<ItemType, string> = {
+      |       ^^^^^^^^^^
+  239 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  240 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  241 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/OperationsTab.tsx [Client Component Browser]
+    ./src/app/warehouse/operations/page.tsx [Client Component Browser]
+    ./src/app/warehouse/operations/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/OperationsTab.tsx [Client Component SSR]
+    ./src/app/warehouse/operations/page.tsx [Client Component SSR]
+    ./src/app/warehouse/operations/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  697876ms] [ERROR] ./src/components/warehouse/constructor/ConstructorWizard.tsx:58:7
+Ecmascript file had an error
+  56 | ];
+  57 |
+> 58 | const typeColors: Record<ItemType, string> = {
+     |       ^^^^^^^^^^
+  59 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  60 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  61 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/constructor/ConstructorWizard.tsx [Client Component Browser]
+    ./src/app/warehouse/builder/page.tsx [Client Component Browser]
+    ./src/app/warehouse/builder/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/constructor/ConstructorWizard.tsx [Client Component SSR]
+    ./src/app/warehouse/builder/page.tsx [Client Component SSR]
+    ./src/app/warehouse/builder/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  704054ms] [ERROR] ./src/components/warehouse/constructor/TreePreview.tsx:14:7
+Ecmascript file had an error
+  12 | }
+  13 |
+> 14 | const typeColors: Record<ItemType, string> = {
+     |       ^^^^^^^^^^
+  15 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  16 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  17 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/components/warehouse/constructor/TreePreview.tsx [Client Component Browser]
+    ./src/components/warehouse/constructor/ConstructorWizard.tsx [Client Component Browser]
+    ./src/app/warehouse/builder/page.tsx [Client Component Browser]
+    ./src/app/warehouse/builder/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/warehouse/constructor/TreePreview.tsx [Client Component SSR]
+    ./src/components/warehouse/constructor/ConstructorWizard.tsx [Client Component SSR]
+    ./src/app/warehouse/builder/page.tsx [Client Component SSR]
+    ./src/app/warehouse/builder/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  711838ms] [ERROR] ./src/app/warehouse/deleted/page.tsx:18:7
+Ecmascript file had an error
+  16 | import { itemTypeLabels, unitLabels, typeColors } from "@/lib/constants";
+  17 |
+> 18 | const typeColors: Record<ItemType, string> = {
+     |       ^^^^^^^^^^
+  19 |   material: "bg-amber-100 text-amber-800 border-amber-300",
+  20 |   blank: "bg-orange-100 text-orange-800 border-orange-300",
+  21 |   product: "bg-emerald-100 text-emerald-800 border-emerald-300",
+
+the name `typeColors` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/app/warehouse/deleted/page.tsx [Client Component Browser]
+    ./src/app/warehouse/deleted/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/warehouse/deleted/page.tsx [Client Component SSR]
+    ./src/app/warehouse/deleted/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127

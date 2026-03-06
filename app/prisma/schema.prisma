@@ -7,6 +7,75 @@ datasource db {
   provider = "postgresql"
 }
 
+// --- Enums ---
+
+enum MovementType {
+  SUPPLIER_INCOME
+  PRODUCTION_INCOME
+  ASSEMBLY_WRITE_OFF
+  ASSEMBLY_INCOME
+  ADJUSTMENT_INCOME
+  ADJUSTMENT_WRITE_OFF
+}
+
+enum WorkerRole {
+  WORKER
+  WAREHOUSE
+  DIRECTOR
+}
+
+enum OrderStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// --- Auth & Users ---
+
+// Роли пользователей (гибкая таблица)
+model Role {
+  id    String @id // "admin", "director", "warehouse"
+  name  String // "Администратор", "Директор", "Кладовщик"
+  users User[]
+
+  @@map("roles")
+}
+
+// Пользователи (веб-доступ: email + пароль)
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  isActive     Boolean  @default(true) @map("is_active")
+  roleId       String   @map("role_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  role   Role    @relation(fields: [roleId], references: [id])
+  worker Worker?
+
+  // Audit trail
+  createdItems         Item[]            @relation("ItemCreator")
+  updatedItems         Item[]            @relation("ItemUpdater")
+  createdStockMovements StockMovement[]  @relation("MovementCreator")
+  createdProductionOrders ProductionOrder[] @relation("OrderCreatorUser")
+
+  @@map("users")
+}
+
+// Конфигурация приложения (настройки клиента)
+model AppConfig {
+  key         String @id
+  value       String
+  description String?
+
+  @@map("app_config")
+}
+
+// --- Nomenclature & Catalog ---
+
 // Типы номенклатуры (гибкая таблица вместо enum)
 model ItemType {
   id    String @id // "material", "blank", "product"
@@ -40,13 +109,14 @@ model Category {
 // Позиция номенклатуры
 model Item {
   id           String  @id
+  code         String  @unique
   name         String
   typeId       String  @map("type_id")
   unitId       String  @map("unit_id")
   categoryId   String? @map("category_id")
   description  String?
   images       String[] // массив URL фото
-  pricePerUnit Float?  @map("price_per_unit")
+  pricePerUnit Decimal? @map("price_per_unit") @db.Decimal(10, 2)
 
   type     ItemType  @relation(fields: [typeId], references: [id])
   unit     Unit      @relation(fields: [unitId], references: [id])
@@ -59,9 +129,18 @@ model Item {
   // Складские движения
   stockMovements StockMovement[]
 
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  deletedAt DateTime? @map("deleted_at") // soft delete
+  // Производственные заказы
+  productionOrders     ProductionOrder[]
+  productionOrderItems ProductionOrderItem[]
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at") // soft delete
+  createdById String?   @map("created_by_id")
+  updatedById String?   @map("updated_by_id")
+
+  createdByUser User? @relation("ItemCreator", fields: [createdById], references: [id])
+  updatedByUser User? @relation("ItemUpdater", fields: [updatedById], references: [id])
 
   @@index([deletedAt])
   @@map("items")
@@ -72,25 +151,29 @@ model BomEntry {
   id       String @id @default(cuid())
   parentId String @map("parent_id")
   childId  String @map("child_id")
-  quantity Float  // сколько единиц child нужно на 1 единицу parent
+  quantity Decimal @db.Decimal(10, 4) // сколько единиц child нужно на 1 единицу parent
 
-  parent Item @relation("BomParent", fields: [parentId], references: [id], onDelete: Cascade)
-  child  Item @relation("BomChild", fields: [childId], references: [id], onDelete: Cascade)
+  parent Item @relation("BomParent", fields: [parentId], references: [id], onDelete: Restrict)
+  child  Item @relation("BomChild", fields: [childId], references: [id], onDelete: Restrict)
 
   @@unique([parentId, childId])
   @@map("bom_entries")
 }
 
-// Рабочие (авторизация по PIN)
+// Рабочие (авторизация по PIN на терминале)
 model Worker {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   name      String
-  pin       String   @unique
-  role      String   @default("worker") // worker, warehouse, director
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
+  pin       String      @unique
+  role      WorkerRole  @default(WORKER)
+  active    Boolean     @default(true)
+  userId    String?     @unique @map("user_id")
+  createdAt DateTime    @default(now()) @map("created_at")
 
+  user           User?             @relation(fields: [userId], references: [id])
   productionLogs ProductionLog[]
+  stockMovements StockMovement[]
+  createdOrders  ProductionOrder[] @relation("OrderCreator")
 
   @@map("workers")
 }
@@ -102,31 +185,104 @@ model ProductionLog {
   itemId       String   @map("item_id")
   itemName     String   @map("item_name")
   quantity     Int
-  pricePerUnit Float    @map("price_per_unit")
-  total        Float
+  pricePerUnit Decimal  @map("price_per_unit") @db.Decimal(10, 2)
+  total        Decimal  @db.Decimal(10, 2)
+  orderId      String?  @map("order_id")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  worker Worker @relation(fields: [workerId], references: [id])
+  worker Worker           @relation(fields: [workerId], references: [id])
+  order  ProductionOrder? @relation(fields: [orderId], references: [id])
 
   @@index([workerId])
   @@index([createdAt])
+  @@index([orderId])
   @@map("production_logs")
+}
+
+// Группы производственных процессов
+model ProcessGroup {
+  id    String @id
+  name  String
+  order Int   @default(0)
+
+  processes Process[]
+
+  @@map("process_groups")
+}
+
+// Производственные процессы (справочник операций)
+model Process {
+  id      String @id
+  name    String
+  groupId String @map("group_id")
+  order   Int    @default(0)
+
+  group ProcessGroup @relation(fields: [groupId], references: [id])
+
+  @@map("processes")
 }
 
 // Складские движения
 model StockMovement {
-  id          String   @id @default(cuid())
-  type        String   // supplier_income, production_income, assembly_write_off, assembly_income, adjustment
-  itemId      String   @map("item_id")
-  quantity    Float
-  performedBy String?  @map("performed_by")
-  workerId    String?  @map("worker_id")
-  comment     String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id            String   @id @default(cuid())
+  type          MovementType
+  itemId        String   @map("item_id")
+  quantity      Decimal  @db.Decimal(10, 4)
+  workerId      String?  @map("worker_id")
+  orderId       String?  @map("order_id")
+  comment       String?
+  createdById   String?  @map("created_by_id")
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  item          Item              @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  worker        Worker?           @relation(fields: [workerId], references: [id])
+  order         ProductionOrder?  @relation(fields: [orderId], references: [id])
+  createdByUser User?             @relation("MovementCreator", fields: [createdById], references: [id])
 
   @@index([itemId])
   @@index([createdAt])
+  @@index([orderId])
   @@map("stock_movements")
+}
+
+// Производственные заказы
+model ProductionOrder {
+  id                String      @id @default(cuid())
+  status            OrderStatus @default(PLANNED)
+  itemId            String      @map("item_id")
+  itemName          String      @map("item_name")
+  quantityPlanned   Int         @map("quantity_planned")
+  quantityCompleted Int         @default(0) @map("quantity_completed")
+  createdBy         String      @map("created_by")
+  createdByUserId   String?     @map("created_by_user_id")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  startedAt         DateTime?   @map("started_at")
+  completedAt       DateTime?   @map("completed_at")
+
+  item          Item    @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  creator       Worker  @relation("OrderCreator", fields: [createdBy], references: [id])
+  createdByUser User?   @relation("OrderCreatorUser", fields: [createdByUserId], references: [id])
+
+  snapshotItems  ProductionOrderItem[]
+  productionLogs ProductionLog[]
+  stockMovements StockMovement[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("production_orders")
+}
+
+// Snapshot состава заказа (BOM на момент создания)
+model ProductionOrderItem {
+  id       String  @id @default(cuid())
+  orderId  String  @map("order_id")
+  itemId   String  @map("item_id")
+  itemName String  @map("item_name")
+  quantity Decimal @db.Decimal(10, 4)
+
+  order ProductionOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  item  Item            @relation(fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, itemId])
+  @@map("production_order_items")
 }

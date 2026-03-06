@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Part } from "@/data/catalog";
+import type { Part } from "./types";
 import { Button } from "@/components/ui/button";
 
 interface PartDetailProps {
   part: Part;
-  onSubmit: (quantity: number) => void;
+  onSubmit: (quantity: number) => Promise<string | null>;
 }
 
 export function PartDetail({ part, onSubmit }: PartDetailProps) {
   const [currentImage, setCurrentImage] = useState(0);
   const [quantity, setQuantity] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   const handleDigit = (digit: string) => {
     if (quantity.length < 5) {
@@ -24,15 +26,25 @@ export function PartDetail({ part, onSubmit }: PartDetailProps) {
     setQuantity(quantity.slice(0, -1));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const num = parseInt(quantity);
     if (num > 0) {
-      setSubmitted(true);
-      onSubmit(num);
-      setTimeout(() => {
-        setQuantity("");
-        setSubmitted(false);
-      }, 2000);
+      setSending(true);
+      setError(null);
+      const err = await onSubmit(num);
+      setSending(false);
+      if (err) {
+        setError(err);
+        setTimeout(() => {
+          setError(null);
+        }, 3000);
+      } else {
+        setSubmitted(true);
+        setTimeout(() => {
+          setQuantity("");
+          setSubmitted(false);
+        }, 2000);
+      }
     }
   };
 
@@ -86,15 +98,25 @@ export function PartDetail({ part, onSubmit }: PartDetailProps) {
       <div className="bg-card rounded-lg p-2.5 border border-border">
         <h2 className="text-foreground text-sm font-medium mb-0.5">{part.name}</h2>
         <p className="text-muted-foreground text-xs">{part.description}</p>
-        <p className="text-emerald-600 dark:text-emerald-400 text-xs mt-1">Оплата за 1 ед.: {part.pricePerUnit} ₽</p>
+        {part.pricePerUnit > 0 && (
+          <p className="text-emerald-600 dark:text-emerald-400 text-xs mt-1">Оплата за 1 ед.: {part.pricePerUnit} ₽</p>
+        )}
       </div>
+
+      {error && (
+        <div className="bg-red-100 dark:bg-red-900/50 border border-red-300 dark:border-red-700 rounded-lg p-3 text-center">
+          <p className="text-destructive text-sm font-medium">{error}</p>
+        </div>
+      )}
 
       {submitted ? (
         <div className="bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-300 dark:border-emerald-700 rounded-lg p-3 text-center">
           <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">Данные отправлены</p>
-          <p className="text-emerald-500 dark:text-emerald-300/70 text-xs mt-0.5">
-            {quantity} шт × {part.pricePerUnit} ₽ = {total} ₽
-          </p>
+          {total > 0 && (
+            <p className="text-emerald-500 dark:text-emerald-300/70 text-xs mt-0.5">
+              {quantity} шт × {part.pricePerUnit} ₽ = {total} ₽
+            </p>
+          )}
         </div>
       ) : (
         <div className="bg-card rounded-lg p-3 border border-border">
@@ -146,10 +168,10 @@ export function PartDetail({ part, onSubmit }: PartDetailProps) {
 
           <Button
             className="w-full h-9 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-30"
-            disabled={!quantity || parseInt(quantity) === 0}
+            disabled={!quantity || parseInt(quantity) === 0 || sending}
             onClick={handleSubmit}
           >
-            Отправить
+            {sending ? "Отправка..." : "Отправить"}
           </Button>
         </div>
       )}

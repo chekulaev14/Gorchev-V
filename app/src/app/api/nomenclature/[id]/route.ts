@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import * as nomenclatureService from "@/services/nomenclature.service";
+import { updateItemSchema } from "@/lib/schemas/nomenclature.schema";
+import { parseBody } from "@/lib/schemas/helpers";
 
 export async function PUT(
   request: Request,
@@ -7,31 +9,11 @@ export async function PUT(
 ) {
   const { id } = await params;
   const body = await request.json();
+  const parsed = parseBody(updateItemSchema, body);
+  if (!parsed.success) return parsed.response;
 
-  const data: Record<string, unknown> = {};
-  if (body.name !== undefined) data.name = body.name;
-  if (body.description !== undefined) data.description = body.description || null;
-  if (body.typeId !== undefined) data.typeId = body.typeId;
-  if (body.unitId !== undefined) data.unitId = body.unitId;
-  if (body.categoryId !== undefined) data.categoryId = body.categoryId || null;
-  if (body.pricePerUnit !== undefined) data.pricePerUnit = body.pricePerUnit ? Number(body.pricePerUnit) : null;
-
-  const updated = await prisma.item.update({
-    where: { id },
-    data,
-    include: { type: true },
-  });
-
-  return NextResponse.json({
-    id: updated.id,
-    name: updated.name,
-    type: updated.typeId,
-    unit: updated.unitId,
-    category: updated.categoryId,
-    description: updated.description,
-    images: updated.images,
-    pricePerUnit: updated.pricePerUnit,
-  });
+  const updated = await nomenclatureService.updateItem(id, parsed.data);
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(
@@ -39,27 +21,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
-  // Soft delete — ставим deletedAt вместо реального удаления
-  await prisma.item.update({
-    where: { id },
-    data: { deletedAt: new Date() },
-  });
-
-  return NextResponse.json({ ok: true });
+  try {
+    await nomenclatureService.softDelete(id);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Ошибка удаления";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }
 
-// Восстановление из удалённых
 export async function PATCH(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-
-  await prisma.item.update({
-    where: { id },
-    data: { deletedAt: null },
-  });
-
+  await nomenclatureService.restore(id);
   return NextResponse.json({ ok: true });
 }
