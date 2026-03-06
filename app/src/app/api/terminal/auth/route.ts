@@ -16,5 +16,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Неверный PIN-код" }, { status: 401 });
   }
 
-  return NextResponse.json({ id: worker.id, name: worker.name });
+  return NextResponse.json({ id: worker.id, name: worker.name, role: worker.role });
 }

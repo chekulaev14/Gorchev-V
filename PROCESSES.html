@@ -154,7 +154,9 @@
   <div class="flow" style="margin-bottom: 14px;">
     <div class="block">Открывает сайт</div>
     <div class="arrow"></div>
-    <div class="block action">Попадает на /warehouse</div>
+    <div class="block action">Вводит PIN</div>
+    <div class="arrow"></div>
+    <div class="block auto">PIN → БД (role=warehouse)</div>
     <div class="arrow"></div>
     <div class="block info">4 таба в шапке</div>
   </div>
@@ -259,57 +261,37 @@
 
 <!-- ==================== ДИРЕКТОР ==================== -->
 <div class="role-section">
-  <div class="role-title director">Директор (тот же /warehouse, без режима редактирования)</div>
+  <div class="role-title director">Директор (/warehouse, полный доступ + выработка)</div>
 
   <div class="flow" style="margin-bottom: 14px;">
     <div class="block">Открывает сайт</div>
     <div class="arrow"></div>
-    <div class="block action">Попадает на /warehouse</div>
+    <div class="block action">Вводит PIN</div>
     <div class="arrow"></div>
-    <div class="block info">Только просмотр (editMode выключен)</div>
+    <div class="block auto">PIN → БД (role=director)</div>
+    <div class="arrow"></div>
+    <div class="block info">5 табов (+ Выработка)</div>
   </div>
 
-  <div class="scenario-label">Типичные сценарии</div>
+  <div class="scenario-label">Всё то же, что у кладовщика, плюс:</div>
   <div class="tabs-block">
     <div class="tab-flow">
-      <div class="tab-label purple">Проверить заказ</div>
-      <div class="block">Таб «Сборка»</div>
+      <div class="tab-label purple">Выработка</div>
+      <div class="block">Таб «Выработка»</div>
       <div class="arrow"></div>
-      <div class="block info">«Можно собрать: N шт»</div>
+      <div class="block info">Сводка: кто сколько сделал, сумма</div>
       <div class="arrow"></div>
-      <div class="block action">Клик → карточка</div>
-      <div class="arrow"></div>
-      <div class="block info">Нехватка: что докупить</div>
+      <div class="block action">Фильтр по периоду (день/неделя/месяц)</div>
     </div>
     <div class="tab-flow">
-      <div class="tab-label purple">Что на складе</div>
-      <div class="block">Таб «Остатки»</div>
+      <div class="tab-label purple">Редактирование</div>
+      <div class="block action">Полный доступ к режиму редактирования</div>
       <div class="arrow"></div>
-      <div class="block info">Видит все остатки</div>
-      <div class="arrow"></div>
-      <div class="block action">Фильтр «Нулевые»</div>
-      <div class="arrow"></div>
-      <div class="block info">Что закончилось</div>
-    </div>
-    <div class="tab-flow">
-      <div class="tab-label purple">Оприходовать</div>
-      <div class="block">Таб «Операции»</div>
-      <div class="arrow"></div>
-      <div class="block action">Может вводить приход/сборку</div>
-      <div class="arrow"></div>
-      <div class="block result">Остатки обновлены</div>
-    </div>
-    <div class="tab-flow">
-      <div class="tab-label purple">Изучить позицию</div>
-      <div class="block">Таб «Номенклатура»</div>
-      <div class="arrow"></div>
-      <div class="block action">Поиск → клик</div>
-      <div class="arrow"></div>
-      <div class="block info">Карточка: состав, остаток, расценка</div>
+      <div class="block action">Конструктор, удалённые, BOM</div>
     </div>
   </div>
 
-  <div class="note">Директору недоступно: редактирование позиций, удаление, конструктор, корзина удалённых.</div>
+  <div class="note">Директор имеет полный доступ ко всем функциям склада и кладовщика.</div>
 </div>
 
 </body>

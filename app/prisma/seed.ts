@@ -159,11 +159,13 @@ async function main() {
   // Рабочие
   console.log("Создание рабочих...");
   const workers = [
-    { name: "Иванов А.С.", pin: "1234" },
-    { name: "Петров В.И.", pin: "5678" },
-    { name: "Сидоров К.М.", pin: "9012" },
-    { name: "Козлов Д.А.", pin: "3456" },
-    { name: "Морозов Е.В.", pin: "7890" },
+    { name: "Горчев В.А.", pin: "0000", role: "director" },
+    { name: "Смирнова Н.П.", pin: "1111", role: "warehouse" },
+    { name: "Иванов А.С.", pin: "1234", role: "worker" },
+    { name: "Петров В.И.", pin: "5678", role: "worker" },
+    { name: "Сидоров К.М.", pin: "9012", role: "worker" },
+    { name: "Козлов Д.А.", pin: "3456", role: "worker" },
+    { name: "Морозов Е.В.", pin: "7890", role: "worker" },
   ];
   for (const w of workers) {
     await prisma.worker.create({ data: w });
