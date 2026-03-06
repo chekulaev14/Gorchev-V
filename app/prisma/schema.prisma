@@ -31,6 +31,15 @@ enum OrderStatus {
   CANCELLED
 }
 
+// --- Code Generation ---
+
+model CodeCounter {
+  key   String @id // MATERIAL, BLANK, PRODUCT
+  value Int    @default(0)
+
+  @@map("code_counters")
+}
+
 // --- Auth & Users ---
 
 // Роли пользователей (гибкая таблица)
