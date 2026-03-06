@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { handleRouteError } from "@/lib/api/handle-route-error";
 
 export async function GET() {
   const configs = await prisma.appConfig.findMany();
@@ -11,18 +12,22 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const body = await request.json();
-  const { key, value } = body;
+  try {
+    const body = await request.json();
+    const { key, value } = body;
 
-  if (!key || value === undefined) {
-    return NextResponse.json({ error: "key и value обязательны" }, { status: 400 });
+    if (!key || value === undefined) {
+      return NextResponse.json({ error: "key и value обязательны" }, { status: 400 });
+    }
+
+    const config = await prisma.appConfig.upsert({
+      where: { key },
+      update: { value },
+      create: { key, value },
+    });
+
+    return NextResponse.json(config);
+  } catch (err) {
+    return handleRouteError(err);
   }
-
-  const config = await prisma.appConfig.upsert({
-    where: { key },
-    update: { value },
-    create: { key, value },
-  });
-
-  return NextResponse.json(config);
 }

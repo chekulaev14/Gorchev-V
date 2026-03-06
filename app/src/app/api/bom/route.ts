@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as bomService from "@/services/bom.service";
 import { addEntrySchema, updateEntrySchema, deleteEntrySchema } from "@/lib/schemas/bom.schema";
 import { parseBody } from "@/lib/schemas/helpers";
+import { handleRouteError } from "@/lib/api/handle-route-error";
 
 export async function GET() {
   const entries = await bomService.getAllEntries();
@@ -9,33 +10,40 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const parsed = parseBody(addEntrySchema, body);
-  if (!parsed.success) return parsed.response;
-
   try {
+    const body = await request.json();
+    const parsed = parseBody(addEntrySchema, body);
+    if (!parsed.success) return parsed.response;
+
     const entry = await bomService.addEntry(parsed.data.parentId, parsed.data.childId, parsed.data.quantity);
     return NextResponse.json(entry, { status: 201 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Ошибка";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return handleRouteError(err);
   }
 }
 
 export async function PUT(request: Request) {
-  const body = await request.json();
-  const parsed = parseBody(updateEntrySchema, body);
-  if (!parsed.success) return parsed.response;
+  try {
+    const body = await request.json();
+    const parsed = parseBody(updateEntrySchema, body);
+    if (!parsed.success) return parsed.response;
 
-  const entry = await bomService.updateEntry(parsed.data.parentId, parsed.data.childId, parsed.data.quantity);
-  return NextResponse.json(entry);
+    const entry = await bomService.updateEntry(parsed.data.parentId, parsed.data.childId, parsed.data.quantity);
+    return NextResponse.json(entry);
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }
 
 export async function DELETE(request: Request) {
-  const body = await request.json();
-  const parsed = parseBody(deleteEntrySchema, body);
-  if (!parsed.success) return parsed.response;
+  try {
+    const body = await request.json();
+    const parsed = parseBody(deleteEntrySchema, body);
+    if (!parsed.success) return parsed.response;
 
-  await bomService.deleteEntry(parsed.data.parentId, parsed.data.childId);
-  return NextResponse.json({ ok: true });
+    await bomService.deleteEntry(parsed.data.parentId, parsed.data.childId);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

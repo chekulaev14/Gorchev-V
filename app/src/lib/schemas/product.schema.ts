@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { idSchema } from "./helpers";
 
 const componentSchema = z.object({
   tempId: z.string().min(1),
   parentTempId: z.string().min(1),
-  existingId: z.string().uuid().optional(),
+  existingId: z.preprocess(v => v === "" ? undefined : v, idSchema.optional()),
   name: z.string().trim().min(1, "Название компонента обязательно"),
   type: z.enum(["material", "blank", "product"]),
   unit: z.enum(["kg", "pcs", "m"]).default("pcs"),

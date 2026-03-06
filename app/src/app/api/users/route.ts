@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUsers, createUser, updateUser, deleteUser, getRoles } from "@/services/user.service";
+import { handleRouteError } from "@/lib/api/handle-route-error";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -13,48 +14,48 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { email, password, name, roleId } = body;
-
-  if (!email || !password || !name || !roleId) {
-    return NextResponse.json({ error: "Все поля обязательны" }, { status: 400 });
-  }
-
   try {
+    const body = await request.json();
+    const { email, password, name, roleId } = body;
+
+    if (!email || !password || !name || !roleId) {
+      return NextResponse.json({ error: "Все поля обязательны" }, { status: 400 });
+    }
+
     const user = await createUser({ email, password, name, roleId });
     return NextResponse.json(user, { status: 201 });
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
+  } catch (err) {
+    return handleRouteError(err);
   }
 }
 
 export async function PUT(request: Request) {
-  const body = await request.json();
-  const { id, ...data } = body;
-
-  if (!id) {
-    return NextResponse.json({ error: "id обязателен" }, { status: 400 });
-  }
-
   try {
+    const body = await request.json();
+    const { id, ...data } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "id обязателен" }, { status: 400 });
+    }
+
     const user = await updateUser(id, data);
     return NextResponse.json(user);
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
+  } catch (err) {
+    return handleRouteError(err);
   }
 }
 
 export async function DELETE(request: Request) {
-  const { id } = await request.json();
-
-  if (!id) {
-    return NextResponse.json({ error: "id обязателен" }, { status: 400 });
-  }
-
   try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "id обязателен" }, { status: 400 });
+    }
+
     await deleteUser(id);
     return NextResponse.json({ ok: true });
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
+  } catch (err) {
+    return handleRouteError(err);
   }
 }

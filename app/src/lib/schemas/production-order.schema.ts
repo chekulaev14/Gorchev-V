@@ -1,24 +1,25 @@
 import { z } from "zod";
+import { idSchema } from "./helpers";
 
 const createAction = z.object({
   action: z.literal("CREATE"),
-  itemId: z.string().uuid("Некорректный itemId"),
+  itemId: idSchema,
   quantityPlanned: z.number().positive("Количество должно быть больше 0"),
 });
 
 const startAction = z.object({
   action: z.literal("START"),
-  orderId: z.string().uuid("Некорректный orderId"),
+  orderId: idSchema,
 });
 
 const completeAction = z.object({
   action: z.literal("COMPLETE"),
-  orderId: z.string().uuid("Некорректный orderId"),
+  orderId: idSchema,
 });
 
 const cancelAction = z.object({
   action: z.literal("CANCEL"),
-  orderId: z.string().uuid("Некорректный orderId"),
+  orderId: idSchema,
 });
 
 export const productionOrderActionSchema = z.discriminatedUnion("action", [

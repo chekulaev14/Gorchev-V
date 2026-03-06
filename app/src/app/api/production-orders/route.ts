@@ -4,6 +4,7 @@ import * as orderService from "@/services/production-order.service";
 import { ProductionOrderError } from "@/services/production-order.service";
 import { productionOrderActionSchema } from "@/lib/schemas/production-order.schema";
 import { parseBody } from "@/lib/schemas/helpers";
+import { handleRouteError } from "@/lib/api/handle-route-error";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,12 +15,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = getAuthContext(request);
-  const body = await request.json();
-  const parsed = parseBody(productionOrderActionSchema, body);
-  if (!parsed.success) return parsed.response;
-
   try {
+    const auth = getAuthContext(request);
+    const body = await request.json();
+    const parsed = parseBody(productionOrderActionSchema, body);
+    if (!parsed.success) return parsed.response;
+
     switch (parsed.data.action) {
       case "CREATE": {
         const order = await orderService.createOrder({
@@ -52,6 +53,6 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    throw err;
+    return handleRouteError(err);
   }
 }

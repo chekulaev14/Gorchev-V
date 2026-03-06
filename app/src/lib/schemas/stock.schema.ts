@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { idSchema } from "./helpers";
 
 export const createMovementSchema = z.object({
   action: z.enum(["SUPPLIER_INCOME", "PRODUCTION_INCOME", "ASSEMBLY"]),
-  itemId: z.string().uuid("Некорректный ID позиции"),
+  itemId: idSchema,
   quantity: z.number().positive("Количество должно быть больше 0"),
   comment: z.string().optional(),
 });

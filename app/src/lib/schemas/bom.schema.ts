@@ -1,20 +1,21 @@
 import { z } from "zod";
+import { idSchema } from "./helpers";
 
 export const addEntrySchema = z.object({
-  parentId: z.string().uuid("Некорректный parentId"),
-  childId: z.string().uuid("Некорректный childId"),
+  parentId: idSchema,
+  childId: idSchema,
   quantity: z.number().positive("Количество должно быть больше 0"),
 });
 
 export const updateEntrySchema = z.object({
-  parentId: z.string().uuid("Некорректный parentId"),
-  childId: z.string().uuid("Некорректный childId"),
+  parentId: idSchema,
+  childId: idSchema,
   quantity: z.number().positive("Количество должно быть больше 0"),
 });
 
 export const deleteEntrySchema = z.object({
-  parentId: z.string().uuid("Некорректный parentId"),
-  childId: z.string().uuid("Некорректный childId"),
+  parentId: idSchema,
+  childId: idSchema,
 });
 
 export type AddEntryInput = z.infer<typeof addEntrySchema>;

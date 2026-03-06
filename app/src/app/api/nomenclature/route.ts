@@ -3,6 +3,7 @@ import * as nomenclatureService from "@/services/nomenclature.service";
 import * as bomService from "@/services/bom.service";
 import { createItemSchema } from "@/lib/schemas/nomenclature.schema";
 import { parseBody } from "@/lib/schemas/helpers";
+import { handleRouteError } from "@/lib/api/handle-route-error";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -27,18 +28,22 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const parsed = parseBody(createItemSchema, body);
-  if (!parsed.success) return parsed.response;
+  try {
+    const body = await request.json();
+    const parsed = parseBody(createItemSchema, body);
+    if (!parsed.success) return parsed.response;
 
-  const item = await nomenclatureService.createItem({
-    name: parsed.data.name,
-    typeId: parsed.data.typeId,
-    unitId: parsed.data.unitId,
-    categoryId: parsed.data.categoryId ?? null,
-    description: parsed.data.description ?? null,
-    pricePerUnit: parsed.data.pricePerUnit ?? null,
-  });
+    const item = await nomenclatureService.createItem({
+      name: parsed.data.name,
+      typeId: parsed.data.typeId,
+      unitId: parsed.data.unitId,
+      categoryId: parsed.data.categoryId ?? null,
+      description: parsed.data.description ?? null,
+      pricePerUnit: parsed.data.pricePerUnit ?? null,
+    });
 
-  return NextResponse.json(item, { status: 201 });
+    return NextResponse.json(item, { status: 201 });
+  } catch (err) {
+    return handleRouteError(err);
+  }
 }

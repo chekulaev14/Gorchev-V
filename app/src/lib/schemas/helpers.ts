@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import type { z } from "zod";
+import { z } from "zod";
+
+export const idSchema = z.string().trim().min(1, "ID обязателен");
 
 type SafeParseResult<T> =
   | { success: true; data: T }
