@@ -9,6 +9,7 @@ import { useWarehouse } from "@/components/warehouse/WarehouseContext";
 import {
   type NomenclatureItem,
   type ItemType,
+  type Unit,
   itemTypeLabels,
   unitLabels,
   categories,
@@ -325,7 +326,7 @@ export function BomView({ item, balances }: Props) {
                 <label className="text-muted-foreground text-xs block mb-1">Тип</label>
                 <select
                   value={form.typeId}
-                  onChange={(e) => setForm({ ...form, typeId: e.target.value })}
+                  onChange={(e) => setForm({ ...form, typeId: e.target.value as ItemType })}
                   className="bg-card border border-border text-foreground text-sm rounded px-2 h-9"
                 >
                   {typeOptions.map((t) => (
@@ -337,7 +338,7 @@ export function BomView({ item, balances }: Props) {
                 <label className="text-muted-foreground text-xs block mb-1">Единица</label>
                 <select
                   value={form.unitId}
-                  onChange={(e) => setForm({ ...form, unitId: e.target.value })}
+                  onChange={(e) => setForm({ ...form, unitId: e.target.value as Unit })}
                   className="bg-card border border-border text-foreground text-sm rounded px-2 h-9"
                 >
                   {unitOptions.map((u) => (
