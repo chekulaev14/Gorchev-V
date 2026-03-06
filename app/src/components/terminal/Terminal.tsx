@@ -14,7 +14,7 @@ export function Terminal() {
     workerId: string;
     workerName: string;
   } | null>(null);
-  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [lastActivity, setLastActivity] = useState(() => Date.now());
 
   const resetActivity = useCallback(() => {
     setLastActivity(Date.now());

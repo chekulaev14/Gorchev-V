@@ -15,7 +15,7 @@ export interface BomChild {
 }
 
 interface BomTreeProps {
-  children: BomChild[];
+  entries: BomChild[];
   balances: Record<string, number>;
   editMode: boolean;
   editingQty: Record<string, string>;
@@ -178,7 +178,7 @@ function EditRow({ child, editingQty, onStartEditQty, onCancelEditQty, onChangeE
 }
 
 export function BomTree({
-  children: bomChildren,
+  entries: bomChildren,
   balances,
   editMode,
   editingQty,

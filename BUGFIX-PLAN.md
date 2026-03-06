@@ -219,22 +219,22 @@
 
 ### BUG 4 — useState(Date.now()) impure initializer
 
-- [ ] 4.1 Terminal.tsx:17 — заменить useState(Date.now()) на useState(() => Date.now())
+- [x] 4.1 Terminal.tsx:17 — заменить useState(Date.now()) на useState(() => Date.now())
 
 ### BUG 5 — BomTree children prop
 
-- [ ] 5.1 BomTree.tsx: переименовать prop children → entries в BomTreeProps (строка 18)
-- [ ] 5.2 BomTree.tsx: заменить все использования children на entries внутри компонента
-- [ ] 5.3 BomView.tsx: заменить children={children} на entries={children} (строка 285)
-- [ ] 5.4 Проверить нет ли вызовов <BomTree>...</BomTree> с вложенными ReactNode children
+- [x] 5.1 BomTree.tsx: переименовать prop children → entries в BomTreeProps (строка 18)
+- [x] 5.2 BomTree.tsx: заменить все использования children на entries внутри компонента
+- [x] 5.3 BomView.tsx: заменить children={children} на entries={children} (строка 285)
+- [x] 5.4 Проверить нет ли вызовов <BomTree>...</BomTree> с вложенными ReactNode children
 
 ### BUG 6 — getListByStep мёртвый код
 
-- [ ] 6.1 wizard-reducer.ts: удалить функцию getListByStep (строки 82-86)
+- [x] 6.1 wizard-reducer.ts: удалить функцию getListByStep (строки 82-86)
 
 ### BUG 7 — ESLint max-lines
 
-- [ ] 7.1 eslint.config.mjs: добавить max-lines в блок files: ["src/**/*.{ts,tsx}"]:
+- [x] 7.1 eslint.config.mjs: добавить max-lines в блок files: ["src/**/*.{ts,tsx}"]:
   - max: 300, skipBlankLines: true, skipComments: true
   - Уровень: warn (не error)
   - Ожидаемые срабатывания: route handlers, schema файлы, reducer, contexts — не чинить в этом коммите

@@ -22,7 +22,7 @@ interface Props {
 
 export function BomView({ item, balances }: Props) {
   const router = useRouter();
-  const { editMode, items: allItems, refresh } = useWarehouse();
+  const { editMode, items: allItems, refresh, refreshAll } = useWarehouse();
   const [children, setChildren] = useState<BomChild[]>([]);
   const [parents, setParents] = useState<BomChild[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ export function BomView({ item, balances }: Props) {
     try {
       await api.put(`/api/nomenclature/${item.id}`, parsed.data);
       setEditing(false);
-      refresh();
+      refreshAll();
     } catch {
       // toast shown by api-client
     } finally {
@@ -88,7 +88,7 @@ export function BomView({ item, balances }: Props) {
     setDeleting(true);
     try {
       await api.del(`/api/nomenclature/${item.id}`);
-      refresh();
+      refreshAll();
       router.push("/warehouse/nomenclature");
     } catch {
       // toast shown by api-client
@@ -282,7 +282,7 @@ export function BomView({ item, balances }: Props) {
               )}
 
               <BomTree
-                children={children}
+                entries={children}
                 balances={balances}
                 editMode={editMode}
                 editingQty={editingQty}
