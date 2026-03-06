@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gorchev-V — Схема процессов</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 32px; color: #1a1a1a; }
+  h1 { text-align: center; margin-bottom: 32px; font-size: 22px; font-weight: 600; }
+
+  .role-section { margin-bottom: 40px; background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .role-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; padding: 6px 14px; border-radius: 6px; display: inline-block; color: #fff; }
+  .role-title.worker { background: #2563eb; }
+  .role-title.warehouse { background: #059669; }
+  .role-title.director { background: #7c3aed; }
+
+  .scenario-label { font-size: 13px; color: #666; margin: 14px 0 8px 0; font-style: italic; }
+
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin-bottom: 6px; }
+
+  .block {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .block.action { border-color: #93c5fd; background: #eff6ff; }
+  .block.result { border-color: #86efac; background: #f0fdf4; }
+  .block.auto { border-color: #fcd34d; background: #fffbeb; }
+  .block.info { border-color: #c4b5fd; background: #f5f3ff; }
+
+  .arrow {
+    flex-shrink: 0;
+    width: 28px;
+    height: 2px;
+    background: #94a3b8;
+    position: relative;
+    margin: 0;
+  }
+  .arrow::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -4px;
+    border: 5px solid transparent;
+    border-left: 6px solid #94a3b8;
+  }
+
+  .branch {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-left: 0;
+  }
+  .branch-row { display: flex; align-items: center; gap: 0; }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: #e5e7eb;
+    margin: 12px 0;
+  }
+
+  .note { font-size: 12px; color: #888; margin-top: 4px; margin-left: 4px; }
+
+  .tabs-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .tab-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .tab-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #059669;
+    min-width: 110px;
+    flex-shrink: 0;
+  }
+  .tab-label.purple {
+    color: #7c3aed;
+  }
+</style>
+</head>
+<body>
+
+<h1>Gorchev-V — Схема процессов</h1>
+
+<!-- ==================== РАБОЧИЙ ==================== -->
+<div class="role-section">
+  <div class="role-title worker">Рабочий (терминал /terminal)</div>
+
+  <div class="scenario-label">Сценарий 1 — посмотреть фото детали (в течение дня)</div>
+  <div class="flow">
+    <div class="block">Подходит к терминалу</div>
+    <div class="arrow"></div>
+    <div class="block action">Вводит PIN (4 цифры)</div>
+    <div class="arrow"></div>
+    <div class="block auto">PIN → БД (проверка)</div>
+    <div class="arrow"></div>
+    <div class="block action">Выбирает категорию</div>
+    <div class="arrow"></div>
+    <div class="block action">Выбирает изделие</div>
+    <div class="arrow"></div>
+    <div class="block action">Выбирает деталь</div>
+    <div class="arrow"></div>
+    <div class="block info">Смотрит фото и описание</div>
+    <div class="arrow"></div>
+    <div class="block auto">Автовыход (60 сек)</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="scenario-label">Сценарий 2 — отметить выработку (конец смены)</div>
+  <div class="flow">
+    <div class="block">Подходит к терминалу</div>
+    <div class="arrow"></div>
+    <div class="block action">Вводит PIN</div>
+    <div class="arrow"></div>
+    <div class="block auto">PIN → БД (проверка)</div>
+    <div class="arrow"></div>
+    <div class="block action">Выбирает категорию</div>
+    <div class="arrow"></div>
+    <div class="block action">Выбирает изделие</div>
+    <div class="arrow"></div>
+    <div class="block action">Выбирает деталь</div>
+    <div class="arrow"></div>
+    <div class="block action">Вводит количество</div>
+    <div class="arrow"></div>
+    <div class="block action">Видит расчёт суммы</div>
+    <div class="arrow"></div>
+    <div class="block result">Нажимает «Отправить»</div>
+    <div class="arrow"></div>
+    <div class="block auto">Данные → БД (production_logs)</div>
+    <div class="arrow"></div>
+    <div class="block auto">Автовыход (60 сек)</div>
+  </div>
+
+  <div class="note">Таймаут бездействия — 60 секунд. Кнопка «Выход» для ручного выхода.</div>
+</div>
+
+<!-- ==================== КЛАДОВЩИК ==================== -->
+<div class="role-section">
+  <div class="role-title warehouse">Кладовщик (склад /warehouse)</div>
+
+  <div class="flow" style="margin-bottom: 14px;">
+    <div class="block">Открывает сайт</div>
+    <div class="arrow"></div>
+    <div class="block action">Попадает на /warehouse</div>
+    <div class="arrow"></div>
+    <div class="block info">4 таба в шапке</div>
+  </div>
+
+  <div class="tabs-block">
+
+    <!-- Номенклатура -->
+    <div class="tab-flow">
+      <div class="tab-label">Номенклатура</div>
+      <div class="block">Каталог по типам (аккордеон)</div>
+      <div class="arrow"></div>
+      <div class="block action">Поиск / фильтр</div>
+      <div class="arrow"></div>
+      <div class="block action">Клик на позицию</div>
+      <div class="arrow"></div>
+      <div class="block info">Карточка: фото, состав, куда входит, остаток</div>
+    </div>
+
+    <!-- Остатки -->
+    <div class="tab-flow">
+      <div class="tab-label">Остатки</div>
+      <div class="block">Остатки по типам</div>
+      <div class="arrow"></div>
+      <div class="block action">Фильтр «Нулевые»</div>
+      <div class="arrow"></div>
+      <div class="block info">Видит что нужно докупить</div>
+    </div>
+
+    <!-- Сборка -->
+    <div class="tab-flow">
+      <div class="tab-label">Сборка</div>
+      <div class="block">Список собираемых позиций</div>
+      <div class="arrow"></div>
+      <div class="block info">«Можно собрать: N шт» + нехватка</div>
+    </div>
+
+    <!-- Операции -->
+    <div class="tab-flow">
+      <div class="tab-label">Операции</div>
+      <div class="block">Выбор типа операции</div>
+      <div class="arrow"></div>
+      <div class="block action">Выбирает позицию</div>
+      <div class="arrow"></div>
+      <div class="block action">Вводит количество</div>
+      <div class="arrow"></div>
+      <div class="block result">Подтверждает</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="scenario-label">3 типа операций</div>
+  <div class="tabs-block">
+    <div class="tab-flow">
+      <div class="tab-label">Приход поставщ.</div>
+      <div class="block">Выбирает сырьё</div>
+      <div class="arrow"></div>
+      <div class="block action">Кол-во + комментарий</div>
+      <div class="arrow"></div>
+      <div class="block result">«Оприходовать» → остаток обновлён</div>
+    </div>
+    <div class="tab-flow">
+      <div class="tab-label">Приход с произв.</div>
+      <div class="block">Выбирает деталь</div>
+      <div class="arrow"></div>
+      <div class="block action">Кол-во + рабочий</div>
+      <div class="arrow"></div>
+      <div class="block result">«Оприходовать» → остаток обновлён</div>
+    </div>
+    <div class="tab-flow">
+      <div class="tab-label">Сборка</div>
+      <div class="block">Выбирает изделие</div>
+      <div class="arrow"></div>
+      <div class="block action">Кол-во → предпросмотр списания</div>
+      <div class="arrow"></div>
+      <div class="block result">«Собрать» → компоненты списаны</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="scenario-label">Режим редактирования (кнопка «Ред.» в шапке)</div>
+  <div class="tabs-block">
+    <div class="tab-flow">
+      <div class="tab-label">Доступно</div>
+      <div class="block action">Добавить позицию</div>
+      <div class="arrow"></div>
+      <div class="block action">Редактировать позицию</div>
+      <div class="arrow"></div>
+      <div class="block action">Удалить позицию (soft)</div>
+      <div class="arrow"></div>
+      <div class="block action">Редактировать BOM</div>
+    </div>
+    <div class="tab-flow">
+      <div class="tab-label">Доп. кнопки</div>
+      <div class="block info">Конструктор изделия (/builder)</div>
+      <div class="arrow"></div>
+      <div class="block info">Удалённые (/deleted) — восстановление</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ДИРЕКТОР ==================== -->
+<div class="role-section">
+  <div class="role-title director">Директор (тот же /warehouse, без режима редактирования)</div>
+
+  <div class="flow" style="margin-bottom: 14px;">
+    <div class="block">Открывает сайт</div>
+    <div class="arrow"></div>
+    <div class="block action">Попадает на /warehouse</div>
+    <div class="arrow"></div>
+    <div class="block info">Только просмотр (editMode выключен)</div>
+  </div>
+
+  <div class="scenario-label">Типичные сценарии</div>
+  <div class="tabs-block">
+    <div class="tab-flow">
+      <div class="tab-label purple">Проверить заказ</div>
+      <div class="block">Таб «Сборка»</div>
+      <div class="arrow"></div>
+      <div class="block info">«Можно собрать: N шт»</div>
+      <div class="arrow"></div>
+      <div class="block action">Клик → карточка</div>
+      <div class="arrow"></div>
+      <div class="block info">Нехватка: что докупить</div>
+    </div>
+    <div class="tab-flow">
+      <div class="tab-label purple">Что на складе</div>
+      <div class="block">Таб «Остатки»</div>
+      <div class="arrow"></div>
+      <div class="block info">Видит все остатки</div>
+      <div class="arrow"></div>
+      <div class="block action">Фильтр «Нулевые»</div>
+      <div class="arrow"></div>
+      <div class="block info">Что закончилось</div>
+    </div>
+    <div class="tab-flow">
+      <div class="tab-label purple">Оприходовать</div>
+      <div class="block">Таб «Операции»</div>
+      <div class="arrow"></div>
+      <div class="block action">Может вводить приход/сборку</div>
+      <div class="arrow"></div>
+      <div class="block result">Остатки обновлены</div>
+    </div>
+    <div class="tab-flow">
+      <div class="tab-label purple">Изучить позицию</div>
+      <div class="block">Таб «Номенклатура»</div>
+      <div class="arrow"></div>
+      <div class="block action">Поиск → клик</div>
+      <div class="arrow"></div>
+      <div class="block info">Карточка: состав, остаток, расценка</div>
+    </div>
+  </div>
+
+  <div class="note">Директору недоступно: редактирование позиций, удаление, конструктор, корзина удалённых.</div>
+</div>
+
+</body>
+</html>

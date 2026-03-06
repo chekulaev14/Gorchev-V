@@ -50,24 +50,28 @@ export function Terminal() {
     resetActivity();
   };
 
-  const handleSubmit = (
+  const handleSubmit = async (
     partId: string,
     partName: string,
     quantity: number,
     pricePerUnit: number
   ) => {
-    // Пока логируем в консоль. Потом — отправка на сервер.
-    console.log("Выработка:", {
-      workerId: session?.workerId,
-      workerName: session?.workerName,
-      partId,
-      partName,
-      quantity,
-      pricePerUnit,
-      total: quantity * pricePerUnit,
-      timestamp: new Date().toISOString(),
-    });
     resetActivity();
+    try {
+      await fetch("/api/terminal/output", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workerId: session?.workerId,
+          itemId: partId,
+          itemName: partName,
+          quantity,
+          pricePerUnit,
+        }),
+      });
+    } catch (err) {
+      console.error("Ошибка отправки выработки:", err);
+    }
   };
 
   if (!session) {

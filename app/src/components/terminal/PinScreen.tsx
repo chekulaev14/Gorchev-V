@@ -11,25 +11,40 @@ interface PinScreenProps {
 export function PinScreen({ onLogin }: PinScreenProps) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const { workers } = require("@/data/catalog");
-
-  const handleDigit = (digit: string) => {
+  const handleDigit = async (digit: string) => {
     if (pin.length < 4) {
       const newPin = pin + digit;
       setPin(newPin);
       setError("");
 
       if (newPin.length === 4) {
-        const worker = workers.find((w: { pin: string }) => w.pin === newPin);
-        if (worker) {
-          onLogin(worker.id, worker.name);
-        } else {
-          setError("Неверный PIN-код");
+        setLoading(true);
+        try {
+          const res = await fetch("/api/terminal/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pin: newPin }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            onLogin(data.id, data.name);
+          } else {
+            setError("Неверный PIN-код");
+            setTimeout(() => {
+              setPin("");
+              setError("");
+            }, 1500);
+          }
+        } catch {
+          setError("Ошибка связи");
           setTimeout(() => {
             setPin("");
             setError("");
           }, 1500);
+        } finally {
+          setLoading(false);
         }
       }
     }
@@ -69,6 +84,10 @@ export function PinScreen({ onLogin }: PinScreenProps) {
         <p className="text-destructive text-sm mb-2 animate-pulse">{error}</p>
       )}
 
+      {loading && (
+        <p className="text-muted-foreground text-sm mb-2">Проверка...</p>
+      )}
+
       <div className="grid grid-cols-3 gap-2">
         {digits.map((digit, i) => {
           if (digit === "") return <div key={i} />;
@@ -79,6 +98,7 @@ export function PinScreen({ onLogin }: PinScreenProps) {
                 variant="outline"
                 className="w-12 h-12 text-lg rounded-xl border-border bg-card text-muted-foreground hover:bg-accent active:bg-accent"
                 onClick={handleDelete}
+                disabled={loading}
               >
                 ⌫
               </Button>
@@ -90,6 +110,7 @@ export function PinScreen({ onLogin }: PinScreenProps) {
               variant="outline"
               className="w-12 h-12 text-xl font-semibold rounded-xl border-border bg-card text-foreground hover:bg-accent active:bg-accent"
               onClick={() => handleDigit(digit)}
+              disabled={loading}
             >
               {digit}
             </Button>

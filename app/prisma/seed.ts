@@ -32,6 +32,8 @@ const typeOrder: Record<string, number> = {
 
 async function main() {
   console.log("Очистка таблиц...");
+  await prisma.productionLog.deleteMany();
+  await prisma.worker.deleteMany();
   await prisma.bomEntry.deleteMany();
   await prisma.stockMovement.deleteMany();
   await prisma.item.deleteMany();
@@ -154,6 +156,20 @@ async function main() {
   }
   console.log(`  Создано ${stockCreated} начальных движений`);
 
+  // Рабочие
+  console.log("Создание рабочих...");
+  const workers = [
+    { name: "Иванов А.С.", pin: "1234" },
+    { name: "Петров В.И.", pin: "5678" },
+    { name: "Сидоров К.М.", pin: "9012" },
+    { name: "Козлов Д.А.", pin: "3456" },
+    { name: "Морозов Е.В.", pin: "7890" },
+  ];
+  for (const w of workers) {
+    await prisma.worker.create({ data: w });
+  }
+  console.log(`  Создано ${workers.length} рабочих`);
+
   console.log("Готово!");
   const counts = {
     types: await prisma.itemType.count(),
@@ -162,6 +178,7 @@ async function main() {
     items: await prisma.item.count(),
     bom: await prisma.bomEntry.count(),
     stock: await prisma.stockMovement.count(),
+    workers: await prisma.worker.count(),
   };
   console.log(counts);
 }
