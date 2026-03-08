@@ -14,6 +14,15 @@
 - [QA-PRINCIPLES.md](QA-PRINCIPLES.md) — правила тестирования
 - [GOTCHA.md](GOTCHA.md) — грабли и решения
 
+## Старт сессии
+
+Проверить: PostgreSQL, app/.env, node_modules, prisma/schema.prisma, localhost:3000. Если что-то не так — сообщить, но не чинить без команды. Подробности проблем — в [GOTCHA.md](GOTCHA.md).
+
+## Ссылки для работы
+
+- Терминал рабочего (вход по PIN): http://localhost:3000/terminal
+- Склад: http://localhost:3000/warehouse
+
 ## Разработка и деплой
 
 - После каждого изменения — спрашивать, нужно ли коммитить и пушить. и не пушить без команды!
@@ -38,5 +47,7 @@
 - [app/src/app/api/](app/src/app/api/) — API routes по модулям (auth/, users/, config/, terminal/, nomenclature/, stock/, bom/)
 - [app/prisma/](app/prisma/) — Prisma schema и миграции
 - [app/scripts/rebuild-balances.ts](app/scripts/rebuild-balances.ts) — пересчёт StockBalance (rebuild/reconcile)
+- [app/scripts/seed-demo-parts.ts](app/scripts/seed-demo-parts.ts) — демо-номенклатура кронштейнов (7 items, BOM, приход)
+- [SESSION-REPORT.md](SESSION-REPORT.md) — отчёт последней сессии (что сделано, что проверить)
 - [docker-compose.yml](docker-compose.yml) — app + PostgreSQL для деплоя
 - [.env.example](.env.example) — шаблон переменных окружения

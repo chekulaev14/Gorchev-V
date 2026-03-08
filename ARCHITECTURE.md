@@ -36,6 +36,10 @@ Location — склад/зона. Enum LocationType (WAREHOUSE, PRODUCTION, WIP,
 
 ItemType: material, blank, product. Unit: kg, pcs, m.
 
+Item.side — enum (LEFT/RIGHT/NONE). Парные детали: RIGHT ссылается на LEFT через baseItemId. Конструктор создаёт обе стороны автоматически.
+
+Item.weight — Decimal(10,4), вес детали в кг. Отображается в карточке, форме номенклатуры и терминале.
+
 Item.code — бизнес-артикул (MAT-001). @unique. Автогенерация через getNextCode() (atomic UPDATE ... RETURNING на code_counters). id — технический (cuid).
 
 MovementType — PostgreSQL enum, UPPER_CASE. Роли — WorkerRole enum (WORKER, WAREHOUSE, DIRECTOR), веб-роли — Role таблица.
@@ -132,6 +136,12 @@ Toast (sonner), SearchableSelect, GroupedAccordion, ConfirmDialog — в compone
 ItemForm — единая форма Item (create/edit), строится по field config (lib/item-field-config.ts). BomView — оркестратор, делегирует в BomTree + BomEntryForm. ConstructorWizard — декомпозирован на 10 файлов, управляется useReducer + wizard-reducer.ts.
 
 WarehouseContext — центральный контекст склада. Два уровня refresh: refresh() (балансы) / refreshAll() (все данные).
+
+Терминал рабочего — каталог показывает два раздела: "Изделия" (products) и "Детали" (blanks). При выработке любого item с BOM происходит автосписание компонентов через assemble().
+
+### Потенциал производства
+
+potential.service.ts — рекурсивный расчёт потенциала через всю BOM-цепочку. Для каждой позиции (кроме material) вычисляет: potential (balance + canProduce), bottleneck (узкое место — лимитирующий компонент), sharedMaterials (если сырьё используется в нескольких цепочках). API: GET /api/stock/potential(?itemId=X). Расчёт на бэкенде (FRONTEND-PRINCIPLES п.1), фронт только отображает.
 
 ### Error Boundary
 
