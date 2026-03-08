@@ -12,8 +12,10 @@
 
 Правила, которые всегда должны быть истинны:
 
+- StockMovement append-only: существующие движения не изменяются и не удаляются
 - StockBalance = сумма всех StockMovement по itemId + locationId
-- Один operationKey = одна операция (нет дублей)
+- Любая операция изменения остатков проходит через InventoryOperation
+- Один operationKey = одна операция; повторный запрос возвращает существующий результат
 - COMPLETED заказ нельзя завершить повторно (409)
 - Завершение заказа использует snapshot BOM, не текущий
 - Складские операции атомарны (all-or-nothing)
@@ -54,8 +56,8 @@ Double POST с одним operationKey → одна InventoryOperation, одно
 После любого фикса — прогон по затронутым областям:
 
 - Inventory: supplier income, assembly (+/-), balance consistency
-- BOM: cycle check, snapshot isolation
-- Auth: worker login, user login, protected routes
+- BOM: cycle check, snapshot isolation, constructor
+- Auth: worker login, user login, protected routes + API
 - Production orders: create, complete, repeat guard, status history
 
 ## 9. Конкурентность — manual
@@ -69,6 +71,58 @@ Double POST с одним operationKey → одна InventoryOperation, одно
 3. Smoke (health, login, основные страницы)
 4. Затронутые бизнес-сценарии
 5. Balance consistency (баланс = сумма движений)
+
+## 11. Smoke чеклисты
+
+Test smoke (после изменений):
+
+- /api/health → 200
+- Worker login по PIN → каталог
+- User login по email/password → склад
+- Основные страницы грузятся без ошибок
+- Logout инвалидирует сессию
+- WORKER не попадает на склад
+- WAREHOUSE не попадает в управление пользователями
+- Неверный PIN / пароль → отказ
+- Unauthenticated → protected API → 401
+
+Prod smoke (после деплоя, только read-only):
+
+- /api/health → 200
+- Login / logout работает
+- Страницы доступны после login
+
+На prod запрещено: приход, сборка, завершение заказов, любые write-операции.
+
+## 12. Пока не автоматизируется
+
+- Нестабильный UI конструктора
+- Конкурентные операции (manual)
+- Быстро меняющиеся фичи
+
+Правило: сначала стабилизировать manual, потом автоматизировать.
+
+---
+
+## Открытые вопросы
+
+Данные:
+- Правило округления Decimal — какое?
+- Источник истины при расхождении — StockMovement (ledger)
+- Rebuild нашёл расхождение — что делать?
+- Частичная сборка допускается или all-or-nothing?
+
+Заказы и BOM:
+- Отмена COMPLETED заказа — возможна?
+- Completed order — полностью immutable?
+- Редактирование BOM при активных заказах — можно?
+
+Номенклатура:
+- Удаление item с активными зависимостями?
+- Уникальность item code — глобально или только среди активных?
+
+Auth:
+- Timeout во время ввода выработки — что с данными?
 
 ---
 

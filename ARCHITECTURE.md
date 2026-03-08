@@ -12,7 +12,9 @@ Route → Service → Prisma/DB. Правила слоёв — [BACKEND-PRINCIPL
 
 services/ — бизнес-логика. lib/ — shared (типы, prisma, auth, schemas, утилиты). components/ — terminal/, warehouse/, ui/. data/ — только для seed.
 
-Модули terminal/ и warehouse/ изолированы. Не импортируют друг друга. Общее — через lib/ и ui/. Изоляция подкреплена ESLint rules (no-restricted-imports).
+Модули terminal/ и warehouse/ изолированы. Не импортируют друг друга. Общее — через lib/ и ui/. Данные между модулями — только через API или БД. Изоляция подкреплена ESLint rules (no-restricted-imports).
+
+При добавлении нового модуля — создавать полный набор: папка компонентов, API routes, типы. Prisma schema единая, модели группировать комментариями по доменам. Hardcoded данные переносить в БД при первой возможности.
 
 ---
 
