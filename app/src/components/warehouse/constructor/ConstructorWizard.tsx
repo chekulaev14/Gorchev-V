@@ -83,7 +83,7 @@ export function ConstructorWizard() {
     blanks.forEach((i) => typeMap.set(i.tempId, "blank"));
 
     const payload = {
-      product: { name: product.name, unit: product.unit, description: product.description },
+      product: { name: product.name, unit: product.unit, description: product.description, weight: product.weight ? Number(product.weight) : undefined },
       isPaired,
       components: allComponents.map((c) => ({
         tempId: c.tempId,

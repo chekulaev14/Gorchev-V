@@ -154,7 +154,12 @@ export function NomenclatureTab({ items, balances }: Props) {
                 >
                   <TableCell className="py-2 pl-10">
                     <div>
-                      <p className="text-foreground text-sm font-medium">{item.name}</p>
+                      <p className="text-foreground text-sm font-medium">
+                        {item.name}
+                        {item.type === "product" && item.weight ? (
+                          <span className="text-muted-foreground text-xs font-normal ml-2">{item.weight} кг</span>
+                        ) : null}
+                      </p>
                       {item.description && (
                         <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">
                           {item.description}

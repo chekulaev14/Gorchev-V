@@ -54,20 +54,19 @@ function buildPairedTree(
   side: "left" | "right",
   productName: string
 ): TreeNode {
-  const suffix = side === "left" ? " левое" : " правое";
-  const blankSuffix = side === "left" ? " левая" : " правая";
+  const sideLabel = side === "left" ? " (Л)" : " (П)";
 
   function mapChildren(children: TreeNode[]): TreeNode[] {
     return children.map((child) => ({
       ...child,
-      name: child.isPaired ? child.name + blankSuffix : child.name,
+      name: child.isPaired ? child.name + sideLabel : child.name,
       children: mapChildren(child.children),
     }));
   }
 
   return {
     ...tree,
-    name: (productName || "Новое изделие") + suffix,
+    name: (productName || "Новое изделие") + sideLabel,
     children: mapChildren(tree.children),
   };
 }
@@ -132,13 +131,13 @@ function UnlinkedItems({
                 <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${typeColors[item.type]}`}>
                   {itemTypeLabels[item.type].slice(0, 3)}
                 </Badge>
-                <span className="text-xs text-foreground truncate">{item.name} левая</span>
+                <span className="text-xs text-foreground truncate">{item.name} (Л)</span>
               </div>
               <div className="flex items-center gap-1.5 py-0.5 pl-2">
                 <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${typeColors[item.type]}`}>
                   {itemTypeLabels[item.type].slice(0, 3)}
                 </Badge>
-                <span className="text-xs text-foreground truncate">{item.name} правая</span>
+                <span className="text-xs text-foreground truncate">{item.name} (П)</span>
               </div>
             </>
           ) : (

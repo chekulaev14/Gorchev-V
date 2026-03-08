@@ -19,6 +19,7 @@ export interface ProductData {
   name: string;
   unit: string;
   description: string;
+  weight: string;
 }
 
 export interface DbItem {
@@ -203,7 +204,7 @@ export function createInitialState(): WizardState {
     step: 0,
     materials: [],
     blanks: [],
-    product: { name: "", unit: "pcs", description: "" },
+    product: { name: "", unit: "pcs", description: "", weight: "" },
     isPaired: false,
   };
 }

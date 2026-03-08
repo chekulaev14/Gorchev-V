@@ -48,13 +48,6 @@ function BomTreeNode({ child, balances, depth }: { child: BomChild; balances: Re
     setExpanded((prev) => !prev);
   }, []);
 
-  const childCanAssemble = loaded && grandChildren.length > 0
-    ? Math.min(...grandChildren.map((cc) => {
-        const av = balances[cc.item.id] ?? 0;
-        return cc.quantity > 0 ? Math.floor(av / cc.quantity) : 0;
-      }))
-    : null;
-
   return (
     <div>
       <div
@@ -77,11 +70,6 @@ function BomTreeNode({ child, balances, depth }: { child: BomChild; balances: Re
           <span className="text-foreground text-sm truncate">{child.item.name}</span>
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-mono" style={{ marginLeft: 24 }}>
-          {childCanAssemble !== null && (
-            <span className={`text-xs ${childCanAssemble > 0 ? "text-emerald-600" : "text-destructive"}`}>
-              собрать: {childCanAssemble}
-            </span>
-          )}
           <span className="text-muted-foreground">
             расход: {formatNumber(child.quantity)} {unitLabels[child.item.unit]}
           </span>

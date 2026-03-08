@@ -69,7 +69,7 @@ export function ProductStep({
             </label>
             {isPaired && (
               <p className="text-[11px] text-muted-foreground mt-1 ml-5">
-                Будет создано 2 изделия: &laquo;{product.name || "..."} левое&raquo; и &laquo;{product.name || "..."} правое&raquo;. Парные заготовки тоже продублируются.
+                Будет создано 2 изделия: &laquo;{product.name || "..."} (Л)&raquo; и &laquo;{product.name || "..."} (П)&raquo;. Парные заготовки тоже продублируются.
               </p>
             )}
           </div>
@@ -88,6 +88,18 @@ export function ProductStep({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Вес, кг</label>
+            <Input
+              type="number"
+              step="0.001"
+              value={product.weight}
+              onChange={(e) => onProductChange({ ...product, weight: e.target.value })}
+              placeholder="—"
+              className="h-9 text-sm w-28"
+            />
           </div>
 
           <div>

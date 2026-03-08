@@ -73,12 +73,15 @@ export function SummaryStep({
             {itemTypeLabels.product}
           </Badge>
           <span className="text-sm font-medium text-foreground">
-            {isPaired ? `${product.name} (лев/прав)` : product.name}
+            {isPaired ? `${product.name} (Л/П)` : product.name}
           </span>
           <span className="text-xs text-muted-foreground">
             ({unitLabels[product.unit as keyof typeof unitLabels]})
           </span>
         </div>
+        {product.weight && (
+          <p className="text-xs text-muted-foreground">Вес: {product.weight} кг</p>
+        )}
         {product.description && (
           <p className="text-xs text-muted-foreground">{product.description}</p>
         )}

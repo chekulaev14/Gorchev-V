@@ -9,7 +9,7 @@ import { useWarehouse } from "@/components/warehouse/WarehouseContext";
 import { ItemForm, itemFormValuesFromItem, type ItemFormValues } from "@/components/warehouse/ItemForm";
 import { BomTree, type BomChild } from "@/components/warehouse/bom/BomTree";
 import { BomEntryForm } from "@/components/warehouse/bom/BomEntryForm";
-import type { NomenclatureItem } from "@/lib/types";
+import type { NomenclatureItem, PotentialItem } from "@/lib/types";
 import { itemTypeLabels, unitLabels, typeColors, formatNumber } from "@/lib/constants";
 import { api } from "@/lib/api-client";
 import { updateItemSchema } from "@/lib/schemas/nomenclature.schema";
@@ -145,15 +145,16 @@ export function BomView({ item, balances }: Props) {
     }
   };
 
+  // --- Potential from server ---
+  const [potential, setPotential] = useState<PotentialItem | null>(null);
+  useEffect(() => {
+    api.get<{ items: PotentialItem[] }>(`/api/stock/potential?itemId=${item.id}`, { silent: true })
+      .then((d) => setPotential(d.items[0] ?? null))
+      .catch(() => {});
+  }, [item.id, balances]);
+
   // --- Derived state ---
   const balance = balances[item.id] ?? 0;
-
-  const canAssemble = !loading && children.length > 0
-    ? Math.min(...children.map((c) => {
-        const available = balances[c.item.id] ?? 0;
-        return c.quantity > 0 ? Math.floor(available / c.quantity) : 0;
-      }))
-    : null;
 
   const deleteDescription = (() => {
     const bomCount = children.length + parents.length;
@@ -232,12 +233,24 @@ export function BomView({ item, balances }: Props) {
                     {formatNumber(balance)} {unitLabels[item.unit]}
                   </span>
                 </div>
-                {canAssemble !== null && (
+                {potential && potential.canProduce >= 0 && children.length > 0 && (
                   <div>
-                    <span className="text-muted-foreground text-xs">Можно собрать:</span>
-                    <span className={`text-base font-semibold ml-1 ${canAssemble > 0 ? "text-emerald-600" : "text-destructive"}`}>
-                      {canAssemble} шт
+                    <span className="text-muted-foreground text-xs">Потенциал:</span>
+                    <span className={`text-base font-semibold ml-1 ${potential.potential > 0 ? "text-emerald-600" : "text-destructive"}`}>
+                      {formatNumber(potential.potential)} шт
                     </span>
+                  </div>
+                )}
+                {potential?.bottleneck && (
+                  <div>
+                    <span className="text-muted-foreground text-xs">Узкое место:</span>
+                    <span className="text-foreground text-sm ml-1">{potential.bottleneck.name}</span>
+                  </div>
+                )}
+                {item.type === "product" && item.weight && (
+                  <div>
+                    <span className="text-muted-foreground text-xs">Вес:</span>
+                    <span className="text-foreground text-base ml-1">{item.weight} кг</span>
                   </div>
                 )}
                 {item.pricePerUnit && (

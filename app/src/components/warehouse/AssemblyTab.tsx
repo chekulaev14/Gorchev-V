@@ -1,65 +1,50 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { GroupedAccordion } from "@/components/ui/grouped-accordion";
-import type { NomenclatureItem, ItemType } from "@/lib/types";
+import type { PotentialItem, ItemType } from "@/lib/types";
 import { itemTypeLabels, typeColors, formatNumber } from "@/lib/constants";
+import { api } from "@/lib/api-client";
 import { useWarehouse } from "@/components/warehouse/WarehouseContext";
 
-interface Props {
-  items: NomenclatureItem[];
-  balances: Record<string, number>;
-}
+const assemblyTypeOrder: ItemType[] = ["product", "blank"];
 
-const assemblyTypeOrder: ItemType[] = ["product"];
-
-export function AssemblyTab({ items, balances }: Props) {
+export function AssemblyTab() {
   const router = useRouter();
-  const { bomChildren } = useWarehouse();
+  const { balances } = useWarehouse();
+  const [items, setItems] = useState<PotentialItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const assemblyItems = useMemo(
-    () => items.filter((i) => i.type === "product" && (bomChildren[i.id]?.length ?? 0) > 0),
-    [items, bomChildren]
-  );
+  const fetchPotential = useCallback(() => {
+    setLoading(true);
+    api.get<{ items: PotentialItem[] }>("/api/stock/potential")
+      .then((data) => setItems(data.items))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const assemblyCapacity = useMemo(() => {
-    const result: Record<string, number> = {};
-    for (const item of assemblyItems) {
-      const children = bomChildren[item.id] || [];
-      let minCan = Infinity;
-      for (const child of children) {
-        const available = balances[child.item.id] ?? 0;
-        const canMake = child.quantity > 0 ? Math.floor(available / child.quantity) : 0;
-        minCan = Math.min(minCan, canMake);
-      }
-      result[item.id] = minCan === Infinity ? 0 : minCan;
-    }
-    return result;
-  }, [assemblyItems, balances, bomChildren]);
+  useEffect(() => { fetchPotential(); }, [fetchPotential]);
 
-  const shortages = useMemo(() => {
-    const result: Record<string, { name: string; needed: number; available: number }[]> = {};
-    for (const item of assemblyItems) {
-      const children = bomChildren[item.id] || [];
-      const shorts: { name: string; needed: number; available: number }[] = [];
-      for (const child of children) {
-        const available = balances[child.item.id] ?? 0;
-        if (available < child.quantity) {
-          shorts.push({ name: child.item.name, needed: child.quantity, available });
-        }
-      }
-      if (shorts.length > 0) {
-        result[item.id] = shorts;
-      }
-    }
-    return result;
-  }, [assemblyItems, balances, bomChildren]);
+  // Перезагрузка при изменении балансов (после операций)
+  const balancesKey = useMemo(() => JSON.stringify(balances), [balances]);
+  useEffect(() => {
+    if (!loading) fetchPotential();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [balancesKey]);
 
   const sortedItems = useMemo(() => {
-    return [...assemblyItems].sort((a, b) => a.name.localeCompare(b.name, "ru"));
-  }, [assemblyItems]);
+    return [...items].sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  }, [items]);
+
+  if (loading && items.length === 0) {
+    return <p className="text-muted-foreground text-sm p-4">Загрузка...</p>;
+  }
+
+  if (items.length === 0) {
+    return <p className="text-muted-foreground text-sm p-4">Нет позиций с составом (BOM)</p>;
+  }
 
   return (
     <GroupedAccordion
@@ -76,42 +61,32 @@ export function AssemblyTab({ items, balances }: Props) {
       )}
       renderGroupContent={(_type, group) => (
         <div className="space-y-1 p-2 pt-0">
-          {group.map((item) => {
-            const canMake = assemblyCapacity[item.id] ?? 0;
-            const deficit = shortages[item.id];
-            const stock = balances[item.id] ?? 0;
-
-            return (
-              <div
-                key={item.id}
-                className="rounded border border-border/50 p-3 cursor-pointer hover:bg-accent/30 transition-colors"
-                onClick={() => router.push(`/warehouse/nomenclature/${item.id}`)}
-              >
-                <div className="mb-1">
-                  <span className="text-foreground text-sm font-medium block">{item.name}</span>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
-                    <span className="text-muted-foreground text-sm">
-                      На складе: <span className="text-foreground font-mono">{stock}</span>
-                    </span>
-                    <span className={`text-sm font-mono ${canMake > 0 ? "text-emerald-600" : "text-destructive"}`}>
-                      Можно собрать: {canMake}
-                    </span>
-                  </div>
+          {group.map((item) => (
+            <div
+              key={item.itemId}
+              className="rounded border border-border/50 p-3 cursor-pointer hover:bg-accent/30 transition-colors"
+              onClick={() => router.push(`/warehouse/nomenclature/${item.itemId}`)}
+            >
+              <div className="mb-1">
+                <span className="text-foreground text-sm font-medium block">{item.name}</span>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                  <span className="text-muted-foreground text-sm">
+                    На складе: <span className="text-foreground font-mono">{formatNumber(item.balance)}</span>
+                  </span>
+                  <span className={`text-sm font-mono ${item.potential > 0 ? "text-emerald-600" : "text-destructive"}`}>
+                    Потенциал: {formatNumber(item.potential)}
+                  </span>
                 </div>
-
-                {deficit && (
-                  <div className="mt-2 space-y-0.5">
-                    <p className="text-destructive text-xs font-medium">Не хватает для 1 шт:</p>
-                    {deficit.map((d) => (
-                      <p key={d.name} className="text-muted-foreground text-xs pl-2">
-                        {d.name}: нужно {formatNumber(d.needed)}, есть {formatNumber(d.available)}
-                      </p>
-                    ))}
-                  </div>
-                )}
               </div>
-            );
-          })}
+
+              {item.bottleneck && (
+                <p className="text-muted-foreground text-xs mt-1">
+                  Узкое место: {item.bottleneck.name} ({formatNumber(item.bottleneck.balance)} в наличии, {formatNumber(item.bottleneck.neededPerUnit)} на 1 шт)
+                </p>
+              )}
+
+            </div>
+          ))}
         </div>
       )}
     />

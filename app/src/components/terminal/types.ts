@@ -4,6 +4,7 @@ export interface Part {
   description: string;
   images: string[];
   pricePerUnit: number;
+  weight?: number | null;
 }
 
 export interface Product {
@@ -11,6 +12,8 @@ export interface Product {
   name: string;
   description: string;
   images: string[];
+  side?: string;
+  weight?: number | null;
   parts: Part[];
 }
 
@@ -19,4 +22,9 @@ export interface Category {
   name: string;
   image: string;
   products: Product[];
+}
+
+export interface CatalogData {
+  categories: Category[];
+  blanks: Product[];
 }

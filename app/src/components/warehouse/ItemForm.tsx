@@ -15,6 +15,7 @@ export interface ItemFormValues {
   unitId: string;
   categoryId: string;
   pricePerUnit: string;
+  weight: string;
   quantity: string;
 }
 
@@ -35,6 +36,7 @@ export const emptyItemFormValues: ItemFormValues = {
   unitId: "pcs",
   categoryId: "",
   pricePerUnit: "",
+  weight: "",
   quantity: "",
 };
 
@@ -45,6 +47,7 @@ export function itemFormValuesFromItem(item: {
   unit: string;
   category?: string | null;
   pricePerUnit?: number | null;
+  weight?: number | null;
 }): ItemFormValues {
   return {
     name: item.name,
@@ -53,12 +56,17 @@ export function itemFormValuesFromItem(item: {
     unitId: item.unit,
     categoryId: item.category || "",
     pricePerUnit: item.pricePerUnit?.toString() || "",
+    weight: item.weight?.toString() || "",
     quantity: "",
   };
 }
 
 export function ItemForm({ mode, values, onChange, onSubmit, onCancel, saving, title }: Props) {
-  const visibleFields = itemFieldConfig.filter((f) => f.visible(mode));
+  const visibleFields = itemFieldConfig.filter((f) => {
+    if (!f.visible(mode)) return false;
+    if (f.key === "weight" && values.typeId !== "product") return false;
+    return true;
+  });
 
   const inlineFields = visibleFields.filter((f) => f.type === "select" || f.type === "number");
   const blockFields = visibleFields.filter((f) => f.type === "text" || f.type === "textarea");

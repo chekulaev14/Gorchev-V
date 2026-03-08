@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Category, Product, Part } from "./types";
+import type { Category, Product, Part, CatalogData } from "./types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PartDetail } from "./PartDetail";
@@ -18,16 +18,26 @@ type View =
   | { type: "categories" }
   | { type: "products"; category: Category }
   | { type: "parts"; product: Product }
-  | { type: "partDetail"; part: Part; product: Product };
+  | { type: "partDetail"; part: Part; product: Product; fromBlanks?: boolean };
+
+function sideLabel(side?: string): string {
+  if (side === "LEFT") return " (Л)";
+  if (side === "RIGHT") return " (П)";
+  return "";
+}
 
 export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenProps) {
   const [view, setView] = useState<View>({ type: "categories" });
   const [categories, setCategories] = useState<Category[]>([]);
+  const [blanks, setBlanks] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<Category[]>("/api/terminal/catalog", { silent: true })
-      .then((data) => setCategories(data))
+    api.get<CatalogData>("/api/terminal/catalog", { silent: true })
+      .then((data) => {
+        setCategories(data.categories);
+        setBlanks(data.blanks);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -41,7 +51,11 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
         setView({ type: "categories" });
         break;
       case "partDetail":
-        setView({ type: "parts", product: view.product });
+        if (view.fromBlanks) {
+          setView({ type: "categories" });
+        } else {
+          setView({ type: "parts", product: view.product });
+        }
         break;
     }
   };
@@ -49,15 +63,27 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
   const title = (() => {
     switch (view.type) {
       case "categories":
-        return "Каталог изделий";
+        return "Каталог";
       case "products":
         return view.category.name;
       case "parts":
-        return view.product.name;
+        return view.product.name + sideLabel(view.product.side);
       case "partDetail":
         return view.part.name;
     }
   })();
+
+  const handleBlankClick = (blank: Product) => {
+    const asPart: Part = {
+      id: blank.id,
+      name: blank.name + sideLabel(blank.side),
+      description: blank.description,
+      images: blank.images,
+      pricePerUnit: 0,
+      weight: blank.weight,
+    };
+    setView({ type: "partDetail", part: asPart, product: blank, fromBlanks: true });
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -94,26 +120,64 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
         ) : (
           <>
             {view.type === "categories" && (
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
-                {categories.map((cat) => (
-                  <Card
-                    key={cat.id}
-                    className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
-                    onClick={() => setView({ type: "products", category: cat })}
-                  >
-                    <div className="aspect-square relative">
-                      <img
-                        src={cat.image}
-                        alt={cat.name}
-                        className="w-full h-full object-cover"
-                      />
+              <div className="space-y-4">
+                {categories.length > 0 && (
+                  <section>
+                    <h2 className="text-sm font-semibold text-foreground mb-2">Изделия</h2>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+                      {categories.map((cat) => (
+                        <Card
+                          key={cat.id}
+                          className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
+                          onClick={() => setView({ type: "products", category: cat })}
+                        >
+                          <div className="aspect-square relative">
+                            <img
+                              src={cat.image}
+                              alt={cat.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-1.5">
+                            <h3 className="text-foreground font-medium text-xs">{cat.name}</h3>
+                            <p className="text-muted-foreground/70 text-[10px]">{cat.products.length} изд.</p>
+                          </div>
+                        </Card>
+                      ))}
                     </div>
-                    <div className="p-1.5">
-                      <h3 className="text-foreground font-medium text-xs">{cat.name}</h3>
-                      <p className="text-muted-foreground/70 text-[10px]">{cat.products.length} изд.</p>
+                  </section>
+                )}
+
+                {blanks.length > 0 && (
+                  <section>
+                    <h2 className="text-sm font-semibold text-foreground mb-2">Детали</h2>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+                      {blanks.map((blank) => (
+                        <Card
+                          key={blank.id}
+                          className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
+                          onClick={() => handleBlankClick(blank)}
+                        >
+                          <div className="aspect-square relative">
+                            <img
+                              src={blank.images[0]}
+                              alt={blank.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-1.5">
+                            <h3 className="text-foreground font-medium text-xs">
+                              {blank.name}{sideLabel(blank.side)}
+                            </h3>
+                            {blank.weight != null && (
+                              <p className="text-muted-foreground/70 text-[10px]">{blank.weight} кг</p>
+                            )}
+                          </div>
+                        </Card>
+                      ))}
                     </div>
-                  </Card>
-                ))}
+                  </section>
+                )}
               </div>
             )}
 
@@ -133,7 +197,9 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
                       />
                     </div>
                     <div className="p-1.5">
-                      <h3 className="text-foreground font-medium text-xs">{product.name}</h3>
+                      <h3 className="text-foreground font-medium text-xs">
+                        {product.name}{sideLabel(product.side)}
+                      </h3>
                       <p className="text-muted-foreground/70 text-[10px]">{product.parts.length} дет.</p>
                     </div>
                   </Card>
