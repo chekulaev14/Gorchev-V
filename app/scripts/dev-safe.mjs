@@ -5,13 +5,13 @@ import { homedir } from "node:os";
 import { createConnection } from "node:net";
 
 function getDatabaseUrl() {
-  if (process.env.GORCHEV_DATABASE_URL) return process.env.GORCHEV_DATABASE_URL;
+  if (process.env.ERP_DATABASE_URL) return process.env.ERP_DATABASE_URL;
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
 
   const globalEnvPath = join(homedir(), ".env.global");
   if (existsSync(globalEnvPath)) {
     const content = readFileSync(globalEnvPath, "utf-8");
-    const match = content.match(/^GORCHEV_DATABASE_URL=(.+)$/m);
+    const match = content.match(/^ERP_DATABASE_URL=(.+)$/m);
     if (match) return match[1].trim();
   }
   return "";
@@ -45,7 +45,7 @@ async function main() {
   // 1. DATABASE_URL
   const dbUrl = getDatabaseUrl();
   if (!dbUrl) {
-    log("\u2716", "DATABASE_URL not found (checked GORCHEV_DATABASE_URL, DATABASE_URL, ~/.env.global)");
+    log("\u2716", "DATABASE_URL not found (checked ERP_DATABASE_URL, DATABASE_URL, ~/.env.global)");
     process.exit(1);
   }
   log("\u2714", "DATABASE_URL found");

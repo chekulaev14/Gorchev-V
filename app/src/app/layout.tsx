@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Горчев-В",
+  title: "ERP",
   description: "Управление производственными процессами",
 };
 

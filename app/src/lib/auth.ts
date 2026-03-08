@@ -23,7 +23,7 @@ if (!JWT_SECRET_RAW) {
 }
 const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW);
 
-const COOKIE_NAME = "gorchev_session";
+const COOKIE_NAME = "erp_session";
 
 const TTL_BY_ROLE: Record<WorkerRole, string> = {
   WORKER: "15m",

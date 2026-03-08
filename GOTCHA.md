@@ -18,4 +18,4 @@
 
 Симптом: `pack-objects died of signal 10` (SIGBUS) при `git push`.
 
-Решение: пушить с `GIT_CURL_VERBOSE=1` или из обычного терминала.
+Решение: пушить с `GIT_CURL_VERBOSE=1`: `cd /Users/petrcekulaev/Desktop/ERP && GIT_CURL_VERBOSE=1 git push`

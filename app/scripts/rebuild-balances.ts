@@ -16,11 +16,11 @@ import { PrismaClient } from "../src/generated/prisma/client.js";
 
 function getDatabaseUrl(): string {
   if (process.env["DATABASE_URL"]) return process.env["DATABASE_URL"];
-  if (process.env["GORCHEV_DATABASE_URL"]) return process.env["GORCHEV_DATABASE_URL"];
+  if (process.env["ERP_DATABASE_URL"]) return process.env["ERP_DATABASE_URL"];
   const globalEnvPath = path.join(process.env["HOME"] || "", ".env.global");
   if (fs.existsSync(globalEnvPath)) {
     const content = fs.readFileSync(globalEnvPath, "utf-8");
-    const match = content.match(/^GORCHEV_DATABASE_URL=(.+)$/m);
+    const match = content.match(/^ERP_DATABASE_URL=(.+)$/m);
     if (match) return match[1].trim();
   }
   throw new Error("DATABASE_URL not found");

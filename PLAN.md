@@ -1,4 +1,4 @@
-# Gorchev-V — План реализации
+# ERP — План реализации
 
 ## Стек
 - Next.js + TypeScript

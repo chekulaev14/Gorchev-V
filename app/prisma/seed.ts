@@ -7,14 +7,14 @@ import bcrypt from "bcryptjs";
 
 function getDatabaseUrl(): string {
   if (process.env["DATABASE_URL"]) return process.env["DATABASE_URL"];
-  if (process.env["GORCHEV_DATABASE_URL"]) return process.env["GORCHEV_DATABASE_URL"];
+  if (process.env["ERP_DATABASE_URL"]) return process.env["ERP_DATABASE_URL"];
   const globalEnvPath = path.join(process.env["HOME"] || "", ".env.global");
   if (fs.existsSync(globalEnvPath)) {
     const content = fs.readFileSync(globalEnvPath, "utf-8");
-    const match = content.match(/^GORCHEV_DATABASE_URL=(.+)$/m);
+    const match = content.match(/^ERP_DATABASE_URL=(.+)$/m);
     if (match) return match[1].trim();
   }
-  throw new Error("DATABASE_URL not found. Set GORCHEV_DATABASE_URL in ~/.env.global");
+  throw new Error("DATABASE_URL not found. Set ERP_DATABASE_URL in ~/.env.global");
 }
 
 const connectionString = getDatabaseUrl();
@@ -116,7 +116,7 @@ async function seedBase() {
   }
 
   // Admin user (email/password из env или дефолтные)
-  const adminEmail = process.env["ADMIN_EMAIL"] || "admin@gorchev.local";
+  const adminEmail = process.env["ADMIN_EMAIL"] || "admin@erp.local";
   const adminPassword = process.env["ADMIN_PASSWORD"] || "admin123";
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!existingAdmin) {
@@ -224,10 +224,10 @@ async function seedDemo() {
   const warehouseHash = await bcrypt.hash("warehouse123", 10);
 
   const directorUser = await prisma.user.create({
-    data: { email: "director@gorchev.local", passwordHash: directorHash, name: "Горчев В.А.", roleId: "director" },
+    data: { email: "director@erp.local", passwordHash: directorHash, name: "Горчев В.А.", roleId: "director" },
   });
   const warehouseUser = await prisma.user.create({
-    data: { email: "warehouse@gorchev.local", passwordHash: warehouseHash, name: "Смирнова Н.П.", roleId: "warehouse" },
+    data: { email: "warehouse@erp.local", passwordHash: warehouseHash, name: "Смирнова Н.П.", roleId: "warehouse" },
   });
 
   const workers = [
