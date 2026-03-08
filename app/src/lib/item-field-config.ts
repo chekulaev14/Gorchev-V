@@ -90,6 +90,15 @@ export const itemFieldConfig: ItemFieldConfig[] = [
     editable: () => true,
   },
   {
+    key: "weight",
+    label: "Вес, кг",
+    type: "number",
+    placeholder: "—",
+    numberProps: { step: "0.001", width: "w-28" },
+    visible: () => true,
+    editable: () => true,
+  },
+  {
     key: "quantity",
     label: "Количество",
     type: "number",

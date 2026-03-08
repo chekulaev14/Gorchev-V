@@ -21,16 +21,9 @@ export async function recordOutput(params: OutputParams): Promise<OutputResult> 
   const qty = Math.round(quantity);
   const total = qty * pricePerUnit;
 
-  const item = await prisma.item.findUnique({
-    where: { id: itemId },
-    select: { typeId: true },
-  });
-
-  if (item?.typeId === "product") {
-    const children = await prisma.bomEntry.findMany({ where: { parentId: itemId } });
-    if (children.length > 0) {
-      await assemble({ itemId, quantity: qty, workerId });
-    }
+  const children = await prisma.bomEntry.findMany({ where: { parentId: itemId } });
+  if (children.length > 0) {
+    await assemble({ itemId, quantity: qty, workerId });
   }
 
   const log = await prisma.productionLog.create({

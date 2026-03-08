@@ -49,6 +49,7 @@ export async function createItem(data: {
   categoryId?: string | null;
   description?: string | null;
   pricePerUnit?: number | null;
+  weight?: number | null;
 }) {
   const typeId = data.typeId || "material";
 
@@ -65,6 +66,7 @@ export async function createItem(data: {
         description: data.description || null,
         images: [],
         pricePerUnit: data.pricePerUnit ?? null,
+        weight: data.weight ?? null,
       },
     });
   });

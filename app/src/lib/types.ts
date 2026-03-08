@@ -16,6 +16,7 @@ export interface NomenclatureItem {
   description?: string;
   images?: string[];
   pricePerUnit?: number;
+  weight?: number | null;
   isDeleted?: boolean;
 }
 
@@ -61,4 +62,24 @@ export interface Worker {
 export interface BomChildEntry {
   item: NomenclatureItem;
   quantity: number;
+}
+
+// --- Potential ---
+
+export interface Bottleneck {
+  itemId: string;
+  name: string;
+  balance: number;
+  neededPerUnit: number;
+}
+
+export interface PotentialItem {
+  itemId: string;
+  name: string;
+  type: ItemType;
+  unit: Unit;
+  balance: number;
+  potential: number;
+  canProduce: number;
+  bottleneck: Bottleneck | null;
 }

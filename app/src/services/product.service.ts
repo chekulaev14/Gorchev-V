@@ -10,6 +10,7 @@ interface ComponentInput {
   unit: string;
   description?: string;
   pricePerUnit?: number;
+  weight?: number;
   quantity: number;
   isPaired?: boolean;
 }
@@ -18,6 +19,7 @@ interface ProductInput {
   name: string;
   unit: string;
   description?: string;
+  weight?: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +42,7 @@ async function createItemsAndBom(tx: any, productId: string, components: Compone
           description: comp.description || null,
           images: [],
           pricePerUnit: comp.pricePerUnit ?? null,
+          weight: comp.weight ?? null,
         },
       });
       itemId = item.id;
@@ -75,6 +78,7 @@ export async function createSingleProduct(product: ProductInput, components: Com
         typeId: "product",
         unitId: product.unit || "pcs",
         description: product.description || null,
+        weight: product.weight ?? null,
         images: [],
       },
     });
@@ -87,16 +91,14 @@ export async function createSingleProduct(product: ProductInput, components: Com
 }
 
 export async function createPairedProducts(product: ProductInput, components: ComponentInput[]) {
-  const sides = [
-    { suffix: " левое", blankSuffix: " левая" },
-    { suffix: " правое", blankSuffix: " правая" },
-  ] as const;
+  const sides = ["LEFT", "RIGHT"] as const;
 
   return prisma.$transaction(async (tx) => {
     let totalItems = 0;
     let totalBom = 0;
     const productIds: string[] = [];
 
+    // Фаза 1: создаём непарные компоненты один раз (side=NONE)
     const sharedIdMap = new Map<string, string>();
     for (const comp of components) {
       if (comp.isPaired) continue;
@@ -115,6 +117,8 @@ export async function createPairedProducts(product: ProductInput, components: Co
             description: comp.description || null,
             images: [],
             pricePerUnit: comp.pricePerUnit ?? null,
+            weight: comp.weight ?? null,
+            side: "NONE",
           },
         });
         itemId = item.id;
@@ -122,6 +126,10 @@ export async function createPairedProducts(product: ProductInput, components: Co
       }
       sharedIdMap.set(comp.tempId, itemId);
     }
+
+    // Фаза 2: создаём LEFT и RIGHT версии
+    // Храним id LEFT-компонентов чтобы связать RIGHT через baseItemId
+    const leftIds = new Map<string, string>(); // tempId → leftItemId
 
     for (const side of sides) {
       const idMap = new Map<string, string>(sharedIdMap);
@@ -131,15 +139,19 @@ export async function createPairedProducts(product: ProductInput, components: Co
         data: {
           id: crypto.randomUUID(),
           code: sideCode,
-          name: product.name.trim() + side.suffix,
+          name: product.name.trim(),
           typeId: "product",
           unitId: product.unit || "pcs",
           description: product.description || null,
+          weight: product.weight ?? null,
           images: [],
+          side,
+          baseItemId: side === "RIGHT" ? productIds[0] : null,
         },
       });
       idMap.set("product", created.id);
       productIds.push(created.id);
+      if (side === "LEFT") leftIds.set("product", created.id);
       totalItems++;
 
       for (const comp of components) {
@@ -153,15 +165,19 @@ export async function createPairedProducts(product: ProductInput, components: Co
             data: {
               id: crypto.randomUUID(),
               code: compCode,
-              name: comp.name.trim() + side.blankSuffix,
+              name: comp.name.trim(),
               typeId: comp.type,
               unitId: comp.unit || "pcs",
               description: comp.description || null,
               images: [],
               pricePerUnit: comp.pricePerUnit ?? null,
+              weight: comp.weight ?? null,
+              side,
+              baseItemId: side === "RIGHT" ? leftIds.get(comp.tempId) ?? null : null,
             },
           });
           itemId = item.id;
+          if (side === "LEFT") leftIds.set(comp.tempId, itemId);
           totalItems++;
         }
         idMap.set(comp.tempId, itemId);

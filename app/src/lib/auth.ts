@@ -60,6 +60,7 @@ const ROUTE_RULES: RouteRule[] = [
 
   // Stock
   { pattern: /^\/api\/stock$/, methods: ["GET", "POST"], roles: ["WAREHOUSE", "DIRECTOR", "ADMIN"] },
+  { pattern: /^\/api\/stock\/potential$/, methods: ["GET"], roles: ["WAREHOUSE", "DIRECTOR", "ADMIN"] },
 
   // BOM
   { pattern: /^\/api\/bom$/, methods: ["GET", "POST", "PUT", "DELETE"], roles: ["WAREHOUSE", "DIRECTOR", "ADMIN"] },
