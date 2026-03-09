@@ -209,9 +209,6 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
 
             {view.type === "parts" && (
               <div className="space-y-2">
-                <div className="bg-card rounded-lg p-2 border border-border">
-                  <p className="text-muted-foreground text-xs">{view.product.description}</p>
-                </div>
                 <h2 className="text-sm font-medium text-muted-foreground">Комплектующие:</h2>
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                   {view.product.parts.map((part) => (

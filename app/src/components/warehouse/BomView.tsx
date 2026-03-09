@@ -220,12 +220,7 @@ export function BomView({ item, balances }: Props) {
                   {itemTypeLabels[item.type]}
                 </Badge>
               </div>
-              {item.description && (
-                <>
-                  <p className="text-muted-foreground text-xs font-mono mb-1">{item.id}</p>
-                  <p className="text-muted-foreground text-sm">{item.description}</p>
-                </>
-              )}
+              <p className="text-muted-foreground text-xs font-mono">{item.code}</p>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
                 <div>
                   <span className="text-muted-foreground text-xs">На складе:</span>

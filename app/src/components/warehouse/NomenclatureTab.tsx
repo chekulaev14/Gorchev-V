@@ -53,8 +53,7 @@ export function NomenclatureTab({ items, balances }: Props) {
     return items.filter(
       (i) =>
         i.name.toLowerCase().includes(q) ||
-        i.id.toLowerCase().includes(q) ||
-        (i.description && i.description.toLowerCase().includes(q))
+        i.code.toLowerCase().includes(q)
     );
   }, [items, search]);
 
@@ -106,7 +105,7 @@ export function NomenclatureTab({ items, balances }: Props) {
     <div className="space-y-3">
       <div className="flex flex-col sm:flex-row gap-2">
         <Input
-          placeholder="Поиск по названию, ID, описанию..."
+          placeholder="Поиск по названию, артикулу..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="bg-card border-border text-foreground placeholder:text-muted-foreground text-sm h-9 w-full sm:max-w-xs"
@@ -136,6 +135,8 @@ export function NomenclatureTab({ items, balances }: Props) {
         />
       )}
 
+      {!showAddForm && (
+      <>
       <p className="text-muted-foreground text-sm">{filtered.length} позиций</p>
 
       <GroupedAccordion
@@ -176,11 +177,6 @@ export function NomenclatureTab({ items, balances }: Props) {
                           <span className="text-muted-foreground text-xs font-normal ml-2">{item.weight} кг</span>
                         ) : null}
                       </p>
-                      {item.description && (
-                        <p className="text-muted-foreground text-xs mt-0.5 line-clamp-1">
-                          {item.description}
-                        </p>
-                      )}
                     </div>
                   </TableCell>
                   <TableCell className="py-2 text-right">
@@ -206,6 +202,8 @@ export function NomenclatureTab({ items, balances }: Props) {
           </Table>
         )}
       />
+      </>
+      )}
     </div>
   );
 }

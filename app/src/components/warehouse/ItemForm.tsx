@@ -33,7 +33,7 @@ export const emptyItemFormValues: ItemFormValues = {
   name: "",
   description: "",
   typeId: "material",
-  unitId: "pcs",
+  unitId: "kg",
   categoryId: "",
   pricePerUnit: "",
   weight: "",
