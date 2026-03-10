@@ -2,11 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { toNumber } from "@/services/helpers/serialize";
 import type { PotentialItem, Bottleneck, PotentialBreakdown } from "@/lib/types";
 
-interface BomLink {
-  childId: string;
-  quantity: number;
-}
-
 interface ItemInfo {
   id: string;
   name: string;
@@ -14,132 +9,91 @@ interface ItemInfo {
   unitId: string;
 }
 
-interface PotentialResult {
-  potential: number;
-  canProduce: number;
-  bottleneck: Bottleneck | null;
-}
-
-type ChildrenMap = Map<string, BomLink[]>;
+type BomChild = { childId: string; quantity: number };
+type BomMap = Map<string, BomChild[]>;
 type BalancesMap = Map<string, number>;
 type ItemsMap = Map<string, ItemInfo>;
-type Memo = Map<string, PotentialResult>;
 
-function buildBomGraph(entries: { parentId: string; childId: string; quantity: unknown }[]) {
-  const childrenMap: ChildrenMap = new Map();
+interface ComputeResult {
+  available: number;
+  canProduce: number;
+  bottleneck: Bottleneck | null;
+  chain: PotentialBreakdown[];
+}
+
+function buildBomMap(entries: { parentId: string; childId: string; quantity: unknown }[]): BomMap {
+  const map: BomMap = new Map();
 
   for (const e of entries) {
     const qty = toNumber(e.quantity as number) ?? 0;
+    if (qty <= 0) continue;
 
-    if (!childrenMap.has(e.parentId)) childrenMap.set(e.parentId, []);
-    childrenMap.get(e.parentId)!.push({ childId: e.childId, quantity: qty });
+    if (!map.has(e.parentId)) map.set(e.parentId, []);
+    map.get(e.parentId)!.push({ childId: e.childId, quantity: qty });
   }
 
-  return { childrenMap };
-}
-
-function calculateItemPotential(
-  itemId: string,
-  childrenMap: ChildrenMap,
-  balances: BalancesMap,
-  memo: Memo,
-  visiting: Set<string>,
-): PotentialResult {
-  if (memo.has(itemId)) return memo.get(itemId)!;
-
-  const balance = balances.get(itemId) ?? 0;
-  const children = childrenMap.get(itemId);
-
-  if (!children || children.length === 0) {
-    const result: PotentialResult = { potential: balance, canProduce: 0, bottleneck: null };
-    memo.set(itemId, result);
-    return result;
-  }
-
-  if (visiting.has(itemId)) {
-    const result: PotentialResult = { potential: balance, canProduce: 0, bottleneck: null };
-    memo.set(itemId, result);
-    return result;
-  }
-
-  visiting.add(itemId);
-
-  let minCanMake = Infinity;
-  let bottleneck: Bottleneck | null = null;
-
-  for (const child of children) {
-    const childResult = calculateItemPotential(child.childId, childrenMap, balances, memo, visiting);
-    const canMake = child.quantity > 0 ? Math.floor(childResult.potential / child.quantity) : 0;
-
-    if (canMake < minCanMake) {
-      minCanMake = canMake;
-
-      if (childResult.bottleneck) {
-        bottleneck = {
-          ...childResult.bottleneck,
-          neededPerUnit: childResult.bottleneck.neededPerUnit * child.quantity,
-        };
-      } else {
-        bottleneck = {
-          itemId: child.childId,
-          name: "",
-          balance: childResult.potential,
-          neededPerUnit: child.quantity,
-        };
-      }
-    }
-  }
-
-  visiting.delete(itemId);
-
-  const canProduce = minCanMake === Infinity ? 0 : minCanMake;
-  const result: PotentialResult = {
-    potential: balance + canProduce,
-    canProduce,
-    bottleneck,
-  };
-  memo.set(itemId, result);
-  return result;
+  return map;
 }
 
 /**
- * Разбивка потенциала: сколько изделий можно получить из остатков каждого уровня BOM.
- * Спускается по цепочке, на каждом уровне "забирает" остаток и считает выход.
+ * Рекурсивно считает доступное количество позиции:
+ * available = balance + canProduce (из компонентов по BOM)
  */
-function calculateBreakdown(
+function computeAvailable(
   itemId: string,
-  childrenMap: ChildrenMap,
+  bomMap: BomMap,
   balances: BalancesMap,
   itemsMap: ItemsMap,
-): PotentialBreakdown[] {
-  const breakdown: PotentialBreakdown[] = [];
-  let currentId = itemId;
-  let multiplier = 1; // кумулятивный расход на 1 изделие верхнего уровня
+  visited: Set<string>,
+): ComputeResult {
+  if (visited.has(itemId)) {
+    return { available: 0, canProduce: 0, bottleneck: null, chain: [] };
+  }
+  visited.add(itemId);
 
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const children = childrenMap.get(currentId);
-    if (!children || children.length === 0) break;
+  const balance = balances.get(itemId) ?? 0;
+  const children = bomMap.get(itemId);
 
-    // Берём первого ребёнка (линейная цепочка)
-    const child = children[0];
-    multiplier *= child.quantity;
-    const childBalance = balances.get(child.childId) ?? 0;
-    const canMake = multiplier > 0 ? Math.floor(childBalance / multiplier) : 0;
-
-    if (canMake > 0 || childBalance > 0) {
-      const info = itemsMap.get(child.childId);
-      breakdown.push({
-        itemId: child.childId,
-        name: info?.name ?? child.childId,
-        quantity: canMake,
-      });
-    }
-
-    currentId = child.childId;
+  if (!children || children.length === 0) {
+    return { available: balance, canProduce: 0, bottleneck: null, chain: [] };
   }
 
-  return breakdown;
+  let minCanProduce = Infinity;
+  let bottleneck: Bottleneck | null = null;
+  const chain: PotentialBreakdown[] = [];
+
+  for (const child of children) {
+    const childResult = computeAvailable(child.childId, bomMap, balances, itemsMap, new Set(visited));
+    const canProduceFromChild = Math.floor(childResult.available / child.quantity);
+    const childInfo = itemsMap.get(child.childId);
+
+    chain.push({
+      itemId: child.childId,
+      name: childInfo?.name ?? "",
+      quantity: canProduceFromChild,
+      balance: balances.get(child.childId) ?? 0,
+      neededPerUnit: child.quantity,
+    });
+
+    if (canProduceFromChild < minCanProduce) {
+      minCanProduce = canProduceFromChild;
+      bottleneck = {
+        itemId: child.childId,
+        name: childInfo?.name ?? "",
+        balance: childResult.available,
+        neededPerUnit: child.quantity,
+      };
+    }
+  }
+
+  const canProduce = minCanProduce === Infinity ? 0 : minCanProduce;
+
+  return {
+    available: balance + canProduce,
+    canProduce,
+    bottleneck,
+    chain,
+  };
 }
 
 export async function calculateAllPotentials(filterItemId?: string): Promise<PotentialItem[]> {
@@ -149,6 +103,7 @@ export async function calculateAllPotentials(filterItemId?: string): Promise<Pot
       select: { parentId: true, childId: true, quantity: true },
     }),
     prisma.stockBalance.findMany({
+      where: { locationId: "MAIN" },
       select: { itemId: true, quantity: true },
     }),
     prisma.item.findMany({
@@ -157,7 +112,7 @@ export async function calculateAllPotentials(filterItemId?: string): Promise<Pot
     }),
   ]);
 
-  const { childrenMap } = buildBomGraph(bomEntries);
+  const bomMap = buildBomMap(bomEntries);
 
   const balances: BalancesMap = new Map();
   for (const sb of stockBalances) {
@@ -166,11 +121,13 @@ export async function calculateAllPotentials(filterItemId?: string): Promise<Pot
 
   const itemsMap: ItemsMap = new Map();
   for (const item of items) {
-    itemsMap.set(item.id, item);
+    itemsMap.set(item.id, {
+      id: item.id,
+      name: item.name,
+      typeId: item.typeId,
+      unitId: item.unitId,
+    });
   }
-
-  const memo: Memo = new Map();
-  const results: PotentialItem[] = [];
 
   const nonMaterialItems = items.filter((i) => i.typeId !== "material");
 
@@ -178,28 +135,22 @@ export async function calculateAllPotentials(filterItemId?: string): Promise<Pot
     ? items.filter((i) => i.id === filterItemId)
     : nonMaterialItems;
 
+  const results: PotentialItem[] = [];
+
   for (const item of targetItems) {
-    const potResult = calculateItemPotential(item.id, childrenMap, balances, memo, new Set());
-
-    if (potResult.bottleneck && !potResult.bottleneck.name) {
-      const info = itemsMap.get(potResult.bottleneck.itemId);
-      if (info) potResult.bottleneck.name = info.name;
-    }
-
-    const breakdown = filterItemId
-      ? calculateBreakdown(item.id, childrenMap, balances, itemsMap)
-      : undefined;
+    const balance = balances.get(item.id) ?? 0;
+    const result = computeAvailable(item.id, bomMap, balances, itemsMap, new Set());
 
     results.push({
       itemId: item.id,
       name: item.name,
       type: item.typeId as PotentialItem["type"],
       unit: item.unitId as PotentialItem["unit"],
-      balance: balances.get(item.id) ?? 0,
-      potential: potResult.potential,
-      canProduce: potResult.canProduce,
-      bottleneck: potResult.bottleneck,
-      breakdown,
+      balance,
+      potential: balance + result.canProduce,
+      canProduce: result.canProduce,
+      bottleneck: result.bottleneck,
+      breakdown: filterItemId ? result.chain : undefined,
     });
   }
 

@@ -78,6 +78,8 @@ export interface PotentialBreakdown {
   itemId: string;
   name: string;
   quantity: number;
+  balance?: number;
+  neededPerUnit?: number;
 }
 
 export interface PotentialItem {

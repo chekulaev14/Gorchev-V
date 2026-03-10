@@ -243,6 +243,9 @@ export function BomView({ item, balances }: Props) {
                       {potential.breakdown.map((b) => (
                         <span key={b.itemId} className="text-xs text-muted-foreground">
                           <span className="text-foreground font-medium">{b.quantity}</span> из {b.name}
+                          {b.balance !== undefined && (
+                            <span className="ml-1">(склад: {b.balance}, расход: {b.neededPerUnit})</span>
+                          )}
                         </span>
                       ))}
                     </div>
