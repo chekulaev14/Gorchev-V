@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof AssemblyError) {
       return NextResponse.json(
-        { error: err.message, shortages: err.shortages },
+        { error: err.message },
         { status: 400 },
       );
     }
