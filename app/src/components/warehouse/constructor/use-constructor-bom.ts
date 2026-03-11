@@ -7,18 +7,23 @@ import { toast } from "sonner";
 import type { LocalBomMap } from "./types";
 
 export function useConstructorBom(productId: string | null) {
-  const { bomChildren, refresh } = useWarehouse();
+  const { bomChildren, items, refresh, refreshAll } = useWarehouse();
   const [localBom, setLocalBom] = useState<LocalBomMap>({});
   // columnsBom — стабильная копия для расчёта колонок.
   // Обновляется при загрузке и addLink, НЕ при removeLink.
   const [columnsBom, setColumnsBom] = useState<LocalBomMap>({});
   const [saving, setSaving] = useState(false);
+  // ID удалённых карточек — columnsBom не трогаем, только скрываем
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+  // Ключ, зафиксированный после save — чтобы isDirty не мигал пока refreshAll не вернёт данные
+  const [savedKey, setSavedKey] = useState<string | null>(null);
 
   // Загрузка из bomChildren → localBom + columnsBom
   useEffect(() => {
     if (!productId) {
       setLocalBom({});
       setColumnsBom({});
+      setRemovedIds(new Set());
       return;
     }
 
@@ -45,6 +50,8 @@ export function useConstructorBom(productId: string | null) {
     collect(productId);
     setLocalBom(bom);
     setColumnsBom(bom);
+    setRemovedIds(new Set());
+    setSavedKey(null);
   }, [productId, bomChildren]);
 
   // --- Helpers ---
@@ -67,14 +74,14 @@ export function useConstructorBom(productId: string | null) {
 
   // --- CRUD ---
 
-  const addLink = useCallback((parentId: string, childId: string) => {
+  const addLink = useCallback((parentId: string, childId: string, initialQty?: number) => {
     const updater = (prev: LocalBomMap) => {
       const existing = prev[parentId] || [];
       if (existing.some((c) => c.childId === childId)) return prev;
-      return { ...prev, [parentId]: [...existing, { childId, quantity: 1 }] };
+      return { ...prev, [parentId]: [...existing, { childId, quantity: initialQty ?? 1 }] };
     };
     setLocalBom(updater);
-    setColumnsBom(updater); // Обновляем колонки при добавлении
+    // columnsBom НЕ обновляем — позиции карточек стабильны до save+refresh
   }, []);
 
   const removeLink = useCallback((parentId: string, childId: string) => {
@@ -108,7 +115,9 @@ export function useConstructorBom(productId: string | null) {
   const removeItem = useCallback((itemId: string) => {
     if (!productId) return;
     const pid = productId;
-    const updater = (prev: LocalBomMap) => {
+
+    // localBom: удаляем блок + cleanOrphans (для корректного save)
+    setLocalBom((prev) => {
       const next = { ...prev };
       delete next[itemId];
       for (const [parentKey, children] of Object.entries(next)) {
@@ -117,9 +126,9 @@ export function useConstructorBom(productId: string | null) {
         else next[parentKey] = filtered;
       }
       return cleanOrphans(next, pid);
-    };
-    setLocalBom(updater);
-    setColumnsBom(updater); // Карточка удаляется — обновляем колонки
+    });
+    // columnsBom НЕ трогаем — depth остаётся стабильным, карточку скрываем через removedIds
+    setRemovedIds((prev) => new Set(prev).add(itemId));
   }, [productId]);
 
   // --- isDirty ---
@@ -150,7 +159,7 @@ export function useConstructorBom(productId: string | null) {
     return pairs.sort().join("|");
   }, [localBom]);
 
-  const isDirty = serverKey !== localKey;
+  const isDirty = serverKey !== localKey && savedKey !== localKey;
 
   // --- Save (diff) ---
 
@@ -199,17 +208,32 @@ export function useConstructorBom(productId: string | null) {
         }
       }
 
+      // Обновить weight номенклатуры для заготовок, если изменился
+      const itemsMap = new Map(items.map((i) => [i.id, i]));
+      for (const [pid, children] of Object.entries(localBom)) {
+        for (const child of children) {
+          const parentItem = itemsMap.get(pid);
+          const childItem = itemsMap.get(child.childId);
+          if (parentItem?.type === "blank" && childItem?.type === "material") {
+            if (parentItem.weight == null || child.quantity !== parentItem.weight) {
+              await api.put(`/api/nomenclature/${pid}`, { weight: child.quantity });
+            }
+          }
+        }
+      }
+
       toast.success("BOM сохранён");
-      refresh();
+      setSavedKey(localKey);
+      refreshAll();
     } catch {
       // api-client покажет toast
     } finally {
       setSaving(false);
     }
-  }, [productId, localBom, bomChildren, refresh]);
+  }, [productId, localBom, localKey, bomChildren, items, refreshAll]);
 
   return {
-    localBom, columnsBom, addLink, removeLink, updateQuantity, removeItem,
+    localBom, columnsBom, removedIds, addLink, removeLink, updateQuantity, removeItem,
     isDirty, save, saving,
   };
 }
