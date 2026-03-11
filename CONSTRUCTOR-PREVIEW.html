@@ -3,715 +3,770 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Конструктор BOM — Превью</title>
+<title>Конструктор — универсальный</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 32px; color: #1a1a1a; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; display: flex; height: 100vh; overflow: hidden; }
 
-  h1 { text-align: center; margin-bottom: 8px; font-size: 22px; font-weight: 600; }
-  .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 32px; }
-
-  .section { margin-bottom: 40px; background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: #374151; }
-  .section-note { font-size: 12px; color: #888; margin-bottom: 16px; font-style: italic; }
-
-  /* === Шапка конструктора === */
-  .constructor-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #e5e7eb;
+  /* === SIDEBAR === */
+  .sidebar {
+    width: 260px; min-width: 260px; background: #fff; border-right: 1px solid #e5e5e5;
+    display: flex; flex-direction: column; overflow: hidden;
   }
-  .constructor-header label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #374151;
-    white-space: nowrap;
+  .sidebar-header {
+    padding: 14px 14px 10px; border-bottom: 1px solid #e5e5e5;
   }
-  .select-mock {
-    background: #fff;
-    border: 1.5px solid #d1d5db;
-    border-radius: 8px;
-    padding: 7px 12px;
-    font-size: 13px;
-    color: #1a1a1a;
-    min-width: 220px;
+  .sidebar-header h2 { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .sidebar-search {
+    width: 100%; font-size: 12px; padding: 6px 10px;
+    border: 1px solid #e0e0e0; border-radius: 6px; outline: none;
   }
-  .select-mock.placeholder { color: #9ca3af; }
-  .btn {
-    padding: 7px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-  .btn-primary { background: #2563eb; color: #fff; }
-  .btn-secondary { background: #f3f4f6; color: #374151; border: 1.5px solid #d1d5db; }
-  .btn-add { background: #f0fdf4; color: #059669; border: 1.5px solid #86efac; }
-  .btn-danger { background: #fef2f2; color: #dc2626; border: 1.5px solid #fca5a5; font-size: 12px; padding: 4px 8px; }
-  .spacer { flex: 1; }
+  .sidebar-search:focus { border-color: #93c5fd; }
 
-  /* === Блоки цепочки === */
-  .chain-area {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  .sidebar-tabs {
+    display: flex; border-bottom: 1px solid #e5e5e5;
   }
-
-  .branch-row {
-    display: flex;
-    align-items: center;
-    gap: 0;
+  .sidebar-tab {
+    flex: 1; padding: 8px 0; font-size: 11px; font-weight: 500;
+    text-align: center; cursor: pointer; color: #888;
+    border-bottom: 2px solid transparent; transition: all 0.15s;
   }
+  .sidebar-tab:hover { color: #333; }
+  .sidebar-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
 
-  .chain-block {
-    background: #f8fafc;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-size: 13px;
-    line-height: 1.4;
-    flex-shrink: 0;
-    position: relative;
+  .sidebar-list {
+    flex: 1; overflow-y: auto; padding: 6px;
   }
-  .chain-block .block-name { font-weight: 500; }
-  .chain-block .block-meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
-
-  /* Типы блоков */
-  .chain-block.material { border-color: #fcd34d; background: #fffbeb; }
-  .chain-block.blank { border-color: #93c5fd; background: #eff6ff; }
-  .chain-block.part { border-color: #c4b5fd; background: #f5f3ff; }
-  .chain-block.product { border-color: #86efac; background: #f0fdf4; }
-
-  .chain-block .type-badge {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 1px 6px;
-    border-radius: 4px;
-    margin-right: 4px;
-    vertical-align: middle;
+  .sidebar-item {
+    padding: 8px 10px; border-radius: 7px; cursor: pointer;
+    margin-bottom: 2px; transition: all 0.12s; display: flex; flex-direction: column; gap: 2px;
   }
-  .type-badge.material { background: #fef3c7; color: #92400e; }
-  .type-badge.blank { background: #dbeafe; color: #1e40af; }
-  .type-badge.part { background: #ede9fe; color: #5b21b6; }
-  .type-badge.product { background: #dcfce7; color: #166534; }
+  .sidebar-item:hover { background: #f5f5f5; }
+  .sidebar-item.active { background: #eff6ff; outline: 1.5px solid #93c5fd; }
+  .sidebar-item .item-top { display: flex; align-items: center; gap: 6px; }
+  .sidebar-item .item-name { font-size: 12px; font-weight: 500; }
+  .sidebar-item .item-code { font-size: 10px; color: #888; }
+  .sidebar-item .item-recipe {
+    font-size: 10px; color: #16a34a; font-weight: 500;
+  }
+  .sidebar-item .item-recipe.none { color: #ccc; }
 
-  /* Кнопка удаления блока */
-  .block-remove {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fee2e2;
-    border: 1px solid #fca5a5;
-    color: #dc2626;
-    font-size: 10px;
-    line-height: 14px;
-    text-align: center;
-    cursor: pointer;
+  /* === MAIN === */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px; border-bottom: 1px solid #e5e5e5; background: #fff;
+  }
+  .header .product-name { font-size: 14px; font-weight: 600; }
+  .header .product-code { font-size: 12px; color: #888; }
+  .header .save-btn {
+    margin-left: auto; font-size: 13px; font-weight: 500;
+    background: #18181b; color: #fff; border: none; border-radius: 6px;
+    padding: 7px 18px; cursor: pointer;
+  }
+  .header .save-btn:hover { background: #333; }
+
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; display: inline-block; white-space: nowrap; }
+  .b-mat { background: #fef3c7; color: #92400e; }
+  .b-blk { background: #dbeafe; color: #1e40af; }
+  .b-prd { background: #d1fae5; color: #065f46; }
+
+  .hint-bar {
+    font-size: 12px; color: #666; background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 8px 20px; display: flex; align-items: center; gap: 8px;
+  }
+  .hint-bar .hint-dot { width: 6px; height: 6px; border-radius: 50%; background: #aaa; flex-shrink: 0; }
+  .hint-bar .add-col-btn {
+    font-size: 11px; color: #888; cursor: pointer;
+    border: 1px solid #d4d4d4; border-radius: 5px;
+    background: #fff; padding: 3px 10px; margin-left: auto;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .hint-bar .add-col-btn:hover { border-color: #93c5fd; color: #3b82f6; background: #eff6ff; }
+
+  .scroll-wrap { flex: 1; overflow: auto; position: relative; padding: 20px; }
+
+  .columns {
+    display: flex; gap: 64px; position: relative; min-height: 300px;
+    padding: 0 8px 20px; align-items: flex-start;
   }
 
-  /* === Стрелка с quantity === */
-  .arrow-with-qty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-    margin: 0 2px;
+  .col { min-width: 220px; flex-shrink: 0; position: relative; z-index: 1; }
+  .col-title {
+    font-size: 10px; font-weight: 600; color: #888;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
   }
-  .qty-input {
-    background: #fff;
-    border: 1.5px solid #d1d5db;
-    border-radius: 6px;
-    padding: 2px 6px;
-    font-size: 11px;
-    width: 48px;
-    text-align: center;
-    margin-bottom: 3px;
-    color: #1a1a1a;
+  .col-title .del-col {
+    font-size: 10px; color: #ccc; cursor: pointer;
+    margin-left: auto; padding: 1px 5px; border-radius: 4px;
+    border: 1px solid transparent; transition: all 0.15s;
   }
-  .qty-unit {
-    font-size: 10px;
-    color: #9ca3af;
+  .col-title .del-col:hover { color: #dc2626; border-color: #fca5a5; background: #fee2e2; }
+
+  .card {
+    padding: 9px 11px; border: 1.5px solid #e5e5e5; border-radius: 9px;
+    margin-bottom: 8px; background: #fff; position: relative;
+    cursor: pointer; transition: all 0.15s; user-select: none;
   }
-  .arrow-line {
-    width: 40px;
-    height: 2px;
-    background: #94a3b8;
-    position: relative;
+  .card:hover { border-color: #b0b0b0; }
+  .card.border-mat { border-color: #fcd34d; }
+  .card.border-blk { border-color: #93c5fd; }
+  .card.border-prd { border-color: #6ee7b7; background: #ecfdf5; cursor: default; }
+  .card.border-root-blk { border-color: #60a5fa; background: #eff6ff; cursor: default; }
+  .card.selected { box-shadow: 0 0 0 2.5px rgba(59,130,246,0.35); border-color: #3b82f6; }
+  .card.link-target { box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+
+  .card .remove-btn {
+    position: absolute; top: -6px; right: -6px;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626;
+    font-size: 10px; line-height: 14px; text-align: center;
+    cursor: pointer; z-index: 10; display: none;
   }
-  .arrow-line::after {
-    content: '';
-    position: absolute;
-    right: 0; top: -4px;
-    border: 5px solid transparent;
-    border-left: 6px solid #94a3b8;
+  .card:hover .remove-btn { display: block; }
+
+  .card .connector {
+    position: absolute; right: -7px; top: 50%; transform: translateY(-50%);
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #e5e5e5; border: 2px solid #fff; z-index: 3;
+  }
+  .card.selected .connector { background: #3b82f6; }
+
+  .card .connector-left {
+    position: absolute; left: -7px; top: 50%; transform: translateY(-50%);
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #e5e5e5; border: 2px solid #fff; z-index: 3;
   }
 
-  /* Кнопка добавления блока */
-  .add-block-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1.5px dashed #86efac;
-    background: #f0fdf4;
-    color: #059669;
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    margin-left: 2px;
+  .card .top-row { display: flex; align-items: center; gap: 5px; }
+  .card .name { font-size: 12px; font-weight: 500; }
+  .card .meta { font-size: 10px; color: #888; margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+  .card .qty-input {
+    width: 44px; text-align: center; font-size: 10px; font-weight: 500;
+    border: 1px solid #e0e0e0; border-radius: 4px; padding: 2px 3px; background: #fff;
+  }
+  .card .fields-row {
+    display: flex; align-items: center; gap: 8px; margin-top: 4px; font-size: 10px; color: #666;
+  }
+  .card .field-group { display: flex; align-items: center; gap: 3px; }
+  .card .field-label { color: #999; }
+  .card .potential { font-size: 9px; color: #16a34a; font-weight: 500; margin-top: 3px; }
+  .card .potential.none { color: #999; }
+
+  .add-slot {
+    border: 1.5px dashed rgba(0,0,0,0.15); background: rgba(0,0,0,0.02);
+    border-radius: 8px; padding: 6px 8px;
+  }
+  .add-slot select {
+    font-size: 11px; color: #888; border: 1px solid #e0e0e0; border-radius: 4px;
+    padding: 5px 8px; background: #fff; width: 100%; cursor: pointer;
   }
 
-  /* Финальный блок (product) — выделение */
-  .chain-block.product-final {
-    border-color: #059669;
-    background: #ecfdf5;
-    border-width: 2px;
+  .lines-svg {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
   }
-  .chain-block.product-final .block-name { color: #059669; }
+  .lines-svg .link-path { stroke: #d4d4d4; stroke-width: 1.5; fill: none; }
+  .lines-svg .link-dot { fill: #d4d4d4; }
 
-  /* === Сходящиеся линии (фаза 2) === */
-  .merge-zone {
-    display: flex;
-    align-items: center;
-    position: relative;
+  .link-remove-zone {
+    position: absolute; z-index: 5; width: 20px; height: 20px;
+    border-radius: 50%; cursor: pointer;
+    transform: translate(-50%, -50%); background: transparent;
   }
-  .merge-lines {
-    width: 40px;
-    flex-shrink: 0;
-    position: relative;
+  .link-remove-zone .x-btn {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; border: 1.5px solid #e5e5e5; color: #999;
+    font-size: 11px; line-height: 13px; text-align: center;
+    display: none; position: absolute; top: 2px; left: 2px;
   }
-  .merge-lines svg { display: block; }
+  .link-remove-zone:hover .x-btn { display: block; background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
 
-  /* === Ветка === */
-  .branch-label {
-    font-size: 11px;
-    color: #9ca3af;
-    margin-right: 8px;
-    white-space: nowrap;
-  }
-  .branch-remove {
-    font-size: 11px;
-    color: #dc2626;
-    cursor: pointer;
-    margin-left: 8px;
-    opacity: 0.6;
-  }
-  .branch-remove:hover { opacity: 1; }
-
-  /* === Легенда === */
-  .legend {
-    display: flex;
-    gap: 16px;
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid #e5e7eb;
-    flex-wrap: wrap;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #6b7280;
-  }
-  .legend-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 4px;
-    border: 1.5px solid;
-  }
-  .legend-dot.material { border-color: #fcd34d; background: #fffbeb; }
-  .legend-dot.blank { border-color: #93c5fd; background: #eff6ff; }
-  .legend-dot.part { border-color: #c4b5fd; background: #f5f3ff; }
-  .legend-dot.product { border-color: #86efac; background: #f0fdf4; }
-
-  /* Добавить ветку */
-  .add-branch {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-    padding: 6px 12px;
-    border: 1.5px dashed #d1d5db;
-    border-radius: 8px;
-    background: #fafafa;
-    color: #9ca3af;
-    font-size: 12px;
-    cursor: pointer;
-    width: fit-content;
-  }
-  .add-branch:hover { border-color: #86efac; color: #059669; background: #f0fdf4; }
-
-  /* Пустой блок (placeholder) */
-  .chain-block.empty {
-    border-style: dashed;
-    border-color: #d1d5db;
-    background: #fafafa;
-    color: #9ca3af;
-  }
-
-  /* Вариант А: горизонтальный скролл */
-  .scroll-variant {
-    overflow-x: auto;
-    padding-bottom: 8px;
-  }
-  .scroll-variant::-webkit-scrollbar { height: 6px; }
-  .scroll-variant::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
-  .scroll-variant::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-  .scroll-variant::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-  .scroll-variant .branch-row { flex-wrap: nowrap; }
-
-  /* Вариант Б: перенос строки */
-  .branch-row-wrap {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    flex-wrap: wrap;
-    row-gap: 10px;
+  /* Empty state */
+  .empty-state {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%; color: #aaa; font-size: 13px;
   }
 </style>
 </head>
 <body>
 
-<h1>Конструктор BOM-цепочек</h1>
-<p class="subtitle">Превью интерфейса (не рабочий макет)</p>
-
-<!-- ==================== ФАЗА 1: Линейная цепочка ==================== -->
-<div class="section">
-  <div class="section-title">Фаза 1 — Линейная цепочка</div>
-  <div class="section-note">Простое изделие с одним маршрутом изготовления</div>
-
-  <!-- Шапка -->
-  <div class="constructor-header">
-    <label>Изделие:</label>
-    <div class="select-mock">Кронштейн КР-01</div>
-    <span class="spacer"></span>
-    <button class="btn btn-primary">Сохранить</button>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>Конструктор</h2>
+    <input class="sidebar-search" id="search" type="text" placeholder="Поиск...">
   </div>
+  <div class="sidebar-tabs">
+    <div class="sidebar-tab active" data-filter="all">Все</div>
+    <div class="sidebar-tab" data-filter="product">Изделия</div>
+    <div class="sidebar-tab" data-filter="blank">Заготовки</div>
+  </div>
+  <div class="sidebar-list" id="sidebar-list"></div>
+</div>
 
-  <!-- Цепочка -->
-  <div class="chain-area">
-    <div class="branch-row">
-
-      <!-- Блок 1: сырьё -->
-      <div class="chain-block material">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge material">Сырьё</span> Лист стальной 4мм</div>
-        <div class="block-meta">LST-4 · кг</div>
-      </div>
-
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="3.2" />
-        <span class="qty-unit">кг</span>
-        <div class="arrow-line"></div>
-      </div>
-
-      <!-- Блок 2: заготовка -->
-      <div class="chain-block blank">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge blank">Загот.</span> Пластина 120×60×4</div>
-        <div class="block-meta">PL-120-60 · шт</div>
-      </div>
-
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-
-      <!-- Блок 3: деталь -->
-      <div class="chain-block part">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge part">Деталь</span> Крюк гнутый</div>
-        <div class="block-meta">KR-HOOK · шт</div>
-      </div>
-
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-
-      <!-- Финальный блок: product -->
-      <div class="chain-block product-final">
-        <div class="block-name"><span class="type-badge product">Изделие</span> Кронштейн КР-01</div>
-        <div class="block-meta">KR-01 · шт</div>
-      </div>
-
+<!-- MAIN -->
+<div class="main">
+  <div class="header" id="header">
+    <span style="color:#aaa; font-size:13px;">Выберите элемент слева</span>
+  </div>
+  <div class="hint-bar" id="hint-bar" style="display:none;">
+    <span class="hint-dot"></span>
+    <span>Кликните на карточку, чтобы начать связь</span>
+    <button class="add-col-btn" id="add-col-btn" style="display:none;">+ Колонка</button>
+  </div>
+  <div class="scroll-wrap">
+    <div class="columns" id="columns">
+      <div class="empty-state">Выберите элемент из списка слева, чтобы открыть конструктор</div>
     </div>
-  </div>
-
-  <!-- Кнопка добавить блок -->
-  <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-    <button class="add-block-btn">+</button>
-    <span style="font-size: 12px; color: #9ca3af;">Добавить шаг в цепочку</span>
-  </div>
-
-  <div class="legend">
-    <div class="legend-item"><div class="legend-dot material"></div> Сырьё</div>
-    <div class="legend-item"><div class="legend-dot blank"></div> Заготовка</div>
-    <div class="legend-item"><div class="legend-dot part"></div> Деталь</div>
-    <div class="legend-item"><div class="legend-dot product"></div> Изделие</div>
   </div>
 </div>
 
-<!-- ==================== ФАЗА 1: Пустой (начало работы) ==================== -->
-<div class="section">
-  <div class="section-title">Фаза 1 — Пустое состояние (начало)</div>
-  <div class="section-note">Пользователь только выбрал product, цепочка пустая</div>
+<script>
+// === DATA ===
+const nomenclature = {
+  materials: [
+    { id: 'mat-1', name: 'Сталь 4.5мм', code: 'MAT-002', unit: 'кг', stock: 120 },
+    { id: 'mat-2', name: 'Сталь 5мм', code: 'MAT-001', unit: 'кг', stock: 85 },
+    { id: 'mat-3', name: 'Труба 40x20', code: 'MAT-003', unit: 'м', stock: 30 },
+  ],
+  blanks: [
+    { id: 'blk-1', name: 'Заготовка №1 (4.5мм)', code: 'BLK-007', unit: 'шт', weight: 0.35 },
+    { id: 'blk-2', name: 'Заготовка №1 (5мм)', code: 'BLK-001', unit: 'шт', weight: 0.40 },
+    { id: 'blk-3', name: 'Заготовка №2 (4.5мм)', code: 'BLK-008', unit: 'шт', weight: 0.55 },
+    { id: 'blk-4', name: 'Заготовка №2 (5мм)', code: 'BLK-002', unit: 'шт', weight: 0.60 },
+    { id: 'blk-5', name: 'Заготовка №3 лев (4.5мм)', code: 'BLK-009', unit: 'шт', weight: 0.80 },
+    { id: 'blk-6', name: 'Заготовка №3 лев (5мм)', code: 'BLK-003', unit: 'шт', weight: 0.90 },
+  ],
+  products: [
+    { id: 'prd-1', name: 'Готовое изделие №1 ЛЕВ', code: 'PRD-001', unit: 'шт' },
+    { id: 'prd-2', name: 'Готовое изделие №2 ПРАВ', code: 'PRD-002', unit: 'шт' },
+  ],
+};
 
-  <div class="constructor-header">
-    <label>Изделие:</label>
-    <div class="select-mock">Кронштейн КР-01</div>
-    <span class="spacer"></span>
-    <button class="btn btn-primary" style="opacity: 0.4; cursor: default;">Сохранить</button>
-  </div>
+// Рецепты — сохранённые связи для каждого корня
+const savedRecipes = {};
 
-  <div class="chain-area">
-    <div class="branch-row">
+// === STATE ===
+let currentRoot = null; // { id, type: 'product'|'blank', ...data }
+let middleColumns = 0;
+let placedItems = {};
+let links = [];
+let selectedCard = null;
+let usedIds = new Set();
+let sidebarFilter = 'all';
 
-      <div class="chain-block empty">
-        <div class="block-name">Выберите позицию...</div>
-        <div class="block-meta">—</div>
+const container = document.getElementById('columns');
+const headerEl = document.getElementById('header');
+const hintBar = document.getElementById('hint-bar');
+const addColBtn = document.getElementById('add-col-btn');
+
+// === SIDEBAR ===
+function renderSidebar() {
+  const list = document.getElementById('sidebar-list');
+  const query = document.getElementById('search').value.toLowerCase();
+  list.innerHTML = '';
+
+  const items = [];
+  if (sidebarFilter === 'all' || sidebarFilter === 'product') {
+    for (const p of nomenclature.products) {
+      items.push({ ...p, type: 'product' });
+    }
+  }
+  if (sidebarFilter === 'all' || sidebarFilter === 'blank') {
+    for (const b of nomenclature.blanks) {
+      items.push({ ...b, type: 'blank' });
+    }
+  }
+
+  const filtered = items.filter(i =>
+    i.name.toLowerCase().includes(query) || i.code.toLowerCase().includes(query)
+  );
+
+  for (const item of filtered) {
+    const isActive = currentRoot && currentRoot.id === item.id;
+    const badgeClass = item.type === 'product' ? 'b-prd' : 'b-blk';
+    const badgeText = item.type === 'product' ? 'Изделие' : 'Заготовка';
+    const recipe = savedRecipes[item.id];
+    let recipeHtml = '';
+    if (item.type === 'blank') {
+      recipeHtml = recipe && recipe.links && recipe.links.length > 0
+        ? '<div class="item-recipe">рецепт настроен</div>'
+        : '<div class="item-recipe none">нет рецепта</div>';
+    }
+
+    const el = document.createElement('div');
+    el.className = 'sidebar-item' + (isActive ? ' active' : '');
+    el.innerHTML = `
+      <div class="item-top">
+        <span class="badge ${badgeClass}">${badgeText}</span>
+        <span class="item-name">${item.name}</span>
       </div>
+      <div class="item-code">${item.code}${recipeHtml ? ' ' : ''}${recipeHtml}</div>
+    `;
+    el.addEventListener('click', () => selectRoot(item));
+    list.appendChild(el);
+  }
+}
 
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit"></span>
-        <div class="arrow-line"></div>
+// Tabs
+document.querySelectorAll('.sidebar-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    sidebarFilter = tab.dataset.filter;
+    renderSidebar();
+  });
+});
+document.getElementById('search').addEventListener('input', renderSidebar);
+
+// === SELECT ROOT ===
+function selectRoot(item) {
+  // Сохранить текущий рецепт перед переключением
+  saveCurrentRecipe();
+
+  currentRoot = item;
+  selectedCard = null;
+
+  // Загрузить сохранённый рецепт или начать пустой
+  const recipe = savedRecipes[item.id];
+  if (recipe) {
+    middleColumns = recipe.middleColumns;
+    placedItems = JSON.parse(JSON.stringify(recipe.placedItems));
+    links = JSON.parse(JSON.stringify(recipe.links));
+    usedIds = new Set(recipe.usedIds);
+  } else {
+    middleColumns = 0;
+    placedItems = {};
+    links = [];
+    usedIds = new Set();
+  }
+
+  renderHeader();
+  renderConstructor();
+  renderSidebar();
+}
+
+function saveCurrentRecipe() {
+  if (!currentRoot) return;
+  savedRecipes[currentRoot.id] = {
+    middleColumns,
+    placedItems: JSON.parse(JSON.stringify(placedItems)),
+    links: JSON.parse(JSON.stringify(links)),
+    usedIds: [...usedIds],
+  };
+}
+
+// === HEADER ===
+function renderHeader() {
+  if (!currentRoot) {
+    headerEl.innerHTML = '<span style="color:#aaa; font-size:13px;">Выберите элемент слева</span>';
+    hintBar.style.display = 'none';
+    return;
+  }
+  const badgeClass = currentRoot.type === 'product' ? 'b-prd' : 'b-blk';
+  const badgeText = currentRoot.type === 'product' ? 'Изделие' : 'Заготовка';
+
+  headerEl.innerHTML = `
+    <span class="badge ${badgeClass}">${badgeText}</span>
+    <span class="product-name">${currentRoot.name}</span>
+    <span class="product-code">${currentRoot.code}</span>
+    <button class="save-btn" id="save-btn">Сохранить</button>
+  `;
+  document.getElementById('save-btn').addEventListener('click', () => {
+    saveCurrentRecipe();
+    renderSidebar();
+    alert('Рецепт сохранён (демо)');
+  });
+
+  hintBar.style.display = 'flex';
+
+  // Кнопка "+ Колонка" видна только для изделий (у заготовок всегда 1 колонка сырья)
+  if (currentRoot.type === 'product') {
+    addColBtn.style.display = '';
+    addColBtn.textContent = '+ Заготовка';
+  } else {
+    addColBtn.style.display = 'none';
+  }
+}
+
+// === CONSTRUCTOR ===
+function renderConstructor() {
+  container.innerHTML = '';
+
+  if (!currentRoot) {
+    container.innerHTML = '<div class="empty-state">Выберите элемент из списка слева, чтобы открыть конструктор</div>';
+    return;
+  }
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('lines-svg');
+  svg.id = 'lines-svg';
+  container.appendChild(svg);
+
+  if (currentRoot.type === 'blank') {
+    // Режим заготовки: [Сырьё] → [Заготовка-корень]
+    container.appendChild(buildColumn(0, 'Сырьё', 'material'));
+    container.appendChild(buildRootCard());
+  } else {
+    // Режим изделия: [Сырьё] → [Заготовка 1] → ... → [Изделие-корень]
+    container.appendChild(buildColumn(0, 'Сырьё', 'material'));
+    for (let i = 1; i <= middleColumns; i++) {
+      container.appendChild(buildColumn(i, middleColumns === 1 ? 'Заготовки' : `Заготовка ${i}`, 'blank'));
+    }
+    container.appendChild(buildRootCard());
+  }
+
+  requestAnimationFrame(drawLines);
+}
+
+function buildRootCard() {
+  const col = document.createElement('div');
+  col.className = 'col';
+  const isProduct = currentRoot.type === 'product';
+  const rootColIdx = isProduct ? middleColumns + 1 : 1;
+  const borderClass = isProduct ? 'border-prd' : 'border-root-blk';
+  const badgeClass = isProduct ? 'b-prd' : 'b-blk';
+  const badgeText = isProduct ? 'Изделие' : 'Заготовка';
+  const label = isProduct ? 'Изделие' : 'Корень';
+
+  let weightHtml = '';
+  if (!isProduct && currentRoot.weight !== undefined) {
+    weightHtml = `
+      <div class="fields-row">
+        <div class="field-group">
+          <span class="field-label">вес:</span>
+          <span style="font-size:10px; font-weight:500;">${currentRoot.weight} кг</span>
+        </div>
       </div>
+    `;
+  }
 
-      <div class="chain-block product-final">
-        <div class="block-name"><span class="type-badge product">Изделие</span> Кронштейн КР-01</div>
-        <div class="block-meta">KR-01 · шт</div>
-      </div>
-
+  col.innerHTML = `
+    <div class="col-title">${label}</div>
+    <div class="card ${borderClass}" data-id="root" data-col="${rootColIdx}">
+      <span class="connector-left"></span>
+      <div class="top-row"><span class="badge ${badgeClass}">${badgeText}</span> <span class="name">${currentRoot.name}</span></div>
+      <div class="meta"><span>${currentRoot.code}</span></div>
+      ${weightHtml}
     </div>
-  </div>
+  `;
+  return col;
+}
 
-  <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-    <button class="add-block-btn">+</button>
-    <span style="font-size: 12px; color: #9ca3af;">Добавить шаг в цепочку</span>
-  </div>
-</div>
+function buildColumn(colIdx, label, type) {
+  const col = document.createElement('div');
+  col.className = 'col';
 
-<!-- ==================== ФАЗА 2: Несколько веток ==================== -->
-<div class="section">
-  <div class="section-title">Фаза 2 — Несколько веток</div>
-  <div class="section-note">Изделие из нескольких компонентов, каждый со своим маршрутом</div>
+  const canDelete = type === 'blank';
+  const delBtn = canDelete
+    ? `<span class="del-col" data-del-col="${colIdx}" title="Удалить колонку">&#x2715;</span>`
+    : '';
+  col.innerHTML = `<div class="col-title"><span>${label}</span>${delBtn}</div>`;
 
-  <div class="constructor-header">
-    <label>Изделие:</label>
-    <div class="select-mock">Кронштейн усиленный КР-У2</div>
-    <span class="spacer"></span>
-    <button class="btn btn-primary">Сохранить</button>
-  </div>
+  const items = placedItems[colIdx] || [];
+  for (const item of items) {
+    const ismat = type === 'material' || item.type === 'material';
+    const borderClass = ismat ? 'border-mat' : 'border-blk';
+    const badgeClass = ismat ? 'b-mat' : 'b-blk';
+    const badgeText = ismat ? 'Сырьё' : 'Заготовка';
 
-  <div class="chain-area">
+    const card = document.createElement('div');
+    card.className = `card ${borderClass}`;
+    card.dataset.id = item.id;
+    card.dataset.col = colIdx;
 
-    <!-- Ветка 1 -->
-    <div style="display: flex; align-items: center;">
-      <span class="branch-label">Ветка 1</span>
-      <div class="branch-row">
-        <div class="chain-block material">
-          <div class="block-remove">×</div>
-          <div class="block-name"><span class="type-badge material">Сырьё</span> Лист стальной 4мм</div>
-          <div class="block-meta">LST-4 · кг</div>
+    if (ismat) {
+      const matData = nomenclature.materials.find(m => m.id === item.id);
+      const stock = matData ? matData.stock : 0;
+      card.innerHTML = `
+        <div class="remove-btn" data-remove="${item.id}">x</div>
+        <span class="connector"></span>
+        <div class="top-row"><span class="badge ${badgeClass}">${badgeText}</span> <span class="name">${item.name}</span></div>
+        <div class="meta"><span>${item.code}</span> <span style="color:#ccc">·</span> <span>остаток: ${stock} ${item.unit}</span></div>
+      `;
+    } else {
+      const potential = calcPotential(item);
+      const potentialHtml = potential !== null
+        ? `<div class="potential">потенциал: ${potential} шт</div>`
+        : `<div class="potential none">нет связи с сырьём</div>`;
+
+      // Проверить есть ли у заготовки свой рецепт
+      const hasRecipe = savedRecipes[item.id] && savedRecipes[item.id].links && savedRecipes[item.id].links.length > 0;
+      const recipeBadge = hasRecipe ? ' <span style="font-size:9px;color:#16a34a;font-weight:500;">● рецепт</span>' : '';
+
+      card.innerHTML = `
+        <div class="remove-btn" data-remove="${item.id}">x</div>
+        <span class="connector-left"></span>
+        <span class="connector"></span>
+        <div class="top-row"><span class="badge ${badgeClass}">${badgeText}</span> <span class="name">${item.name}</span>${recipeBadge}</div>
+        <div class="meta"><span>${item.code}</span></div>
+        <div class="fields-row">
+          <div class="field-group">
+            <span class="field-label">вес:</span>
+            <input class="qty-input" type="number" value="${item.weight}" step="0.01" min="0.01" data-field="weight" data-item-id="${item.id}">
+            <span>кг</span>
+          </div>
+          <div class="field-group">
+            <span class="field-label">кол-во:</span>
+            <input class="qty-input" type="number" value="${item.qty}" step="1" min="1" data-field="qty" data-item-id="${item.id}">
+            <span>шт</span>
+          </div>
         </div>
+        ${potentialHtml}
+      `;
+    }
+    col.appendChild(card);
+  }
 
-        <div class="arrow-with-qty">
-          <input class="qty-input" value="3.2" />
-          <span class="qty-unit">кг</span>
-          <div class="arrow-line"></div>
-        </div>
+  // AddSlot
+  const slot = document.createElement('div');
+  slot.className = 'add-slot';
+  const select = document.createElement('select');
+  select.innerHTML = '<option value="">+ Добавить...</option>';
 
-        <div class="chain-block blank">
-          <div class="block-remove">×</div>
-          <div class="block-name"><span class="type-badge blank">Загот.</span> Пластина 120×60×4</div>
-          <div class="block-meta">PL-120-60 · шт</div>
-        </div>
+  const source = type === 'material' ? nomenclature.materials : nomenclature.blanks;
+  for (const n of source) {
+    if (usedIds.has(n.id)) continue;
+    if (n.id === (currentRoot && currentRoot.id)) continue; // не добавлять корень в свои же компоненты
+    select.innerHTML += `<option value="${n.id}">${n.name}</option>`;
+  }
 
-        <div class="arrow-with-qty">
-          <input class="qty-input" value="1" />
-          <span class="qty-unit">шт</span>
-          <div class="arrow-line"></div>
-        </div>
+  select.addEventListener('change', (e) => {
+    const id = e.target.value;
+    if (!id) return;
+    const item = source.find(s => s.id === id);
+    if (!item) return;
 
-        <div class="chain-block part">
-          <div class="block-remove">×</div>
-          <div class="block-name"><span class="type-badge part">Деталь</span> Крюк гнутый усиленный</div>
-          <div class="block-meta">KR-HOOK-U · шт</div>
-        </div>
-      </div>
+    if (!placedItems[colIdx]) placedItems[colIdx] = [];
+    if (type === 'material') {
+      placedItems[colIdx].push({ ...item, type });
+    } else {
+      placedItems[colIdx].push({ ...item, qty: 1, type });
+    }
+    usedIds.add(id);
+    renderConstructor();
+  });
 
-      <!-- Стрелка к product -->
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
+  slot.appendChild(select);
+  col.appendChild(slot);
+  return col;
+}
 
-      <span class="branch-remove">✕ убрать</span>
-    </div>
+// === POTENTIAL ===
+function calcPotential(blankItem) {
+  const linkedMaterials = links
+    .filter(l => l.to === blankItem.id)
+    .map(l => {
+      for (const col in placedItems) {
+        const found = placedItems[col].find(i => i.id === l.from && i.type === 'material');
+        if (found) return found;
+      }
+      return null;
+    })
+    .filter(Boolean);
 
-    <!-- Ветка 2 -->
-    <div style="display: flex; align-items: center;">
-      <span class="branch-label">Ветка 2</span>
-      <div class="branch-row">
-        <div class="chain-block material">
-          <div class="block-remove">×</div>
-          <div class="block-name"><span class="type-badge material">Сырьё</span> Пруток стальной 8мм</div>
-          <div class="block-meta">PR-8 · кг</div>
-        </div>
+  if (linkedMaterials.length === 0) return null;
+  let minPotential = Infinity;
+  for (const mat of linkedMaterials) {
+    const matData = nomenclature.materials.find(m => m.id === mat.id);
+    if (!matData || !blankItem.weight || blankItem.weight <= 0) continue;
+    const potential = Math.floor(matData.stock / blankItem.weight);
+    if (potential < minPotential) minPotential = potential;
+  }
+  return minPotential === Infinity ? null : minPotential;
+}
 
-        <div class="arrow-with-qty">
-          <input class="qty-input" value="0.5" />
-          <span class="qty-unit">кг</span>
-          <div class="arrow-line"></div>
-        </div>
+// === INPUT ===
+container.addEventListener('input', (e) => {
+  if (!e.target.classList.contains('qty-input')) return;
+  const itemId = e.target.dataset.itemId;
+  const field = e.target.dataset.field;
+  const val = parseFloat(e.target.value);
+  if (!itemId || !field || isNaN(val)) return;
 
-        <div class="chain-block blank">
-          <div class="block-remove">×</div>
-          <div class="block-name"><span class="type-badge blank">Загот.</span> Ось 8×120</div>
-          <div class="block-meta">OS-8-120 · шт</div>
-        </div>
-      </div>
+  for (const col in placedItems) {
+    const item = placedItems[col].find(i => i.id === itemId);
+    if (item) {
+      item[field] = val;
+      if (field === 'weight') {
+        const nomItem = nomenclature.blanks.find(b => b.id === itemId);
+        if (nomItem) nomItem.weight = val;
+      }
+      break;
+    }
+  }
+  updatePotentials();
+});
 
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="2" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
+function updatePotentials() {
+  container.querySelectorAll('.card.border-blk').forEach(card => {
+    const id = card.dataset.id;
+    for (const col in placedItems) {
+      const item = placedItems[col].find(i => i.id === id);
+      if (item && item.type === 'blank') {
+        const potential = calcPotential(item);
+        const el = card.querySelector('.potential');
+        if (el) {
+          if (potential !== null) {
+            el.className = 'potential';
+            el.textContent = `потенциал: ${potential} шт`;
+          } else {
+            el.className = 'potential none';
+            el.textContent = 'нет связи с сырьём';
+          }
+        }
+      }
+    }
+  });
+}
 
-      <span class="branch-remove">✕ убрать</span>
-    </div>
+// === LINES ===
+function drawLines() {
+  const svg = document.getElementById('lines-svg');
+  if (!svg) return;
+  const rect = container.getBoundingClientRect();
+  svg.innerHTML = '';
+  svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
 
-    <!-- Ветка 3 (короткая — покупная деталь) -->
-    <div style="display: flex; align-items: center;">
-      <span class="branch-label">Ветка 3</span>
-      <div class="branch-row">
-        <div class="chain-block material">
-          <div class="block-remove">×</div>
-          <div class="block-name"><span class="type-badge material">Сырьё</span> Болт М8×30 оцинкованный</div>
-          <div class="block-meta">BLT-M8-30 · шт</div>
-        </div>
-      </div>
+  container.querySelectorAll('.link-remove-zone').forEach(el => el.remove());
 
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="4" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
+  links.forEach((link, idx) => {
+    const fromEl = container.querySelector(`[data-id="${link.from}"]`);
+    const toEl = container.querySelector(`[data-id="${link.to}"]`);
+    if (!fromEl || !toEl) return;
 
-      <span class="branch-remove">✕ убрать</span>
-    </div>
+    const fr = fromEl.getBoundingClientRect();
+    const tr = toEl.getBoundingClientRect();
+    const fromX = fr.right - rect.left;
+    const fromY = fr.top + fr.height / 2 - rect.top;
+    const toX = tr.left - rect.left;
+    const toY = tr.top + tr.height / 2 - rect.top;
+    const midX = (fromX + toX) / 2;
+    const midY = (fromY + toY) / 2;
 
-  </div>
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`);
+    path.setAttribute('class', 'link-path');
+    svg.appendChild(path);
 
-  <!-- Все ветки → Product -->
-  <div style="display: flex; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1.5px dashed #e5e7eb;">
-    <svg width="100%" height="40" style="max-width: 600px;">
-      <line x1="0" y1="8" x2="580" y2="20" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
-      <line x1="0" y1="20" x2="580" y2="20" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
-      <line x1="0" y1="32" x2="580" y2="20" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4"/>
-    </svg>
-    <div class="chain-block product-final" style="margin-left: 8px;">
-      <div class="block-name"><span class="type-badge product">Изделие</span> Кронштейн усиленный КР-У2</div>
-      <div class="block-meta">KR-U2 · шт</div>
-    </div>
-  </div>
+    [[fromX, fromY], [toX, toY]].forEach(([cx, cy]) => {
+      const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', cy);
+      dot.setAttribute('r', '3'); dot.setAttribute('class', 'link-dot');
+      svg.appendChild(dot);
+    });
 
-  <!-- Кнопка добавить ветку -->
-  <div class="add-branch">
-    + Добавить ветку
-  </div>
+    const zone = document.createElement('div');
+    zone.className = 'link-remove-zone';
+    zone.style.left = midX + 'px';
+    zone.style.top = midY + 'px';
+    zone.innerHTML = '<div class="x-btn">\u00d7</div>';
+    zone.addEventListener('click', (e) => {
+      e.stopPropagation();
+      links.splice(idx, 1);
+      renderConstructor();
+    });
+    container.appendChild(zone);
+  });
+}
 
-  <div class="legend">
-    <div class="legend-item"><div class="legend-dot material"></div> Сырьё</div>
-    <div class="legend-item"><div class="legend-dot blank"></div> Заготовка</div>
-    <div class="legend-item"><div class="legend-dot part"></div> Деталь</div>
-    <div class="legend-item"><div class="legend-dot product"></div> Изделие</div>
-  </div>
-</div>
+// === CARD CLICK ===
+container.addEventListener('click', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
 
-<!-- ==================== Вариант А: горизонтальный скролл ==================== -->
-<div class="section">
-  <div class="section-title">Длинная цепочка — Вариант А: горизонтальный скролл</div>
-  <div class="section-note">Область скроллится, цепочка всегда в одну линию. Попробуй проскроллить →</div>
+  const delCol = e.target.closest('[data-del-col]');
+  if (delCol) {
+    const colIdx = Number(delCol.dataset.delCol);
+    const items = placedItems[colIdx] || [];
+    for (const item of items) {
+      links = links.filter(l => l.from !== item.id && l.to !== item.id);
+      usedIds.delete(item.id);
+    }
+    const newPlaced = {};
+    for (const [idx, arr] of Object.entries(placedItems)) {
+      const i = Number(idx);
+      if (i === colIdx) continue;
+      newPlaced[i < colIdx ? i : i - 1] = arr;
+    }
+    placedItems = newPlaced;
+    middleColumns--;
+    selectedCard = null;
+    renderConstructor();
+    return;
+  }
 
-  <div class="constructor-header">
-    <label>Изделие:</label>
-    <div class="select-mock">Рама сварная РС-500</div>
-    <span class="spacer"></span>
-    <button class="btn btn-primary">Сохранить</button>
-  </div>
+  const removeBtn = e.target.closest('[data-remove]');
+  if (removeBtn) {
+    const id = removeBtn.dataset.remove;
+    for (const col in placedItems) {
+      placedItems[col] = placedItems[col].filter(i => i.id !== id);
+    }
+    links = links.filter(l => l.from !== id && l.to !== id);
+    usedIds.delete(id);
+    renderConstructor();
+    return;
+  }
 
-  <div class="chain-area scroll-variant">
-    <div class="branch-row">
-      <div class="chain-block material">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge material">Сырьё</span> Лист стальной горячекатаный Ст3сп 4×1250×2500</div>
-        <div class="block-meta">LST-4-HC · кг</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="12.5" />
-        <span class="qty-unit">кг</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block blank">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge blank">Загот.</span> Полоса 500×80×4</div>
-        <div class="block-meta">PLS-500-80 · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="2" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block blank">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge blank">Загот.</span> Швеллер гнутый 500мм</div>
-        <div class="block-meta">SHV-500 · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="2" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block part">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge part">Деталь</span> Балка сварная 500мм</div>
-        <div class="block-meta">BLK-500 · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="2" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block part">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge part">Деталь</span> Каркас сварной</div>
-        <div class="block-meta">KRK-SV · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block part">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge part">Деталь</span> Рама окрашенная</div>
-        <div class="block-meta">RM-OKR · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block product-final">
-        <div class="block-name"><span class="type-badge product">Изделие</span> Рама сварная РС-500</div>
-        <div class="block-meta">RS-500 · шт</div>
-      </div>
-    </div>
-  </div>
+  const card = e.target.closest('.card');
+  if (!card) {
+    if (selectedCard) { selectedCard = null; renderConstructor(); }
+    return;
+  }
 
-  <div style="margin-top: 8px; font-size: 11px; color: #059669;">✓ Цепочка всегда горизонтальная, скроллбар появляется при переполнении</div>
-</div>
+  const id = card.dataset.id;
+  const col = Number(card.dataset.col);
 
-<!-- ==================== Вариант Б: перенос строки ==================== -->
-<div class="section">
-  <div class="section-title">Длинная цепочка — Вариант Б: перенос на новую строку</div>
-  <div class="section-note">Цепочка переносится, всё видно без скролла</div>
+  if (selectedCard) {
+    const selEl = container.querySelector(`[data-id="${selectedCard}"]`);
+    const selCol = selEl ? Number(selEl.dataset.col) : -1;
+    if (id === selectedCard) { selectedCard = null; renderConstructor(); return; }
+    if (col === selCol + 1) {
+      if (!links.some(l => l.from === selectedCard && l.to === id)) {
+        links.push({ from: selectedCard, to: id });
+      }
+      selectedCard = null;
+      renderConstructor();
+      return;
+    }
+    selectedCard = null;
+    renderConstructor();
+    return;
+  }
 
-  <div class="constructor-header">
-    <label>Изделие:</label>
-    <div class="select-mock">Рама сварная РС-500</div>
-    <span class="spacer"></span>
-    <button class="btn btn-primary">Сохранить</button>
-  </div>
+  if (id === 'root') return;
+  selectedCard = id;
 
-  <div class="chain-area wrap-variant">
-    <div class="branch-row-wrap">
-      <div class="chain-block material">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge material">Сырьё</span> Лист стальной горячекатаный Ст3сп 4×1250×2500</div>
-        <div class="block-meta">LST-4-HC · кг</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="12.5" />
-        <span class="qty-unit">кг</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block blank">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge blank">Загот.</span> Полоса 500×80×4</div>
-        <div class="block-meta">PLS-500-80 · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="2" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block blank">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge blank">Загот.</span> Швеллер гнутый 500мм</div>
-        <div class="block-meta">SHV-500 · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="2" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block part">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge part">Деталь</span> Балка сварная 500мм</div>
-        <div class="block-meta">BLK-500 · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="2" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block part">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge part">Деталь</span> Каркас сварной</div>
-        <div class="block-meta">KRK-SV · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block part">
-        <div class="block-remove">×</div>
-        <div class="block-name"><span class="type-badge part">Деталь</span> Рама окрашенная</div>
-        <div class="block-meta">RM-OKR · шт</div>
-      </div>
-      <div class="arrow-with-qty">
-        <input class="qty-input" value="1" />
-        <span class="qty-unit">шт</span>
-        <div class="arrow-line"></div>
-      </div>
-      <div class="chain-block product-final">
-        <div class="block-name"><span class="type-badge product">Изделие</span> Рама сварная РС-500</div>
-        <div class="block-meta">RS-500 · шт</div>
-      </div>
-    </div>
-  </div>
+  container.querySelectorAll('.card').forEach(c => c.classList.remove('selected', 'link-target'));
+  card.classList.add('selected');
+  container.querySelectorAll('.card').forEach(c => {
+    if (Number(c.dataset.col) === col + 1) c.classList.add('link-target');
+  });
+});
 
-  <div style="margin-top: 8px; font-size: 11px; color: #2563eb;">✓ Всё видно сразу, но стрелки при переносе теряют направление</div>
-</div>
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && selectedCard) { selectedCard = null; renderConstructor(); }
+});
 
+// === ADD COLUMN ===
+addColBtn.addEventListener('click', () => {
+  middleColumns++;
+  renderConstructor();
+});
+
+// === INIT ===
+// Предзаполним рецепт одной заготовки для демо
+savedRecipes['blk-1'] = {
+  middleColumns: 0,
+  placedItems: { 0: [{ id: 'mat-1', name: 'Сталь 4.5мм', code: 'MAT-002', unit: 'кг', stock: 120, type: 'material' }] },
+  links: [{ from: 'mat-1', to: 'root' }],
+  usedIds: ['mat-1'],
+};
+
+renderSidebar();
+</script>
 </body>
 </html>

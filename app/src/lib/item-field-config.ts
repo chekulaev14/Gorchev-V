@@ -75,7 +75,7 @@ export const itemFieldConfig: ItemFieldConfig[] = [
   },
   {
     key: "quantity",
-    label: "Количество",
+    label: "Начальный остаток",
     type: "number",
     placeholder: "0",
     numberProps: { step: "0.01", width: "w-28" },

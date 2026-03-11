@@ -25,6 +25,7 @@ function computeDepthFromLeaf(
 export function useConstructorColumns(
   columnsBom: LocalBomMap,
   productId: string | null,
+  removedIds?: Set<string>,
 ): ColumnItem[][] {
   return useMemo(() => {
     if (!productId) return [];
@@ -57,8 +58,15 @@ export function useConstructorColumns(
     const maxDepth = byDepth.size > 0 ? Math.max(...byDepth.keys()) : -1;
     const columns: ColumnItem[][] = [];
     for (let d = 0; d <= maxDepth; d++) {
-      columns.push(byDepth.get(d) || []);
+      const col = (byDepth.get(d) || []).filter(
+        (ci) => !removedIds?.has(ci.itemId),
+      );
+      columns.push(col);
+    }
+    // Убрать trailing пустые колонки
+    while (columns.length > 0 && columns[columns.length - 1].length === 0) {
+      columns.pop();
     }
     return columns;
-  }, [columnsBom, productId]);
+  }, [columnsBom, productId, removedIds]);
 }

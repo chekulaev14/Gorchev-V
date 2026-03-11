@@ -11,6 +11,7 @@ import { ItemCard } from "./ItemCard";
 import { AddSlot } from "./AddSlot";
 import { LinkOverlay } from "./LinkOverlay";
 import { ZoomControls } from "./ZoomControls";
+import { toast } from "sonner";
 
 /* ── Карточка изделия в списке ── */
 
@@ -46,20 +47,25 @@ function ProductListCard({
 /* ── Главный компонент (orchestrator) ── */
 
 export function ChainConstructor() {
-  const { items, bomChildren } = useWarehouse();
+  const { items, bomChildren, balances } = useWarehouse();
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [addParent, setAddParent] = useState<Record<number, number>>({});
+  // Режим создания цепочки с нуля (без выбранного изделия)
+  const [creatingNew, setCreatingNew] = useState(false);
+
+  // Пустые колонки заготовок (для создания цепочки с нуля)
+  const [extraBlankCols, setExtraBlankCols] = useState(0);
+  // Несвязанные карточки (добавлены через AddSlot, ещё не в BOM)
+  const [unlinkedCards, setUnlinkedCards] = useState<{ itemId: string; slotIdx: number }[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { localBom, columnsBom, addLink, removeLink, updateQuantity, removeItem, isDirty, save, saving } =
+  const { localBom, columnsBom, removedIds, addLink, removeLink, updateQuantity, removeItem, isDirty, save, saving } =
     useConstructorBom(selectedProductId);
 
-  // Колонки строятся по columnsBom (стабильный — не меняется при removeLink)
-  const columns = useConstructorColumns(columnsBom, selectedProductId);
+  const columns = useConstructorColumns(columnsBom, selectedProductId, removedIds);
 
   const products = useMemo(() => items.filter((i) => i.type === "product"), [items]);
   const selectedProduct = selectedProductId
@@ -72,30 +78,67 @@ export function ChainConstructor() {
     return map;
   }, [items]);
 
-  // Items уже использованные в BOM
+  // Display columns: BOM columns + extra пустые (минимум 1 — Сырьё)
+  const displayCols = useMemo(() => {
+    const minCols = 1 + extraBlankCols;
+    const len = Math.max(columns.length, minCols);
+    const result: Array<Array<{ itemId: string; quantity: number; parentItemId: string }>> = [];
+    for (let i = 0; i < len; i++) {
+      result.push(columns[i] ? [...columns[i]] : []);
+    }
+    return result;
+  }, [columns, extraBlankCols]);
+
+  // Items уже использованные
   const usedIds = useMemo(() => {
     const set = new Set<string>();
     if (selectedProductId) set.add(selectedProductId);
     for (const col of columns) for (const ci of col) set.add(ci.itemId);
+    for (const card of unlinkedCards) set.add(card.itemId);
     return set;
-  }, [selectedProductId, columns]);
+  }, [selectedProductId, columns, unlinkedCards]);
 
-  const availableItems = useMemo(
-    () => items.filter((i) => (i.type === "blank" || i.type === "material") && !usedIds.has(i.id)),
+  // Фильтрация по типу колонки
+  const availableMaterials = useMemo(
+    () => items.filter((i) => i.type === "material" && !usedIds.has(i.id)),
+    [items, usedIds],
+  );
+  const availableBlanks = useMemo(
+    () => items.filter((i) => i.type === "blank" && !usedIds.has(i.id)),
     [items, usedIds],
   );
 
-  // Колонка каждого item
+  // Колонка каждого item (BOM + unlinked + product)
   const itemColMap = useMemo(() => {
     const map = new Map<string, number>();
-    columns.forEach((col, colIdx) => {
+    displayCols.forEach((col, colIdx) => {
       for (const ci of col) map.set(ci.itemId, colIdx);
     });
-    if (selectedProductId) map.set(selectedProductId, columns.length);
+    for (const card of unlinkedCards) {
+      if (!map.has(card.itemId)) map.set(card.itemId, card.slotIdx);
+    }
+    if (selectedProductId) map.set(selectedProductId, displayCols.length);
     return map;
-  }, [columns, selectedProductId]);
+  }, [displayCols, unlinkedCards, selectedProductId]);
 
-  // Links для LinkOverlay — из localBom (реактивный, обновляется при removeLink)
+  // IDs элементов в BOM (достижимы от product)
+  const bomItemIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const col of columns) for (const ci of col) set.add(ci.itemId);
+    return set;
+  }, [columns]);
+
+  // Unlinked items сгруппированные по колонке
+  const unlinkedByCol = useMemo(() => {
+    const map: Record<number, typeof unlinkedCards> = {};
+    for (const card of unlinkedCards) {
+      if (!map[card.slotIdx]) map[card.slotIdx] = [];
+      map[card.slotIdx].push(card);
+    }
+    return map;
+  }, [unlinkedCards]);
+
+  // Links для LinkOverlay
   const allLinks = useMemo(() => {
     const result: { fromId: string; toId: string }[] = [];
     for (const [parentId, children] of Object.entries(localBom)) {
@@ -106,8 +149,18 @@ export function ChainConstructor() {
     return result;
   }, [localBom]);
 
-  // Сброс addParent при изменении колонок
-  useEffect(() => setAddParent({}), [columns.length]);
+  // Доступные изделия для выбора (в режиме создания)
+  const availableProducts = useMemo(
+    () => items.filter((i) => i.type === "product"),
+    [items],
+  );
+
+  // Сброс при смене product
+  useEffect(() => {
+    setExtraBlankCols(0);
+    setUnlinkedCards([]);
+    setSelectedCard(null);
+  }, [selectedProductId]);
 
   // --- Linking ---
 
@@ -131,7 +184,12 @@ export function ChainConstructor() {
       const targetCol = itemColMap.get(itemId) ?? -1;
 
       if (targetCol === sourceCol + 1) {
-        addLink(itemId, selectedCard);
+        // Если связываем material с blank — начальный qty = weight заготовки
+        const childItem = itemsById.get(selectedCard);
+        const parentItem = itemsById.get(itemId);
+        const initialQty = childItem?.type === "material" && parentItem?.weight
+          ? parentItem.weight : 1;
+        addLink(itemId, selectedCard, initialQty);
         clearSelection();
         return;
       }
@@ -189,31 +247,71 @@ export function ChainConstructor() {
     [removeLink],
   );
 
-  // AddSlot: parent = items из правой колонки или product
-  const getParentForCol = useCallback(
-    (colIdx: number): string | null => {
-      if (colIdx === columns.length - 1) return selectedProductId;
-      const rightCol = columns[colIdx + 1];
-      if (!rightCol || rightCol.length === 0) return selectedProductId;
-      const idx = addParent[colIdx] ?? 0;
-      return rightCol[idx]?.itemId ?? rightCol[0]?.itemId ?? null;
+  // Добавить несвязанную карточку в колонку
+  const handleAddUnlinked = useCallback((colIdx: number, itemId: string) => {
+    setUnlinkedCards((prev) => [...prev, { itemId, slotIdx: colIdx }]);
+  }, []);
+
+  // Удалить несвязанную карточку
+  const handleRemoveUnlinked = useCallback((itemId: string) => {
+    setUnlinkedCards((prev) => prev.filter((c) => c.itemId !== itemId));
+  }, []);
+
+  // Удалить колонку заготовки
+  const handleRemoveColumn = useCallback(
+    (colIdx: number) => {
+      if (colIdx === 0) return; // Сырьё не удаляется
+
+      // Удалить BOM items в этой колонке
+      const bomCol = displayCols[colIdx] || [];
+      for (const entry of bomCol) removeItem(entry.itemId);
+
+      // Удалить unlinked + переиндексировать
+      setUnlinkedCards((prev) =>
+        prev
+          .filter((c) => c.slotIdx !== colIdx)
+          .map((c) => (c.slotIdx > colIdx ? { ...c, slotIdx: c.slotIdx - 1 } : c)),
+      );
+
+      // Если extra колонка (за пределами BOM) — уменьшить счётчик
+      if (colIdx >= columns.length) {
+        setExtraBlankCols((prev) => Math.max(0, prev - 1));
+      }
     },
-    [columns, selectedProductId, addParent],
+    [displayCols, columns.length, removeItem],
   );
 
+  // Save — несвязанные карточки просто не попадут в BOM
+  const handleSave = useCallback(async () => {
+    await save();
+  }, [save]);
+
   // Layout
-  const totalCols = Math.max(columns.length, 1) + 1;
+  const totalCols = displayCols.length + 1;
   const minWidth = totalCols * 230 + (totalCols - 1) * 64;
   const selectedCol = selectedCard ? (itemColMap.get(selectedCard) ?? -1) : -1;
-  const blankColumnsCount = columns.length > 0 ? columns.length - 1 : 0;
+  const blankColumnsCount = displayCols.length > 1 ? displayCols.length - 1 : 0;
+  const hasDirtyOrUnlinked = isDirty || unlinkedCards.length > 0;
 
   /* ── Список изделий ── */
 
-  if (!selectedProduct) {
+  if (!selectedProduct && !creatingNew) {
     return (
       <div className="space-y-4">
-        <div className="text-sm font-semibold text-foreground pb-3 border-b border-border">
-          Конструктор изделий
+        <div className="flex items-center gap-3 pb-3 border-b border-border">
+          <span className="text-sm font-semibold text-foreground">
+            Конструктор изделий
+          </span>
+          {products.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCreatingNew(true)}
+              className="ml-auto text-xs"
+            >
+              Создать цепочку
+            </Button>
+          )}
         </div>
         <div className="grid grid-cols-1 gap-2">
           {products.map((product) => (
@@ -243,25 +341,32 @@ export function ChainConstructor() {
         <button
           type="button"
           onClick={() => {
-            if (isDirty && !window.confirm("Есть несохранённые изменения. Выйти без сохранения?")) return;
+            if (hasDirtyOrUnlinked && !window.confirm("Есть несохранённые изменения. Выйти без сохранения?")) return;
             setSelectedProductId(null);
+            setCreatingNew(false);
             clearSelection();
           }}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           &larr; Назад
         </button>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-            {itemTypeLabels.product}
-          </span>
-          <span className="text-sm font-semibold">{selectedProduct.name}</span>
-          <span className="text-xs text-muted-foreground">{selectedProduct.code}</span>
-        </div>
+        {selectedProduct ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+              {itemTypeLabels.product}
+            </span>
+            <span className="text-sm font-semibold">{selectedProduct.name}</span>
+            <span className="text-xs text-muted-foreground">{selectedProduct.code}</span>
+          </div>
+        ) : (
+          <span className="text-sm font-semibold text-foreground">Новая цепочка</span>
+        )}
         <div className="flex-1" />
-        <Button size="sm" disabled={!isDirty || saving} onClick={save}>
-          {saving ? "Сохранение..." : "Сохранить"}
-        </Button>
+        {selectedProduct && (
+          <Button size="sm" disabled={!isDirty || saving} onClick={handleSave}>
+            {saving ? "Сохранение..." : "Сохранить"}
+          </Button>
+        )}
       </div>
 
       {/* Hint bar */}
@@ -292,9 +397,18 @@ export function ChainConstructor() {
             </button>
           </>
         ) : (
-          <span>
-            Кликните на карточку, чтобы начать связь. Наведите на линию, чтобы удалить.
-          </span>
+          <>
+            <span>
+              Кликните на карточку, чтобы начать связь. Наведите на линию, чтобы удалить.
+            </span>
+            <button
+              type="button"
+              onClick={() => setExtraBlankCols((prev) => prev + 1)}
+              className="ml-auto text-[11px] text-gray-500 border border-gray-300 rounded px-2.5 py-0.5 bg-white hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-all whitespace-nowrap"
+            >
+              + Заготовка
+            </button>
+          </>
         )}
       </div>
 
@@ -325,103 +439,189 @@ export function ChainConstructor() {
             />
 
             {/* Колонки */}
-            {columns.map((col, colIdx) => {
-              const label =
-                colIdx === 0
-                  ? "Сырьё"
-                  : blankColumnsCount === 1
-                    ? "Заготовки"
-                    : `Заготовка ${colIdx}`;
+            {displayCols.map((col, colIdx) => {
+              const isMaterialCol = colIdx === 0;
+              const label = isMaterialCol
+                ? "Сырьё"
+                : blankColumnsCount === 1
+                  ? "Заготовки"
+                  : `Заготовка ${colIdx}`;
 
-              // Parent candidates для AddSlot
-              const isLastCol = colIdx === columns.length - 1;
-              const rightCol = isLastCol ? null : columns[colIdx + 1];
-              const parentCandidates = rightCol || [];
-              const selParentIdx = addParent[colIdx] ?? 0;
+              const unlinkedInCol = unlinkedByCol[colIdx] || [];
 
               return (
                 <div key={colIdx} className="min-w-[230px] flex-shrink-0 relative z-[1]">
-                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    {label}
+                  <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                    <span>{label}</span>
+                    {/* Крестик удаления колонки заготовки */}
+                    {!isMaterialCol && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveColumn(colIdx)}
+                        className="ml-auto text-[10px] text-gray-300 px-1 py-0.5 rounded border border-transparent hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all"
+                        title="Удалить колонку"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
 
+                  {/* BOM items */}
                   {col.map((entry) => {
                     const item = itemsById.get(entry.itemId);
                     if (!item) return null;
+
+                    if (item.type === "material") {
+                      return (
+                        <ItemCard
+                          key={entry.itemId}
+                          item={item}
+                          balance={balances[item.id] ?? null}
+                          onRemove={() => removeItem(entry.itemId)}
+                          isSelected={selectedCard === entry.itemId}
+                          isLinkTarget={selectedCard !== null && colIdx === selectedCol + 1}
+                          onClick={() => handleCardClick(entry.itemId)}
+                          cardId={`card-${entry.itemId}`}
+                        />
+                      );
+                    }
+
+                    // Blank: найти weight из связи с material
+                    const materialChild = (localBom[entry.itemId] || []).find((c) => {
+                      const ci = itemsById.get(c.childId);
+                      return ci?.type === "material";
+                    });
+                    const blankWeight = materialChild?.quantity ?? item.weight ?? null;
+
+                    // Локальный расчёт потенциала: остаток сырья / вес заготовки
+                    let localPotential: number | null = null;
+                    if (materialChild && blankWeight && blankWeight > 0) {
+                      const matBalance = balances[materialChild.childId] ?? 0;
+                      localPotential = Math.floor(matBalance / blankWeight);
+                    }
 
                     return (
                       <ItemCard
                         key={entry.itemId}
                         item={item}
                         quantity={entry.quantity}
+                        weight={blankWeight}
                         onQuantityChange={(q) =>
                           updateQuantity(entry.parentItemId, entry.itemId, q)
+                        }
+                        onWeightChange={materialChild
+                          ? (w) => updateQuantity(entry.itemId, materialChild.childId, w)
+                          : undefined
                         }
                         onRemove={() => removeItem(entry.itemId)}
                         isSelected={selectedCard === entry.itemId}
                         isLinkTarget={selectedCard !== null && colIdx === selectedCol + 1}
                         onClick={() => handleCardClick(entry.itemId)}
                         cardId={`card-${entry.itemId}`}
+                        potential={localPotential}
                       />
                     );
                   })}
 
-                  {/* AddSlot с dropdown если parents > 1 */}
-                  {!isLastCol && parentCandidates.length > 1 && (
-                    <select
-                      value={selParentIdx}
-                      onChange={(e) =>
-                        setAddParent((p) => ({ ...p, [colIdx]: Number(e.target.value) }))
-                      }
-                      className="text-[11px] border border-input rounded px-1.5 py-1 bg-background text-foreground mb-1 w-full"
-                    >
-                      {parentCandidates.map((ci, i) => (
-                        <option key={ci.itemId} value={i}>
-                          {itemsById.get(ci.itemId)?.name || `Позиция ${i + 1}`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  {/* Unlinked items (скрываем если уже в BOM columns) */}
+                  {unlinkedInCol.filter((c) => !bomItemIds.has(c.itemId)).map((card) => {
+                    const item = itemsById.get(card.itemId);
+                    if (!item) return null;
 
+                    // Проверяем localBom: может карточка уже связана, но ещё не в columnsBom
+                    if (item.type === "blank") {
+                      // Найти родителя в localBom (кто ссылается на эту заготовку)
+                      let parentEntry: { parentId: string; quantity: number } | null = null;
+                      for (const [pid, children] of Object.entries(localBom)) {
+                        const found = children.find((c) => c.childId === card.itemId);
+                        if (found) { parentEntry = { parentId: pid, quantity: found.quantity }; break; }
+                      }
+
+                      // Найти дочернее сырьё в localBom
+                      const materialChild = (localBom[card.itemId] || []).find((c) => {
+                        const ci = itemsById.get(c.childId);
+                        return ci?.type === "material";
+                      });
+                      const blankWeight = materialChild?.quantity ?? item.weight ?? null;
+
+                      let localPotential: number | null = null;
+                      if (materialChild && blankWeight && blankWeight > 0) {
+                        const matBalance = balances[materialChild.childId] ?? 0;
+                        localPotential = Math.floor(matBalance / blankWeight);
+                      }
+
+                      return (
+                        <ItemCard
+                          key={card.itemId}
+                          item={item}
+                          quantity={parentEntry?.quantity}
+                          weight={blankWeight}
+                          onQuantityChange={parentEntry
+                            ? (q) => updateQuantity(parentEntry.parentId, card.itemId, q)
+                            : undefined
+                          }
+                          onWeightChange={materialChild
+                            ? (w) => updateQuantity(card.itemId, materialChild.childId, w)
+                            : undefined
+                          }
+                          onRemove={() => handleRemoveUnlinked(card.itemId)}
+                          isSelected={selectedCard === card.itemId}
+                          isLinkTarget={selectedCard !== null && colIdx === selectedCol + 1}
+                          onClick={() => handleCardClick(card.itemId)}
+                          cardId={`card-${card.itemId}`}
+                          potential={localPotential}
+                        />
+                      );
+                    }
+
+                    return (
+                      <ItemCard
+                        key={card.itemId}
+                        item={item}
+                        balance={item.type === "material" ? (balances[item.id] ?? null) : undefined}
+                        onRemove={() => handleRemoveUnlinked(card.itemId)}
+                        isSelected={selectedCard === card.itemId}
+                        isLinkTarget={selectedCard !== null && colIdx === selectedCol + 1}
+                        onClick={() => handleCardClick(card.itemId)}
+                        cardId={`card-${card.itemId}`}
+                      />
+                    );
+                  })}
+
+                  {/* AddSlot — материалы для col 0, заготовки для остальных */}
                   <AddSlot
-                    items={availableItems}
-                    onSelect={(id) => {
-                      const parentId = getParentForCol(colIdx);
-                      if (parentId) addLink(parentId, id);
-                    }}
+                    items={isMaterialCol ? availableMaterials : availableBlanks}
+                    onSelect={(id) => handleAddUnlinked(colIdx, id)}
                     placeholder="+ Добавить..."
                   />
                 </div>
               );
             })}
 
-            {/* Пустой слот если нет колонок */}
-            {columns.length === 0 && (
-              <div className="min-w-[230px] flex-shrink-0 relative z-[1]">
-                <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  Компоненты
-                </div>
-                <AddSlot
-                  items={availableItems}
-                  onSelect={(id) => selectedProductId && addLink(selectedProductId, id)}
-                  placeholder="+ Добавить компонент..."
-                />
-              </div>
-            )}
-
             {/* Изделие */}
             <div className="min-w-[230px] flex-shrink-0 relative z-[1]">
               <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Изделие
               </div>
-              <ItemCard
-                item={selectedProduct}
-                cardId={`card-${selectedProductId}`}
-                isLinkTarget={
-                  selectedCard !== null && selectedCol === columns.length - 1
-                }
-                onClick={() => handleCardClick(selectedProductId!)}
-              />
+              {selectedProduct ? (
+                <ItemCard
+                  item={selectedProduct}
+                  cardId={`card-${selectedProductId}`}
+                  isLinkTarget={
+                    selectedCard !== null && selectedCol === displayCols.length - 1
+                  }
+                  onClick={() => handleCardClick(selectedProductId!)}
+                />
+              ) : (
+                <AddSlot
+                  items={availableProducts}
+                  onSelect={(id) => {
+                    setSelectedProductId(id);
+                    setCreatingNew(false);
+                  }}
+                  placeholder="Выберите изделие..."
+                />
+              )}
             </div>
           </div>
         </div>

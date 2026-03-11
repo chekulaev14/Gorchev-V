@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { ServiceError } from "@/lib/api/handle-route-error";
 import { mapItem } from "./helpers/map-item";
 import { getNextCode, toCodeKind } from "./helpers/code-generator";
 
@@ -89,11 +90,44 @@ export async function softDelete(id: string) {
     prisma.productionLog.count({ where: { itemId: id } }),
   ]);
 
-  if (movementsCount > 0 || logsCount > 0) {
-    const reasons: string[] = [];
-    if (movementsCount > 0) reasons.push(`складских движений: ${movementsCount}`);
-    if (logsCount > 0) reasons.push(`записей выработки: ${logsCount}`);
-    throw new Error(`Нельзя удалить позицию — есть связанные данные (${reasons.join(", ")})`);
+  if (logsCount > 0) {
+    throw new ServiceError(
+      `Нельзя удалить — есть записи выработки: ${logsCount}`,
+      400,
+    );
+  }
+
+  // Если есть только складские движения — откатить их и удалить баланс
+  if (movementsCount > 0) {
+    await prisma.$transaction(async (tx) => {
+      // Удаляем складские движения и связанные операции
+      const movements = await tx.stockMovement.findMany({
+        where: { itemId: id },
+        select: { operationId: true },
+      });
+      const operationIds = [
+        ...new Set(movements.map((m) => m.operationId).filter(Boolean)),
+      ] as string[];
+
+      await tx.stockMovement.deleteMany({ where: { itemId: id } });
+      await tx.stockBalance.deleteMany({ where: { itemId: id } });
+
+      if (operationIds.length > 0) {
+        // Удаляем операции только если у них не осталось других движений
+        for (const opId of operationIds) {
+          const remaining = await tx.stockMovement.count({ where: { operationId: opId } });
+          if (remaining === 0) {
+            await tx.inventoryOperation.delete({ where: { id: opId } });
+          }
+        }
+      }
+
+      await tx.item.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
+    });
+    return;
   }
 
   await prisma.item.update({
