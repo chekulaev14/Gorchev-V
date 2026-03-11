@@ -92,6 +92,8 @@ Lot — партия (itemId, lotNumber, sourceType, expiresAt). ProductionOpera
 - Завершение производственного заказа выполняется атомарно: статус, история, списания, приход продукции и баланс фиксируются в одной транзакции.
 - ProductionOrderItem хранит snapshot BOM; изменения BOM после создания заказа не влияют на его выполнение.
 - BOM не может содержать прямых или косвенных циклов.
+- Рекурсивная сборка атомарна — вся цепочка от сырья до изделия в одной транзакции.
+- StockBalance может быть отрицательным — штатная ситуация (сырьё не оприходовано, но фактически на складе).
 
 Эти гарантии должны подтверждаться тестами на уровне данных (StockMovement, StockBalance, InventoryOperation, ProductionOrderItem, StatusHistory), а не только проверками UI.
 
@@ -133,11 +135,11 @@ Toast (sonner), SearchableSelect, GroupedAccordion, ConfirmDialog — в compone
 
 ### Компоненты
 
-ItemForm — единая форма Item (create/edit), строится по field config (lib/item-field-config.ts). BomView — оркестратор, делегирует в BomTree + BomEntryForm. Конструктор BOM-цепочек (constructor/) — визуальный редактор: ChainConstructor (оркестратор), ChainBlock (блок позиции), ChainArrow (стрелка с quantity). Сохраняет связи через POST /api/bom.
+ItemForm — единая форма Item (create/edit), строится по field config (lib/item-field-config.ts). BomView — оркестратор, делегирует в BomTree + BomEntryForm. Конструктор BOM-цепочек (constructor/) — визуальный редактор произвольной глубины: ChainConstructor (оркестратор), ItemCard, AddSlot, LinkOverlay (SVG связи), ZoomControls. Хуки: useConstructorBom (localBom CRUD + diff-save), useConstructorColumns (колонки по depth-from-leaf). Связи через клик-клик, удаление hover на линию, зум Ctrl+scroll.
 
 WarehouseContext — центральный контекст склада. Два уровня refresh: refresh() (балансы) / refreshAll() (все данные).
 
-Терминал рабочего — каталог показывает два раздела: "Изделия" (products) и "Детали" (blanks). При выработке любого item с BOM происходит автосписание компонентов через assemble().
+Терминал рабочего — каталог показывает два раздела: "Изделия" (products) и "Детали" (blanks). Клик на изделие — сразу форма ввода количества (не список комплектующих). При выработке item с BOM — рекурсивная сборка через assemble(): система проходит всю цепочку до сырья, собирая промежуточные компоненты автоматически.
 
 ### Потенциал производства
 

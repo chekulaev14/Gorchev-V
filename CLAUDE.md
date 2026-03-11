@@ -35,7 +35,9 @@ Frontend:
 - NEVER оставляй deprecated паттерн при внедрении нового
 
 DB:
+- ALWAYS перед первым raw SQL в сессии — выполни Read tool на schema.prisma. Без этого шага не писать SQL. Таблицы и колонки в snake_case, имена отличаются от Prisma-моделей.
 - ALWAYS после изменения schema.prisma — запускай `npx prisma generate`. Если dev server уже запущен — перезапусти его (HMR не подхватывает generated client)
+- NEVER используй `npx tsx -e` с Prisma — generated client в кастомном пути `src/generated/prisma`, eval не резолвит. Для разовых вставок — psql напрямую.
 - NEVER используй Float → Decimal. NEVER пропускай FK/CHECK/NOT NULL/RESTRICT
 - NEVER изменяй/удаляй StockMovement — append-only ledger
 - NEVER создавай движение без InventoryOperation + operationKey
