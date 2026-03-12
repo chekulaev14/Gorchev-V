@@ -24,6 +24,8 @@ enum LocationType {
   PRODUCTION
   WIP
   SCRAP
+  EXTERNAL
+  ADJUSTMENT
 }
 
 enum WorkerRole {
@@ -107,6 +109,7 @@ model User {
   orderStatusChanges   ProductionOrderStatusHistory[] @relation("StatusChanger")
   inventoryOperations  InventoryOperation[]           @relation("OperationCreator")
   createdBoms          Bom[]                          @relation("BomCreator")
+  createdProductionOps ProductionOperation[]          @relation("ProductionOpCreator")
 
   @@map("users")
 }
@@ -123,9 +126,10 @@ model AppConfig {
 // --- Locations ---
 
 model Location {
-  id   String       @id // стабильный системный код (MAIN, RAW, FG)
-  name String       // отображаемое имя
-  type LocationType
+  id       String       @id // стабильный системный код (MAIN, EXTERNAL, PRODUCTION, ...)
+  name     String       // отображаемое имя
+  type     LocationType
+  isSystem Boolean      @default(false) @map("is_system")
 
   fromMovements StockMovement[] @relation("FromLocation")
   toMovements   StockMovement[] @relation("ToLocation")
@@ -142,8 +146,9 @@ model InventoryOperation {
   createdById  String?                 @map("created_by_id")
   createdAt    DateTime                @default(now()) @map("created_at")
 
-  createdBy User?           @relation("OperationCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  movements StockMovement[]
+  createdBy    User?                @relation("OperationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  movements    StockMovement[]
+  productionOp ProductionOperation?
 
   @@index([type, createdAt])
   @@map("inventory_operations")
@@ -210,6 +215,7 @@ model Item {
   weight       Decimal? @db.Decimal(10, 4)
   side         Side     @default(NONE)
   baseItemId   String?  @map("base_item_id")
+  hasRecipe    Boolean  @default(false) @map("has_recipe")
 
   type     ItemType  @relation(fields: [typeId], references: [id])
   unit     Unit      @relation(fields: [unitId], references: [id])
@@ -226,7 +232,9 @@ model Item {
   bomComponents BomLine[] @relation("BomLineComponent")
 
   // Маршруты
-  routings Routing[]
+  routings           Routing[]
+  stepsAsOutput      RoutingStep[]      @relation("StepOutput")
+  routingStepInputs  RoutingStepInput[] @relation("StepInputItem")
 
   // Складские движения и остатки
   stockMovements StockMovement[]
@@ -235,6 +243,9 @@ model Item {
   // Производственные заказы
   productionOrders     ProductionOrder[]
   productionOrderItems ProductionOrderItem[]
+
+  // Производственные операции
+  productionOperations ProductionOperation[]
 
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
@@ -312,10 +323,11 @@ model Worker {
   userId    String?     @unique @map("user_id")
   createdAt DateTime    @default(now()) @map("created_at")
 
-  user           User?             @relation(fields: [userId], references: [id])
-  productionLogs ProductionLog[]
-  stockMovements StockMovement[]
-  createdOrders  ProductionOrder[] @relation("OrderCreator")
+  user                     User?             @relation(fields: [userId], references: [id])
+  productionLogs           ProductionLog[]
+  stockMovements           StockMovement[]
+  createdOrders            ProductionOrder[] @relation("OrderCreator")
+  productionOpWorkerEntries ProductionOperationWorker[]
 
   @@map("workers")
 }
@@ -380,22 +392,45 @@ model Routing {
   @@map("routings")
 }
 
-// Шаг маршрута
+// Шаг маршрута (inputs[] → outputItem с явными количествами)
 model RoutingStep {
-  id           String   @id @default(cuid())
-  routingId    String   @map("routing_id")
-  stepNo       Int      @map("step_no")
-  processId    String   @map("process_id")
+  id           String  @id @default(cuid())
+  routingId    String  @map("routing_id")
+  stepNo       Int     @map("step_no")
+  processId    String  @map("process_id")
+  outputItemId String  @map("output_item_id")
+  outputQty    Decimal @db.Decimal(10, 4) @map("output_qty")
   normTimeMin  Decimal? @db.Decimal(10, 2) @map("norm_time_min")
   setupTimeMin Decimal? @db.Decimal(10, 2) @map("setup_time_min")
   note         String?
 
-  routing Routing @relation(fields: [routingId], references: [id], onDelete: Cascade)
-  process Process @relation(fields: [processId], references: [id], onDelete: Restrict)
+  routing              Routing            @relation(fields: [routingId], references: [id], onDelete: Cascade)
+  process              Process            @relation(fields: [processId], references: [id], onDelete: Restrict)
+  outputItem           Item               @relation("StepOutput", fields: [outputItemId], references: [id], onDelete: Restrict)
+  inputs               RoutingStepInput[]
+  productionOperations ProductionOperation[]
 
   @@unique([routingId, stepNo])
   @@index([processId])
+  @@index([outputItemId])
   @@map("routing_steps")
+}
+
+// Входной материал шага маршрута
+model RoutingStepInput {
+  id        String  @id @default(cuid())
+  stepId    String  @map("step_id")
+  itemId    String  @map("item_id")
+  qty       Decimal @db.Decimal(10, 4)
+  sortOrder Int     @map("sort_order")
+
+  step RoutingStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  item Item        @relation("StepInputItem", fields: [itemId], references: [id], onDelete: Restrict)
+
+  @@unique([stepId, sortOrder])
+  @@index([stepId])
+  @@index([itemId])
+  @@map("routing_step_inputs")
 }
 
 // Складские движения
@@ -407,8 +442,8 @@ model StockMovement {
   workerId       String?  @map("worker_id")
   orderId        String?  @map("order_id")
   operationId    String?  @map("operation_id")
-  fromLocationId String?  @map("from_location_id")
-  toLocationId   String?  @map("to_location_id")
+  fromLocationId String   @map("from_location_id")
+  toLocationId   String   @map("to_location_id")
   comment        String?
   createdById    String?  @map("created_by_id")
   createdAt      DateTime @default(now()) @map("created_at")
@@ -417,8 +452,8 @@ model StockMovement {
   worker        Worker?             @relation(fields: [workerId], references: [id])
   order         ProductionOrder?    @relation(fields: [orderId], references: [id])
   operation     InventoryOperation? @relation(fields: [operationId], references: [id], onDelete: SetNull)
-  fromLocation  Location?           @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: Restrict)
-  toLocation    Location?           @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: Restrict)
+  fromLocation  Location            @relation("FromLocation", fields: [fromLocationId], references: [id], onDelete: Restrict)
+  toLocation    Location            @relation("ToLocation", fields: [toLocationId], references: [id], onDelete: Restrict)
   createdByUser User?               @relation("MovementCreator", fields: [createdById], references: [id])
 
   @@index([itemId, createdAt])
@@ -487,4 +522,43 @@ model ProductionOrderItem {
 
   @@unique([orderId, itemId])
   @@map("production_order_items")
+}
+
+// Факт производства (одна операция = один выпуск)
+model ProductionOperation {
+  id                     String   @id @default(cuid())
+  itemId                 String   @map("item_id")
+  quantity               Decimal  @db.Decimal(10, 4)
+  routingStepId          String?  @map("routing_step_id")
+  inventoryOperationId   String   @unique @map("inventory_operation_id")
+  createdById            String?  @map("created_by_id")
+  clientOperationKey     String?  @unique @map("client_operation_key")
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  item                Item               @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  routingStep         RoutingStep?       @relation(fields: [routingStepId], references: [id], onDelete: SetNull)
+  inventoryOperation  InventoryOperation @relation(fields: [inventoryOperationId], references: [id], onDelete: Restrict)
+  createdBy           User?              @relation("ProductionOpCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  workers             ProductionOperationWorker[]
+
+  @@index([itemId, createdAt])
+  @@map("production_operations")
+}
+
+// Участник производственной операции
+model ProductionOperationWorker {
+  id                    String   @id @default(cuid())
+  productionOperationId String   @map("production_operation_id")
+  workerId              String   @map("worker_id")
+  quantity              Decimal  @db.Decimal(10, 4)
+  pricePerUnit          Decimal  @db.Decimal(10, 2) @map("price_per_unit")
+  total                 Decimal  @db.Decimal(10, 2)
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  productionOperation ProductionOperation @relation(fields: [productionOperationId], references: [id], onDelete: Restrict)
+  worker              Worker              @relation(fields: [workerId], references: [id], onDelete: Restrict)
+
+  @@unique([productionOperationId, workerId])
+  @@index([workerId, createdAt])
+  @@map("production_operation_workers")
 }
