@@ -10,7 +10,7 @@ FK constraints, CHECK constraints, NOT NULL где возможно, RESTRICT в
 
 ## 2. Исторические данные неизменяемы
 
-StockMovement, ProductionLog, ProductionOrder — append-only. Новая запись = новое событие. Старые записи не изменяются. Completed/started заказы не удаляются — только отменяются статусом.
+StockMovement, ProductionOperation, ProductionOperationWorker, ProductionLog, ProductionOrder — append-only. Новая запись = новое событие. Старые записи не изменяются. Completed/started заказы не удаляются — только отменяются статусом.
 
 ## 3. Склад — движения + баланс
 
@@ -22,7 +22,7 @@ StockMovement — append-only ledger, источник истины. StockBalanc
 
 ## 5. Location — обязательное измерение
 
-Все складские сущности проектированы с Location как обязательным измерением, даже при одном складе (MAIN).
+fromLocationId и toLocationId в StockMovement — NOT NULL. Системные Location (isSystem=true) нельзя удалять: MAIN, EXTERNAL, PRODUCTION, ADJUSTMENT, SCRAP. Баланс по location: SUM(qty WHERE to=L) - SUM(qty WHERE from=L).
 
 ## 6. Конкурентная защита
 
@@ -34,7 +34,7 @@ Float запрещён. Decimal. quantity > 0, направление опред
 
 ## 8. BOM, routing, факт — разные сущности
 
-Не смешивать: справочник операции (Process) / маршрут-норматив (Routing + RoutingStep) / состав (Bom + BomLine → BomEntry runtime) / факт выполнения (ProductionOperation). ProductionOrderItem — только snapshot норматива, не "свалка смысла".
+Не смешивать: справочник операции (Process) / маршрут-норматив (Routing + RoutingStep) / состав (Bom + BomLine) / факт выполнения (ProductionOperation). BomEntry — legacy, не источник production flow. RoutingStep — источник истины для списания (inputItemId, outputItemId, inputQty, outputQty). Один producing step на outputItemId среди ACTIVE routings.
 
 ## 9. Бизнес-идентификатор != технический id
 
@@ -58,4 +58,4 @@ Prisma для CRUD. Raw SQL для: рекурсивных BOM (WITH RECURSIVE),
 
 ## 14. Эволюционное развитие
 
-Простая модель → стабильность → расширение. Не добавлять сложные системы (lot tracking, routing, costing) пока не требует бизнес.
+Простая модель → стабильность → расширение. Не добавлять сложные системы (lot tracking, costing) пока не требует бизнес.

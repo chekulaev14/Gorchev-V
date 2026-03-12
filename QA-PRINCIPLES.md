@@ -57,7 +57,7 @@ Double POST с одним operationKey → одна InventoryOperation, одно
 После любого фикса — прогон по затронутым областям:
 
 - Inventory: supplier income, assembly (+/-), balance consistency
-- BOM: cycle check, snapshot isolation, constructor
+- BOM: cycle check, snapshot isolation, bom-constructor / routing-constructor
 - Auth: worker login, user login, protected routes + API
 - Production orders: create, complete, repeat guard, status history
 
@@ -97,7 +97,7 @@ Prod smoke (после деплоя, только read-only):
 
 ## 12. Пока не автоматизируется
 
-- Нестабильный UI конструктора
+- UI bom-constructor / routing-constructor (стабилизируется)
 - Конкурентные операции (manual)
 - Быстро меняющиеся фичи
 

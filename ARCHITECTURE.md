@@ -24,21 +24,23 @@ services/ — бизнес-логика. lib/ — shared (типы, prisma, auth
 
 ### Модель данных
 
-Item — master data. Центральные транзакционные сущности — ProductionOrder, StockMovement, InventoryOperation.
+Item — master data. Центральные транзакционные сущности — ProductionOrder, ProductionOperation, StockMovement, InventoryOperation.
 
 StockMovement — append-only ledger, источник истины. StockBalance — read model (кэш), PK = (itemId, locationId). Пересчёт: scripts/rebuild-balances.ts.
 
 InventoryOperation — бизнес-команда, группирующая движения. operationKey @unique — идемпотентность.
 
-Location — склад/зона. Enum LocationType (WAREHOUSE, PRODUCTION, WIP, SCRAP). Seed: MAIN.
+Location — склад/зона. Enum LocationType (WAREHOUSE, PRODUCTION, WIP, SCRAP, EXTERNAL, ADJUSTMENT). Системные Location (isSystem=true): MAIN, EXTERNAL, PRODUCTION, ADJUSTMENT, SCRAP. fromLocationId и toLocationId в StockMovement обязательны (NOT NULL). Маппинг from/to определяется типом движения (LOCATION_MAP в stock.service).
 
 ### Типы и конвенции
 
 ItemType: material, blank, product. Unit: kg, pcs, m.
 
-Item.side — enum (LEFT/RIGHT/NONE). Парные детали: RIGHT ссылается на LEFT через baseItemId. Конструктор создаёт обе стороны автоматически.
+Item.side — enum (LEFT/RIGHT/NONE). Парные детали: RIGHT ссылается на LEFT через baseItemId. При создании парной детали система создаёт обе стороны автоматически.
 
 Item.weight — Decimal(10,4), вес детали в кг. Отображается в карточке, форме номенклатуры и терминале.
+
+Item.hasRecipe — Boolean, default false. Ставится true при сохранении рецепта заготовки (blank) через routing-конструктор, false — если все связи удалены.
 
 Item.code — бизнес-артикул (MAT-001). @unique. Автогенерация через getNextCode() (atomic UPDATE ... RETURNING на code_counters). id — технический (cuid).
 
@@ -48,13 +50,17 @@ MovementType — PostgreSQL enum, UPPER_CASE. Роли — WorkerRole enum (WORK
 
 ### BOM versioning
 
-Двухуровневая архитектура: versioned BOM (Bom + BomLine) + runtime BOM (BomEntry). activateVersion() синхронизирует BomEntry. Сервис: bom-version.service.ts.
+Двухуровневая архитектура: versioned BOM (Bom + BomLine) + runtime BOM (BomEntry). BomEntry — legacy, не участвует в production flow. activateVersion() больше не синхронизирует BomEntry. Сервис: bom-version.service.ts.
 
 ProductionOrder.bomId — nullable FK на Bom (аудит).
 
 ### Routing
 
-Routing + RoutingStep — маршрут производства. Пока без UI — только модели. Три уровня не смешивать: справочник (Process) / маршрут-норматив (Routing) / факт (ProductionOperation, позже).
+Routing + RoutingStep + RoutingStepInput — источник истины для производственного преобразования. RoutingStep хранит: outputItemId, outputQty, processId. Входные материалы — через RoutingStepInput[] (itemId, qty, sortOrder). Каждый шаг может иметь несколько входов (сборка). Один Routing = последовательность шагов (ветвления запрещены). Рекурсия — только между маршрутами.
+
+Сервисы: routing.service.ts (CRUD маршрутов, getProducingStep с inputs[], валидация), production.service.ts (produce() — списание всех входов шага, рекурсивное достраивание при нехватке). assembly.service.ts — deprecated, не используется в production flow.
+
+API: /api/routing (GET, POST), /api/routing/[id] (PUT, DELETE), /api/routing/[id]/activate, /api/routing/[id]/archive. BOM versions API: /api/bom/versions (GET, POST), /api/bom/versions/[id] (PUT, DELETE), /api/bom/versions/[id]/activate.
 
 ### Производственные заказы
 
@@ -72,11 +78,21 @@ FK RESTRICT на исторических данных. Soft delete через d
 
 ### Audit trail
 
-Nullable FK на User: Item (createdById, updatedById), StockMovement (createdById), ProductionOrder (createdByUserId), Bom (createdById).
+Nullable FK на User: Item (createdById, updatedById), StockMovement (createdById), ProductionOrder (createdByUserId), ProductionOperation (createdById), Bom (createdById).
+
+### Производственные операции
+
+ProductionOperation — факт выпуска (itemId, quantity, routingStepId, inventoryOperationId). Одна операция = один факт производства. Связана 1:1 с InventoryOperation. clientOperationKey — идемпотентность с клиента.
+
+ProductionOperationWorker — участник операции (workerId, quantity, pricePerUnit, total). Одна операция может иметь несколько рабочих. SUM(workers.quantity) = operation.quantity. Один worker на операцию (@@unique). pricePerUnit фиксируется на момент операции.
+
+ProductionLog — legacy, заменяется ProductionOperationWorker. Не удалять — используется для сверки старых данных.
+
+API: POST /api/terminal/produce (itemId, workers[], clientOperationKey).
 
 ### Будущие модели
 
-Lot — партия (itemId, lotNumber, sourceType, expiresAt). ProductionOperation — факт выполнения шага маршрута.
+Lot — партия (itemId, lotNumber, sourceType, expiresAt).
 
 ---
 
@@ -92,8 +108,10 @@ Lot — партия (itemId, lotNumber, sourceType, expiresAt). ProductionOpera
 - Завершение производственного заказа выполняется атомарно: статус, история, списания, приход продукции и баланс фиксируются в одной транзакции.
 - ProductionOrderItem хранит snapshot BOM; изменения BOM после создания заказа не влияют на его выполнение.
 - BOM не может содержать прямых или косвенных циклов.
-- Рекурсивная сборка атомарна — вся цепочка от сырья до изделия в одной транзакции.
+- Рекурсивное производство атомарно — вся цепочка от сырья до изделия в одной транзакции (production.service).
 - StockBalance может быть отрицательным — штатная ситуация (сырьё не оприходовано, но фактически на складе).
+- SUM(ProductionOperationWorker.quantity) = ProductionOperation.quantity — всегда.
+- Каждый StockMovement имеет fromLocationId и toLocationId (NOT NULL). Системные Location нельзя удалять.
 
 Эти гарантии должны подтверждаться тестами на уровне данных (StockMovement, StockBalance, InventoryOperation, ProductionOrderItem, StatusHistory), а не только проверками UI.
 
@@ -135,11 +153,11 @@ Toast (sonner), SearchableSelect, GroupedAccordion, ConfirmDialog — в compone
 
 ### Компоненты
 
-ItemForm — единая форма Item (create/edit), строится по field config (lib/item-field-config.ts). BomView — оркестратор, делегирует в BomTree + BomEntryForm. Конструктор BOM-цепочек (constructor/) — визуальный редактор произвольной глубины: ChainConstructor (оркестратор), ItemCard, AddSlot, LinkOverlay (SVG связи), ZoomControls. Хуки: useConstructorBom (localBom CRUD + diff-save), useConstructorColumns (колонки по depth-from-leaf). Связи через клик-клик, удаление hover на линию, зум Ctrl+scroll.
+ItemForm — единая форма Item (create/edit), строится по field config (lib/item-field-config.ts). BomView — просмотр состава позиции (BomTree + BomEntryForm, legacy BomEntry). BOM-конструктор (bom-constructor/) — редактирование версионированного состава (Bom + BomLine). Routing-конструктор (routing-constructor/) — редактирование маршрутов с множественными входами на шаг (Routing + RoutingStep + RoutingStepInput). Оба конструктора: orchestrator + editor, переиспользуют BomItemList для левой панели.
 
 WarehouseContext — центральный контекст склада. Два уровня refresh: refresh() (балансы) / refreshAll() (все данные).
 
-Терминал рабочего — каталог показывает два раздела: "Изделия" (products) и "Детали" (blanks). Клик на изделие — сразу форма ввода количества (не список комплектующих). При выработке item с BOM — рекурсивная сборка через assemble(): система проходит всю цепочку до сырья, собирая промежуточные компоненты автоматически.
+Терминал рабочего — каталог показывает два раздела: "Изделия" (products) и "Детали" (blanks). Клик → PartDetail (ввод количества) → "Отправить" (один рабочий) или "С напарником" → WorkersStep (групповая операция: PIN напарника + его количество). POST /api/terminal/produce с массивом workers. production.service.produce() создаёт ProductionOperation + ProductionOperationWorker + StockMovement в одной транзакции.
 
 ### Потенциал производства
 

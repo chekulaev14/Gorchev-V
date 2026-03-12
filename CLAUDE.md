@@ -4,17 +4,15 @@
 
 ## Правило чтения файлов
 
-НЕ ЧИТАТЬ документацию при старте сессии. Дождаться задачи, определить контур, читать только нужные файлы (см. навигацию). SESSION-REPORT.md — только если задача связана с предыдущей сессией.
+Старт сессии: PRODUCT.md, SYSTEM-DIAGRAM.md, CORE-ARCHITECTURE.md — читаются всегда (rule в .claude/rules/context.md).
 
-## Навигация по задачам
+Перед первым изменением кода — дополнительно прочитать файлы своего контура:
 
-Перед первым изменением кода — ОБЯЗАТЕЛЬНО прочитать файлы своего контура:
-
-- Backend: BACKEND-PRINCIPLES.md, ARCHITECTURE.md, похожий сервис в app/src/services/, schema.prisma
+- Backend: BACKEND-PRINCIPLES.md, похожий сервис в app/src/services/, schema.prisma
 - Frontend: FRONTEND-PRINCIPLES.md, ARCHITECTURE.md (секция Фронтенд), похожий компонент, lib/types.ts
-- БД/миграция: DB-PRINCIPLES.md, schema.prisma, ARCHITECTURE.md (секция БД)
+- БД/миграция: DB-PRINCIPLES.md, schema.prisma
 - Баг/ошибка: GOTCHA.md, SESSION-REPORT.md, файл из стека ошибки
-- Новая фича: PLAN.md, ARCHITECTURE.md, LOGIC.md (если склад), PROCESSES.html (если роли)
+- Новая фича: ARCHITECTURE.md
 - Тестирование: QA-PRINCIPLES.md
 - Склад (UI/логика): LOGIC.md
 
@@ -73,15 +71,19 @@ QA:
 - [app/](app/) — Next.js приложение
 - [app/src/components/terminal/](app/src/components/terminal/) — модуль терминала (PIN, каталог, детали)
 - [app/src/components/warehouse/](app/src/components/warehouse/) — модуль склада (номенклатура, остатки, сборка, операции)
-- [app/src/components/warehouse/constructor/](app/src/components/warehouse/constructor/) — конструктор изделия
+- [app/src/components/warehouse/bom-constructor/](app/src/components/warehouse/bom-constructor/) — BOM-конструктор (версионированный состав)
+- [app/src/components/warehouse/routing-constructor/](app/src/components/warehouse/routing-constructor/) — Routing-конструктор (маршруты с множественными входами)
 - [app/src/components/ui/](app/src/components/ui/) — shared: shadcn/ui компоненты
-- [app/src/services/](app/src/services/) — бизнес-логика (auth, user, stock, assembly, bom, bom-version, nomenclature, product, process, production-order)
+- [app/src/services/](app/src/services/) — бизнес-логика (auth, user, stock, routing, production, bom, bom-version, nomenclature, product, process, production-order). assembly.service — deprecated
 - [app/src/lib/](app/src/lib/) — shared: prisma client, auth (JWT/RBAC), типы, утилиты
 - [app/src/data/](app/src/data/) — статические данные (только для seed)
-- [app/src/app/api/](app/src/app/api/) — API routes по модулям (auth/, users/, config/, terminal/, nomenclature/, stock/, bom/)
+- [app/src/app/api/](app/src/app/api/) — API routes по модулям (auth/, users/, config/, terminal/, nomenclature/, stock/, bom/, routing/)
 - [app/prisma/](app/prisma/) — Prisma schema и миграции
 - [app/scripts/rebuild-balances.ts](app/scripts/rebuild-balances.ts) — пересчёт StockBalance (rebuild/reconcile)
 - [app/scripts/seed-demo-parts.ts](app/scripts/seed-demo-parts.ts) — демо-номенклатура кронштейнов (7 items, BOM, приход)
+- [PRODUCT.md](PRODUCT.md) — бизнес-логика, сущности, поведение системы
+- [CORE-ARCHITECTURE.md](CORE-ARCHITECTURE.md) — слои, зависимости, flow, инварианты, границы сервисов
+- [SYSTEM-DIAGRAM.md](SYSTEM-DIAGRAM.md) — визуальная карта: схемы архитектуры, data model, flows
 - [SESSION-REPORT.md](SESSION-REPORT.md) — отчёт последней сессии (что сделано, что проверить)
 - [docker-compose.yml](docker-compose.yml) — app + PostgreSQL для деплоя
 - [.env.example](.env.example) — шаблон переменных окружения

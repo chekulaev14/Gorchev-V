@@ -34,13 +34,13 @@ Write-endpoints: zod-схемы в lib/schemas/. parseBody() для единог
 
 ## 7. Именование сервисных методов
 
-CRUD: createX, getX/getXs, updateX, deleteX. Доменные операции: глагол + существительное (startOrder, completeOrder, cancelOrder, assembleItem, activateVersion). Bulk: getBulkX (getBulkBalances). Не смешивать CRUD и доменные имена.
+CRUD: createX, getX/getXs, updateX, deleteX. Доменные операции: глагол + существительное (startOrder, completeOrder, cancelOrder, produce, activateVersion, activateRouting). Bulk: getBulkX (getBulkBalances). Не смешивать CRUD и доменные имена.
 
 ## 8. Идемпотентность
 
 Любая операция, изменяющая остатки, обязана проходить через InventoryOperation. Нет InventoryOperation — нет движения. operationKey @unique — idempotency key. Клиент может передать свой operationKey; если не передан — сервер генерирует автоматически. Повторный запрос с тем же operationKey возвращает существующий результат без дублирования.
 
-Паттерн реализован в: assembly.service (ASSEMBLY), production-order.service (ORDER_COMPLETION), stock.service (SUPPLIER_INCOME, PRODUCTION_INCOME, SHIPMENT).
+Паттерн реализован в: production.service (ASSEMBLY, clientOperationKey), production-order.service (ORDER_COMPLETION), stock.service (SUPPLIER_INCOME, PRODUCTION_INCOME, SHIPMENT).
 
 UI debounce — дополнительная защита, не замена серверной.
 
