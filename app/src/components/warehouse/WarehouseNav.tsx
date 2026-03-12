@@ -15,7 +15,8 @@ export function WarehouseNav() {
 
   let navItems = [...baseItems];
   if (editMode) {
-    navItems.push({ href: "/warehouse/builder", label: "Конструктор" });
+    navItems.push({ href: "/warehouse/bom", label: "Состав" });
+    navItems.push({ href: "/warehouse/routing", label: "Маршруты" });
   }
   if (session?.role === "DIRECTOR") {
     navItems.push({ href: "/warehouse/production", label: "Выработка" });

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef, useEffect, type ReactNode } from "react"
+import { useState, useRef, useEffect, useLayoutEffect, useCallback, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -36,6 +37,9 @@ export function SearchableSelect<T>({
   const [query, setQuery] = useState("")
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
 
   const selectedItem = value ? items.find((item) => getKey(item) === value) ?? null : null
 
@@ -49,17 +53,46 @@ export function SearchableSelect<T>({
 
   const visibleItems = filtered.slice(0, maxItems)
 
+  const updatePosition = useCallback(() => {
+    if (!inputRef.current) return
+    const rect = inputRef.current.getBoundingClientRect()
+    setDropdownStyle({
+      position: "fixed",
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+    })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (open) updatePosition()
+  }, [open, updatePosition])
+
   useEffect(() => {
+    if (!open) return
+
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      if (
+        containerRef.current && !containerRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setOpen(false)
       }
     }
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside)
-      return () => document.removeEventListener("mousedown", handleClickOutside)
+
+    function handleScroll() {
+      updatePosition()
     }
-  }, [open])
+
+    document.addEventListener("mousedown", handleClickOutside)
+    window.addEventListener("scroll", handleScroll, true)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      window.removeEventListener("scroll", handleScroll, true)
+    }
+  }, [open, updatePosition])
 
   if (selectedItem) {
     return (
@@ -87,9 +120,34 @@ export function SearchableSelect<T>({
     )
   }
 
+  const dropdown = open && visibleItems.length > 0 ? createPortal(
+    <div
+      ref={dropdownRef}
+      style={dropdownStyle}
+      className="bg-popover border border-border rounded-md max-h-48 overflow-y-auto shadow-md"
+    >
+      {visibleItems.map((item) => (
+        <div
+          key={getKey(item)}
+          className="px-3 py-2 hover:bg-accent cursor-pointer text-sm"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            onChange(getKey(item))
+            setQuery("")
+            setOpen(false)
+          }}
+        >
+          {renderItem ? renderItem(item) : getLabel(item)}
+        </div>
+      ))}
+    </div>,
+    document.body
+  ) : null
+
   return (
     <div className={cn("relative", className)} ref={containerRef}>
       <Input
+        ref={inputRef}
         placeholder={placeholder}
         value={query}
         onChange={(e) => {
@@ -97,27 +155,11 @@ export function SearchableSelect<T>({
           setOpen(true)
         }}
         onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         disabled={disabled}
         className="bg-background border-input text-foreground text-sm h-9"
       />
-      {open && visibleItems.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md max-h-48 overflow-y-auto shadow-md">
-          {visibleItems.map((item) => (
-            <div
-              key={getKey(item)}
-              className="px-3 py-2 hover:bg-accent cursor-pointer text-sm"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onChange(getKey(item))
-                setQuery("")
-                setOpen(false)
-              }}
-            >
-              {renderItem ? renderItem(item) : getLabel(item)}
-            </div>
-          ))}
-        </div>
-      )}
+      {dropdown}
     </div>
   )
 }

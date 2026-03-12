@@ -121,14 +121,6 @@ function WarehouseLayout({ children }: { children: React.ReactNode }) {
               >
                 Удалённые
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => router.push("/warehouse/builder")}
-              >
-                Конструктор изделия
-              </Button>
             </div>
           )}
         </div>
