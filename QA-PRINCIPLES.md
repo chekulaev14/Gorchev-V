@@ -21,6 +21,7 @@
 - Рекурсивная сборка атомарна (вся цепочка от сырья до изделия в одной транзакции)
 - StockBalance может быть отрицательным (сырьё не оприходовано, но фактически на складе)
 - BOM не содержит циклов (ни прямых, ни косвенных)
+- Side-совместимость: LEFT output не содержит RIGHT inputs, RIGHT output не содержит LEFT inputs, NONE output содержит только NONE inputs. Смешивание LEFT+RIGHT в одном шаге/составе запрещено
 - Worker auth не даёт доступ к web-модулям
 - WAREHOUSE не имеет доступ к admin API
 - Unauthenticated → protected API → 401

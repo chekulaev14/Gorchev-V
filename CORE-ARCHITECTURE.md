@@ -88,6 +88,7 @@ Logs / зарплата
 - Один Routing = последовательность шагов (1..N), каждый шаг может иметь несколько входов (RoutingStepInput[])
 - Рекурсия только между маршрутами, не внутри одного
 - Защита от циклов: visited Set хранит пары (itemId, routingId) в produce()
+- Side-совместимость: output LEFT → inputs LEFT/NONE; output RIGHT → inputs RIGHT/NONE; output NONE → inputs только NONE. Проверяется при создании/обновлении/активации маршрута и BOM
 
 Операции:
 - SUM(workers.quantity) = ProductionOperation.quantity
@@ -207,6 +208,13 @@ npx tsx scripts/rebuild-balances.ts rebuild
 - Чтение выработки для UI (логи + зарплата)
 - Читает из ProductionOperationWorker + fallback ProductionLog
 - Не пишет данные
+
+### setup-import.service
+- Массовая загрузка данных (load, validate, import) для 4 табов: nomenclature, stock, bom, routing
+- Двухэтапный flow: validate → import. Import повторно вызывает validate
+- Работает ТОЛЬКО через существующие сервисы (nomenclature, stock, bom-version, routing)
+- Валидация: side-совместимость, cycle detection (BOM DFS), типы, уникальность кодов, лимиты
+- Import атомарен ($transaction), всё или ничего
 
 ### bom-version.service
 - Версионирование состава (Bom + BomLine)

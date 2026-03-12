@@ -7,16 +7,16 @@
 ## 1. Общая архитектура
 
 ```
-Terminal UI              Warehouse UI
-     │                        │
-     ▼                        ▼
-  API Routes               API Routes
-  /terminal/*              /routing, /bom, /stock
-     │                        │
-     └────────────┬───────────┘
+Terminal UI              Warehouse UI              Setup UI
+     │                        │                        │
+     ▼                        ▼                        ▼
+  API Routes               API Routes              API Routes
+  /terminal/*              /routing, /bom, /stock   /setup/*
+     │                        │                        │
+     └────────────┬───────────┴────────────────────────┘
                   ▼
            Domain Services
-   production   routing   stock   bom-version
+   production   routing   stock   bom-version   setup-import
                   │
                   ▼
       Persistence Layer (Prisma / SQL)

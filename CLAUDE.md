@@ -54,6 +54,7 @@ QA:
 
 - Терминал рабочего (вход по PIN): http://localhost:3000/terminal
 - Склад: http://localhost:3000/warehouse
+- Массовая загрузка: http://localhost:3000/warehouse/setup
 
 ## Разработка и деплой
 
@@ -73,11 +74,12 @@ QA:
 - [app/src/components/warehouse/](app/src/components/warehouse/) — модуль склада (номенклатура, остатки, сборка, операции)
 - [app/src/components/warehouse/bom-constructor/](app/src/components/warehouse/bom-constructor/) — BOM-конструктор (версионированный состав)
 - [app/src/components/warehouse/routing-constructor/](app/src/components/warehouse/routing-constructor/) — Routing-конструктор (маршруты с множественными входами)
+- [app/src/components/warehouse/setup/](app/src/components/warehouse/setup/) — массовая загрузка (4 таба, editable таблица, paste из Excel)
 - [app/src/components/ui/](app/src/components/ui/) — shared: shadcn/ui компоненты
-- [app/src/services/](app/src/services/) — бизнес-логика (auth, user, stock, routing, production, bom, bom-version, nomenclature, product, process, production-order). assembly.service — deprecated
-- [app/src/lib/](app/src/lib/) — shared: prisma client, auth (JWT/RBAC), типы, утилиты
+- [app/src/services/](app/src/services/) — бизнес-логика (auth, user, stock, routing, production, bom, bom-version, nomenclature, product, process, production-order, setup-import). assembly.service — deprecated
+- [app/src/lib/](app/src/lib/) — shared: prisma client, auth (JWT/RBAC), типы, утилиты, schemas (setup-import.schema.ts)
 - [app/src/data/](app/src/data/) — статические данные (только для seed)
-- [app/src/app/api/](app/src/app/api/) — API routes по модулям (auth/, users/, config/, terminal/, nomenclature/, stock/, bom/, routing/)
+- [app/src/app/api/](app/src/app/api/) — API routes по модулям (auth/, users/, config/, terminal/, nomenclature/, stock/, bom/, routing/, setup/)
 - [app/prisma/](app/prisma/) — Prisma schema и миграции
 - [app/scripts/rebuild-balances.ts](app/scripts/rebuild-balances.ts) — пересчёт StockBalance (rebuild/reconcile)
 - [app/scripts/seed-demo-parts.ts](app/scripts/seed-demo-parts.ts) — демо-номенклатура кронштейнов (7 items, BOM, приход)
