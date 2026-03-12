@@ -5,6 +5,10 @@
  *   rebuild   — truncate stock_balances, полный пересчёт
  *   reconcile — сверка без изменений, показ расхождений
  *
+ * Баланс по location:
+ *   balance(item, location) = SUM(quantity WHERE to=location) - SUM(quantity WHERE from=location)
+ *   quantity всегда > 0, from/to определяет направление.
+ *
  * Запуск: npx tsx scripts/rebuild-balances.ts rebuild|reconcile
  */
 
@@ -26,17 +30,9 @@ function getDatabaseUrl(): string {
   throw new Error("DATABASE_URL not found");
 }
 
-const INCOME_TYPES = [
-  "SUPPLIER_INCOME",
-  "PRODUCTION_INCOME",
-  "ASSEMBLY_INCOME",
-  "ADJUSTMENT_INCOME",
-];
-
-const DEFAULT_LOCATION = "MAIN";
-
 interface BalanceRow {
   item_id: string;
+  location_id: string;
   computed: number;
 }
 
@@ -44,14 +40,25 @@ const pool = new pg.Pool({ connectionString: getDatabaseUrl() });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+/**
+ * Пересчёт балансов через from/to location.
+ * Для каждого (item, location):
+ *   income = SUM(quantity) WHERE to_location_id = location
+ *   expense = SUM(quantity) WHERE from_location_id = location
+ *   balance = income - expense
+ */
 async function computeBalances(): Promise<BalanceRow[]> {
   return prisma.$queryRaw<BalanceRow[]>`
-    SELECT item_id,
-      COALESCE(SUM(
-        CASE WHEN type = ANY(${INCOME_TYPES}) THEN quantity ELSE -quantity END
-      ), 0)::numeric AS computed
-    FROM stock_movements
-    GROUP BY item_id
+    SELECT item_id, location_id, SUM(qty)::numeric AS computed
+    FROM (
+      SELECT item_id, to_location_id AS location_id, quantity AS qty
+      FROM stock_movements
+      UNION ALL
+      SELECT item_id, from_location_id AS location_id, -quantity AS qty
+      FROM stock_movements
+    ) movements
+    GROUP BY item_id, location_id
+    HAVING SUM(qty) != 0
   `;
 }
 
@@ -59,7 +66,7 @@ async function rebuild() {
   console.log("=== REBUILD: пересчёт StockBalance ===\n");
 
   const rows = await computeBalances();
-  console.log(`Найдено ${rows.length} позиций с движениями.`);
+  console.log(`Найдено ${rows.length} пар (item, location) с ненулевым балансом.`);
 
   await prisma.$queryRaw`TRUNCATE stock_balances`;
   console.log("stock_balances очищена.");
@@ -70,7 +77,7 @@ async function rebuild() {
     if (qty === 0) continue;
     await prisma.$queryRaw`
       INSERT INTO stock_balances (item_id, location_id, quantity, updated_at)
-      VALUES (${row.item_id}, ${DEFAULT_LOCATION}, ${qty}, NOW())
+      VALUES (${row.item_id}, ${row.location_id}, ${qty}, NOW())
     `;
     inserted++;
   }
@@ -83,25 +90,25 @@ async function reconcile() {
   console.log("=== RECONCILE: сверка StockBalance ===\n");
 
   const computed = await computeBalances();
-  const currentRows = await prisma.$queryRaw<{ item_id: string; quantity: number }[]>`
-    SELECT item_id, quantity FROM stock_balances WHERE location_id = ${DEFAULT_LOCATION}
+  const currentRows = await prisma.$queryRaw<{ item_id: string; location_id: string; quantity: number }[]>`
+    SELECT item_id, location_id, quantity FROM stock_balances
   `;
 
   const currentMap: Record<string, number> = {};
-  for (const row of currentRows) currentMap[row.item_id] = Number(row.quantity);
+  for (const row of currentRows) currentMap[`${row.item_id}:${row.location_id}`] = Number(row.quantity);
 
   const computedMap: Record<string, number> = {};
-  for (const row of computed) computedMap[row.item_id] = Number(row.computed);
+  for (const row of computed) computedMap[`${row.item_id}:${row.location_id}`] = Number(row.computed);
 
-  const allIds = new Set([...Object.keys(currentMap), ...Object.keys(computedMap)]);
-  const diffs: { itemId: string; current: number; computed: number; delta: number }[] = [];
+  const allKeys = new Set([...Object.keys(currentMap), ...Object.keys(computedMap)]);
+  const diffs: { key: string; current: number; computed: number; delta: number }[] = [];
 
-  for (const id of allIds) {
-    const current = currentMap[id] ?? 0;
-    const comp = computedMap[id] ?? 0;
+  for (const key of allKeys) {
+    const current = currentMap[key] ?? 0;
+    const comp = computedMap[key] ?? 0;
     const delta = Math.round((comp - current) * 10000) / 10000;
     if (delta !== 0) {
-      diffs.push({ itemId: id, current, computed: comp, delta });
+      diffs.push({ key, current, computed: comp, delta });
     }
   }
 
@@ -109,10 +116,10 @@ async function reconcile() {
     console.log("Расхождений нет. StockBalance актуален.");
   } else {
     console.log(`Найдено ${diffs.length} расхождений:\n`);
-    console.log("item_id | current | computed | delta");
-    console.log("--------|---------|----------|------");
+    console.log("item:location | current | computed | delta");
+    console.log("-------------|---------|----------|------");
     for (const d of diffs) {
-      console.log(`${d.itemId} | ${d.current} | ${d.computed} | ${d.delta > 0 ? "+" : ""}${d.delta}`);
+      console.log(`${d.key} | ${d.current} | ${d.computed} | ${d.delta > 0 ? "+" : ""}${d.delta}`);
     }
     console.log("\nДля исправления запустите: npx tsx scripts/rebuild-balances.ts rebuild");
   }

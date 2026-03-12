@@ -270,7 +270,7 @@ async function main() {
         itemId: inc.itemId,
         quantity: inc.quantity,
         operationId: operation.id,
-        fromLocationId: null,
+        fromLocationId: "EXTERNAL",
         toLocationId: LOCATION,
         comment: "Начальный приход — демо seed штамповка",
       },

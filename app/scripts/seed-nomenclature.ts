@@ -53,6 +53,7 @@ async function addStock(tx: typeof prisma, itemId: string, quantity: number) {
       type: "SUPPLIER_INCOME",
       itemId,
       quantity,
+      fromLocationId: "EXTERNAL",
       toLocationId: "MAIN",
       operationId: op.id,
     },

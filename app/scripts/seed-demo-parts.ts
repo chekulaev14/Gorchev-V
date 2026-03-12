@@ -183,7 +183,7 @@ async function main() {
         itemId: "demo-mat-steel-4mm",
         quantity: 500,
         operationId: operation.id,
-        fromLocationId: null,
+        fromLocationId: "EXTERNAL",
         toLocationId: LOCATION,
         comment: "Начальный приход — демо seed",
       },
