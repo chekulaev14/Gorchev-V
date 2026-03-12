@@ -25,23 +25,18 @@ export function Terminal() {
     api.post("/api/auth/logout", undefined, { silent: true }).catch(() => {});
   }, []);
 
-  // Автовыход по таймауту бездействия
   useEffect(() => {
     if (!session) return;
-
     const interval = setInterval(() => {
       if (Date.now() - lastActivity > INACTIVITY_TIMEOUT) {
         handleLogout();
       }
     }, 1000);
-
     return () => clearInterval(interval);
   }, [session, lastActivity, handleLogout]);
 
-  // Отслеживание активности
   useEffect(() => {
     if (!session) return;
-
     const events = ["touchstart", "mousedown", "keydown", "scroll"];
     events.forEach((e) => window.addEventListener(e, resetActivity));
     return () => {
@@ -58,19 +53,19 @@ export function Terminal() {
     resetActivity();
   };
 
+  /** Отправка через /api/terminal/produce с поддержкой нескольких рабочих */
   const handleSubmit = async (
     partId: string,
-    partName: string,
-    quantity: number,
-    pricePerUnit: number
+    _partName: string,
+    workers: { workerId: string; quantity: number }[],
   ): Promise<string | null> => {
     resetActivity();
     try {
-      await api.post("/api/terminal/output", {
+      const clientOperationKey = `term-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      await api.post("/api/terminal/produce", {
         itemId: partId,
-        itemName: partName,
-        quantity,
-        pricePerUnit,
+        workers,
+        clientOperationKey,
       }, { silent: true });
       return null;
     } catch (err) {
@@ -86,6 +81,7 @@ export function Terminal() {
   return (
     <CatalogScreen
       workerName={session.workerName}
+      workerId={session.workerId}
       onLogout={handleLogout}
       onSubmit={handleSubmit}
     />

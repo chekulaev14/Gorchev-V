@@ -5,20 +5,23 @@ import type { Category, Product, Part, CatalogData } from "./types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PartDetail } from "./PartDetail";
+import { WorkersStep } from "./WorkersStep";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { api } from "@/lib/api-client";
 
 interface CatalogScreenProps {
   workerName: string;
+  workerId: string;
   onLogout: () => void;
-  onSubmit: (partId: string, partName: string, quantity: number, pricePerUnit: number) => Promise<string | null>;
+  onSubmit: (partId: string, partName: string, workers: { workerId: string; quantity: number }[]) => Promise<string | null>;
 }
 
 type View =
   | { type: "categories" }
   | { type: "products"; category: Category }
   | { type: "parts"; product: Product }
-  | { type: "partDetail"; part: Part; product: Product; fromBlanks?: boolean; fromProducts?: Category };
+  | { type: "partDetail"; part: Part; product: Product; fromBlanks?: boolean; fromProducts?: Category }
+  | { type: "workersStep"; part: Part; product: Product; quantity: number; fromBlanks?: boolean; fromProducts?: Category };
 
 function sideLabel(side?: string): string {
   if (side === "LEFT") return " (Л)";
@@ -26,7 +29,7 @@ function sideLabel(side?: string): string {
   return "";
 }
 
-export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenProps) {
+export function CatalogScreen({ workerName, workerId, onLogout, onSubmit }: CatalogScreenProps) {
   const [view, setView] = useState<View>({ type: "categories" });
   const [categories, setCategories] = useState<Category[]>([]);
   const [blanks, setBlanks] = useState<Product[]>([]);
@@ -51,27 +54,23 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
         setView({ type: "categories" });
         break;
       case "partDetail":
-        if (view.fromBlanks) {
-          setView({ type: "categories" });
-        } else if (view.fromProducts) {
-          setView({ type: "products", category: view.fromProducts });
-        } else {
-          setView({ type: "parts", product: view.product });
-        }
+        if (view.fromBlanks) setView({ type: "categories" });
+        else if (view.fromProducts) setView({ type: "products", category: view.fromProducts });
+        else setView({ type: "parts", product: view.product });
+        break;
+      case "workersStep":
+        setView({ type: "partDetail", part: view.part, product: view.product, fromBlanks: view.fromBlanks, fromProducts: view.fromProducts });
         break;
     }
   };
 
   const title = (() => {
     switch (view.type) {
-      case "categories":
-        return "Каталог";
-      case "products":
-        return view.category.name;
-      case "parts":
-        return view.product.name + sideLabel(view.product.side);
-      case "partDetail":
-        return view.part.name;
+      case "categories": return "Каталог";
+      case "products": return view.category.name;
+      case "parts": return view.product.name + sideLabel(view.product.side);
+      case "partDetail": return view.part.name;
+      case "workersStep": return "Групповая операция";
     }
   })();
 
@@ -92,11 +91,7 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
       <header className="flex items-center justify-between px-3 py-2 bg-card border-b border-border">
         <div className="flex items-center gap-2">
           {view.type !== "categories" && (
-            <Button
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground text-base px-2 h-8"
-              onClick={handleBack}
-            >
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground text-base px-2 h-8" onClick={handleBack}>
               ←
             </Button>
           )}
@@ -105,12 +100,7 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-xs">{workerName}</span>
           <ThemeToggle />
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border text-muted-foreground hover:bg-accent h-7 text-xs px-2"
-            onClick={onLogout}
-          >
+          <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:bg-accent h-7 text-xs px-2" onClick={onLogout}>
             Выход
           </Button>
         </div>
@@ -128,49 +118,26 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
                     <h2 className="text-sm font-semibold text-foreground mb-2">Изделия</h2>
                     <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                       {categories.map((cat) => (
-                        <Card
-                          key={cat.id}
-                          className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
-                          onClick={() => setView({ type: "products", category: cat })}
-                        >
+                        <Card key={cat.id} className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden" onClick={() => setView({ type: "products", category: cat })}>
                           <div className="aspect-square relative">
-                            <img
-                              src={cat.image}
-                              alt={cat.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
                           </div>
-                          <div className="p-1.5">
-                            <h3 className="text-foreground font-medium text-xs">{cat.name}</h3>
-                          </div>
+                          <div className="p-1.5"><h3 className="text-foreground font-medium text-xs">{cat.name}</h3></div>
                         </Card>
                       ))}
                     </div>
                   </section>
                 )}
-
                 {blanks.length > 0 && (
                   <section>
                     <h2 className="text-sm font-semibold text-foreground mb-2">Детали</h2>
                     <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                       {blanks.map((blank) => (
-                        <Card
-                          key={blank.id}
-                          className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
-                          onClick={() => handleBlankClick(blank)}
-                        >
+                        <Card key={blank.id} className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden" onClick={() => handleBlankClick(blank)}>
                           <div className="aspect-square relative">
-                            <img
-                              src={blank.images[0]}
-                              alt={blank.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={blank.images[0]} alt={blank.name} className="w-full h-full object-cover" />
                           </div>
-                          <div className="p-1.5">
-                            <h3 className="text-foreground font-medium text-xs">
-                              {blank.name}{sideLabel(blank.side)}
-                            </h3>
-                          </div>
+                          <div className="p-1.5"><h3 className="text-foreground font-medium text-xs">{blank.name}{sideLabel(blank.side)}</h3></div>
                         </Card>
                       ))}
                     </div>
@@ -182,33 +149,13 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
             {view.type === "products" && (
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                 {view.category.products.map((product) => (
-                  <Card
-                    key={product.id}
-                    className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
+                  <Card key={product.id} className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
                     onClick={() => {
-                      const asPart: Part = {
-                        id: product.id,
-                        name: product.name + sideLabel(product.side),
-                        description: product.description,
-                        images: product.images,
-                        pricePerUnit: 0,
-                        weight: product.weight,
-                      };
+                      const asPart: Part = { id: product.id, name: product.name + sideLabel(product.side), description: product.description, images: product.images, pricePerUnit: 0, weight: product.weight };
                       setView({ type: "partDetail", part: asPart, product, fromProducts: view.category });
-                    }}
-                  >
-                    <div className="aspect-square relative">
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-1.5">
-                      <h3 className="text-foreground font-medium text-xs">
-                        {product.name}{sideLabel(product.side)}
-                      </h3>
-                    </div>
+                    }}>
+                    <div className="aspect-square relative"><img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" /></div>
+                    <div className="p-1.5"><h3 className="text-foreground font-medium text-xs">{product.name}{sideLabel(product.side)}</h3></div>
                   </Card>
                 ))}
               </div>
@@ -219,21 +166,9 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
                 <h2 className="text-sm font-medium text-muted-foreground">Комплектующие:</h2>
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                   {view.product.parts.map((part) => (
-                    <Card
-                      key={part.id}
-                      className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden"
-                      onClick={() => setView({ type: "partDetail", part, product: view.product })}
-                    >
-                      <div className="aspect-square relative">
-                        <img
-                          src={part.images[0]}
-                          alt={part.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="p-1.5">
-                        <h3 className="text-foreground font-medium text-[11px]">{part.name}</h3>
-                      </div>
+                    <Card key={part.id} className="bg-card border-border cursor-pointer hover:border-ring active:bg-accent transition-all overflow-hidden" onClick={() => setView({ type: "partDetail", part, product: view.product })}>
+                      <div className="aspect-square relative"><img src={part.images[0]} alt={part.name} className="w-full h-full object-cover" /></div>
+                      <div className="p-1.5"><h3 className="text-foreground font-medium text-[11px]">{part.name}</h3></div>
                     </Card>
                   ))}
                 </div>
@@ -243,9 +178,22 @@ export function CatalogScreen({ workerName, onLogout, onSubmit }: CatalogScreenP
             {view.type === "partDetail" && (
               <PartDetail
                 part={view.part}
-                onSubmit={(quantity) =>
-                  onSubmit(view.part.id, view.part.name, quantity, view.part.pricePerUnit)
-                }
+                onSubmit={(quantity) => onSubmit(view.part.id, view.part.name, [{ workerId, quantity }])}
+                onWithPartner={(quantity) => setView({
+                  type: "workersStep", part: view.part, product: view.product, quantity,
+                  fromBlanks: view.fromBlanks, fromProducts: view.fromProducts,
+                })}
+              />
+            )}
+
+            {view.type === "workersStep" && (
+              <WorkersStep
+                partName={view.part.name}
+                currentWorker={{ workerId, workerName }}
+                initialQuantity={view.quantity}
+                pricePerUnit={view.part.pricePerUnit}
+                onSubmit={(workers) => onSubmit(view.part.id, view.part.name, workers)}
+                onBack={handleBack}
               />
             )}
           </>

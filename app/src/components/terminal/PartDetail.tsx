@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 interface PartDetailProps {
   part: Part;
   onSubmit: (quantity: number) => Promise<string | null>;
+  onWithPartner?: (quantity: number) => void;
 }
 
-export function PartDetail({ part, onSubmit }: PartDetailProps) {
+export function PartDetail({ part, onSubmit, onWithPartner }: PartDetailProps) {
   const [currentImage, setCurrentImage] = useState(0);
   const [quantity, setQuantity] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -165,13 +166,25 @@ export function PartDetail({ part, onSubmit }: PartDetailProps) {
             )}
           </div>
 
-          <Button
-            className="w-full h-9 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-30"
-            disabled={!quantity || parseInt(quantity) === 0 || sending}
-            onClick={handleSubmit}
-          >
-            {sending ? "Отправка..." : "Отправить"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1 h-9 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-30"
+              disabled={!quantity || parseInt(quantity) === 0 || sending}
+              onClick={handleSubmit}
+            >
+              {sending ? "Отправка..." : "Отправить"}
+            </Button>
+            {onWithPartner && (
+              <Button
+                variant="outline"
+                className="h-9 text-xs px-3 rounded-lg border-blue-300 text-blue-600 hover:bg-blue-50 disabled:opacity-30"
+                disabled={!quantity || parseInt(quantity) === 0 || sending}
+                onClick={() => onWithPartner(parseInt(quantity))}
+              >
+                С напарником
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
