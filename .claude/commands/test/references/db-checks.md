@@ -32,14 +32,20 @@ SELECT * FROM chain WHERE child_item_id = ANY(path);
 ## Складские остатки
 
 ```sql
--- Баланс = сумма движений (инвариант)
-SELECT sb.item_id, sb.quantity as balance,
-  COALESCE(SUM(sm.quantity), 0) as sum_movements,
-  sb.quantity - COALESCE(SUM(sm.quantity), 0) as diff
-FROM stock_balance sb
-LEFT JOIN stock_movement sm ON sm.item_id = sb.item_id AND sm.location_id = sb.location_id
-GROUP BY sb.item_id, sb.quantity, sb.location_id
-HAVING sb.quantity != COALESCE(SUM(sm.quantity), 0);
+-- Баланс = inflow - outflow по location (инвариант)
+SELECT sb.item_id, sb.location_id, sb.quantity as balance,
+  COALESCE(inflow.total, 0) - COALESCE(outflow.total, 0) as computed,
+  sb.quantity - (COALESCE(inflow.total, 0) - COALESCE(outflow.total, 0)) as diff
+FROM stock_balances sb
+LEFT JOIN (
+  SELECT item_id, to_location_id as location_id, SUM(quantity) as total
+  FROM stock_movements GROUP BY item_id, to_location_id
+) inflow ON inflow.item_id = sb.item_id AND inflow.location_id = sb.location_id
+LEFT JOIN (
+  SELECT item_id, from_location_id as location_id, SUM(quantity) as total
+  FROM stock_movements GROUP BY item_id, from_location_id
+) outflow ON outflow.item_id = sb.item_id AND outflow.location_id = sb.location_id
+HAVING sb.quantity != COALESCE(inflow.total, 0) - COALESCE(outflow.total, 0);
 
 -- Должно вернуть 0 строк. Если есть строки — расхождение.
 ```
