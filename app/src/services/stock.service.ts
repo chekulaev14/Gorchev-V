@@ -12,15 +12,25 @@ const INCOME_TYPES: MovementType[] = [
   "ADJUSTMENT_INCOME",
 ];
 
-/** Инварианты from/to location по типу движения */
+/** Маппинг from/to Location по типу движения */
+const LOCATION_MAP: Record<string, { from: string; to: string }> = {
+  SUPPLIER_INCOME:      { from: "EXTERNAL",    to: "MAIN" },
+  PRODUCTION_INCOME:    { from: "PRODUCTION",  to: "MAIN" },
+  ASSEMBLY_WRITE_OFF:   { from: "MAIN",        to: "PRODUCTION" },
+  ASSEMBLY_INCOME:      { from: "PRODUCTION",  to: "MAIN" },
+  ADJUSTMENT_INCOME:    { from: "ADJUSTMENT",  to: "MAIN" },
+  ADJUSTMENT_WRITE_OFF: { from: "MAIN",        to: "ADJUSTMENT" },
+  SHIPMENT_WRITE_OFF:   { from: "MAIN",        to: "EXTERNAL" },
+};
+
 function getLocationsByType(
   type: MovementType,
-  locationId: string,
-): { fromLocationId: string | null; toLocationId: string | null } {
-  if (INCOME_TYPES.includes(type)) {
-    return { fromLocationId: null, toLocationId: locationId };
+): { fromLocationId: string; toLocationId: string } {
+  const mapping = LOCATION_MAP[type];
+  if (!mapping) {
+    return { fromLocationId: "MAIN", toLocationId: "MAIN" };
   }
-  return { fromLocationId: locationId, toLocationId: null };
+  return { fromLocationId: mapping.from, toLocationId: mapping.to };
 }
 
 /** Баланс-дельта: +1 для прихода, -1 для списания */
@@ -81,7 +91,7 @@ export async function createMovement(data: {
   operationId?: string;
 }) {
   const locationId = data.locationId ?? DEFAULT_LOCATION;
-  const { fromLocationId, toLocationId } = getLocationsByType(data.type, locationId);
+  const { fromLocationId, toLocationId } = getLocationsByType(data.type);
   const delta = balanceDelta(data.type);
 
   return prisma.$transaction(async (tx) => {
@@ -179,7 +189,7 @@ export async function createIncomeOperation(params: {
       FOR UPDATE
     `;
 
-    const { fromLocationId, toLocationId } = getLocationsByType(type, DEFAULT_LOCATION);
+    const { fromLocationId, toLocationId } = getLocationsByType(type);
 
     const movement = await tx.stockMovement.create({
       data: {
@@ -274,8 +284,8 @@ export async function createShipmentOperation(params: {
         comment,
         createdById,
         operationId: operation.id,
-        fromLocationId: DEFAULT_LOCATION,
-        toLocationId: null,
+        fromLocationId: "MAIN",
+        toLocationId: "EXTERNAL",
       },
     });
 
@@ -352,7 +362,7 @@ export async function createAdjustmentOperation(params: {
       data: { operationKey: opKey, type: "ADJUSTMENT", createdById },
     });
 
-    const { fromLocationId, toLocationId } = getLocationsByType(movementType, DEFAULT_LOCATION);
+    const { fromLocationId, toLocationId } = getLocationsByType(movementType);
 
     const movement = await tx.stockMovement.create({
       data: {

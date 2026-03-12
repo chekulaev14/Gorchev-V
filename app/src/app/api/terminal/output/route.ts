@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { recordOutput, AssemblyError } from "@/services/terminal-output.service";
+import { recordOutput } from "@/services/terminal-output.service";
 import { getAuthContext } from "@/lib/auth-helper";
 import { handleRouteError } from "@/lib/api/handle-route-error";
 
@@ -23,12 +23,6 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ ok: true, ...result }, { status: 201 });
   } catch (err) {
-    if (err instanceof AssemblyError) {
-      return NextResponse.json(
-        { error: err.message },
-        { status: 400 },
-      );
-    }
     return handleRouteError(err);
   }
 }

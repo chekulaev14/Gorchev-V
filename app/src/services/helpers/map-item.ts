@@ -13,6 +13,7 @@ interface DbItem {
   weight?: { toNumber(): number } | number | null;
   side?: string;
   baseItemId?: string | null;
+  hasRecipe?: boolean;
 }
 
 export function mapItem(dbItem: DbItem) {
@@ -29,5 +30,6 @@ export function mapItem(dbItem: DbItem) {
     weight: toNumber(dbItem.weight),
     side: dbItem.side ?? "NONE",
     baseItemId: dbItem.baseItemId ?? null,
+    hasRecipe: dbItem.hasRecipe ?? false,
   };
 }

@@ -104,7 +104,7 @@ async function assembleNode(
         createdById: ctx.createdById,
         operationId: ctx.operationId,
         fromLocationId: DEFAULT_LOCATION,
-        toLocationId: null,
+        toLocationId: "PRODUCTION",
         comment: `Списание на сборку ${itemName} x${quantity}`,
       },
     });
@@ -125,7 +125,7 @@ async function assembleNode(
       workerId: ctx.workerId,
       createdById: ctx.createdById,
       operationId: ctx.operationId,
-      fromLocationId: null,
+      fromLocationId: "PRODUCTION",
       toLocationId: DEFAULT_LOCATION,
       comment: `Сборка ${quantity} шт`,
     },

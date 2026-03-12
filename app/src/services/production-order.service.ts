@@ -278,7 +278,7 @@ export async function completeOrder(id: string, workerId: string, changedById?: 
           orderId: id,
           operationId: operation.id,
           fromLocationId: DEFAULT_LOCATION,
-          toLocationId: null,
+          toLocationId: "PRODUCTION",
           comment: `Списание по заказу: ${order.item_name} x${quantityToComplete}`,
         },
       });
@@ -297,7 +297,7 @@ export async function completeOrder(id: string, workerId: string, changedById?: 
         workerId,
         orderId: id,
         operationId: operation.id,
-        fromLocationId: null,
+        fromLocationId: "PRODUCTION",
         toLocationId: DEFAULT_LOCATION,
         comment: `Выпуск по заказу: ${order.item_name} x${quantityToComplete}`,
       },

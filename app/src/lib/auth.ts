@@ -50,6 +50,7 @@ const PUBLIC_ROUTES: RegExp[] = [
 const ROUTE_RULES: RouteRule[] = [
   // Terminal
   { pattern: /^\/api\/terminal\/output$/, methods: ["POST"], roles: ["WORKER", "WAREHOUSE", "DIRECTOR", "ADMIN"] },
+  { pattern: /^\/api\/terminal\/produce$/, methods: ["POST"], roles: ["WORKER", "WAREHOUSE", "DIRECTOR", "ADMIN"] },
   { pattern: /^\/api\/terminal\/catalog$/, methods: ["GET"], roles: ["WORKER", "WAREHOUSE", "DIRECTOR", "ADMIN"] },
   { pattern: /^\/api\/terminal\/logs$/, methods: ["GET"], roles: ["DIRECTOR", "ADMIN"] },
 
@@ -64,6 +65,10 @@ const ROUTE_RULES: RouteRule[] = [
 
   // BOM
   { pattern: /^\/api\/bom$/, methods: ["GET", "POST", "PUT", "DELETE"], roles: ["WAREHOUSE", "DIRECTOR", "ADMIN"] },
+  { pattern: /^\/api\/bom\/versions(\/[^/]+)?(\/[^/]+)?$/, methods: ["GET", "POST", "PUT", "DELETE"], roles: ["WAREHOUSE", "DIRECTOR", "ADMIN"] },
+
+  // Routing
+  { pattern: /^\/api\/routing(\/[^/]+)?(\/[^/]+)?$/, methods: ["GET", "POST", "PUT", "DELETE"], roles: ["WAREHOUSE", "DIRECTOR", "ADMIN"] },
 
   // Product create
   { pattern: /^\/api\/product-create$/, methods: ["POST"], roles: ["WAREHOUSE", "DIRECTOR", "ADMIN"] },

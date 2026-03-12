@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { assemble, AssemblyError } from "./assembly.service";
+import { produce } from "./production.service";
+import { getProducingStep } from "./routing.service";
 
 interface OutputParams {
   itemId: string;
@@ -14,16 +15,21 @@ interface OutputResult {
   total: number;
 }
 
-export { AssemblyError };
-
+/**
+ * @deprecated Используй POST /api/terminal/produce + production.service.produce()
+ * Оставлен для обратной совместимости старого endpoint /api/terminal/output
+ */
 export async function recordOutput(params: OutputParams): Promise<OutputResult> {
   const { itemId, itemName, quantity, pricePerUnit = 0, workerId } = params;
   const qty = Math.round(quantity);
   const total = qty * pricePerUnit;
 
-  const children = await prisma.bomEntry.findMany({ where: { parentId: itemId } });
-  if (children.length > 0) {
-    await assemble({ itemId, quantity: qty, workerId });
+  const step = await getProducingStep(itemId);
+  if (step) {
+    await produce({
+      itemId,
+      workers: [{ workerId, quantity: qty }],
+    });
   }
 
   const log = await prisma.productionLog.create({

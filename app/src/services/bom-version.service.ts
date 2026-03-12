@@ -127,23 +127,60 @@ export async function activateVersion(bomId: string) {
       data: { status: "ACTIVE", effectiveFrom: new Date() },
     });
 
-    // Синхронизируем runtime BomEntry
-    await tx.bomEntry.deleteMany({ where: { parentId: bom.itemId } });
-    for (const line of bom.lines) {
-      await tx.bomEntry.create({
-        data: {
-          parentId: bom.itemId,
-          childId: line.componentItemId,
-          quantity: line.quantity,
-        },
-      });
-    }
+    // BomEntry sync removed — production flow uses Routing, not BomEntry
 
     return tx.bom.findUnique({
       where: { id: bomId },
       include: { lines: true },
     });
   });
+}
+
+/** Обновить строки черновика (полная перезапись) */
+export async function updateDraft(bomId: string, lines: { componentItemId: string; quantity: number; scrapFactor?: number; note?: string }[]) {
+  const bom = await prisma.bom.findUnique({ where: { id: bomId } });
+  if (!bom) throw new BomVersionError("Версия BOM не найдена");
+  if (bom.status !== "DRAFT") {
+    throw new BomVersionError("Можно редактировать только черновик");
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await tx.bomLine.deleteMany({ where: { bomId } });
+
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      await tx.bomLine.create({
+        data: {
+          bomId,
+          lineNo: i + 1,
+          componentItemId: l.componentItemId,
+          quantity: l.quantity,
+          scrapFactor: l.scrapFactor ?? null,
+          note: l.note ?? null,
+        },
+      });
+    }
+
+    return tx.bom.findUnique({
+      where: { id: bomId },
+      include: {
+        lines: {
+          include: { componentItem: { select: { id: true, name: true, code: true } } },
+          orderBy: { lineNo: "asc" },
+        },
+      },
+    });
+  });
+}
+
+/** Удалить черновик */
+export async function deleteDraft(bomId: string) {
+  const bom = await prisma.bom.findUnique({ where: { id: bomId } });
+  if (!bom) throw new BomVersionError("Версия BOM не найдена");
+  if (bom.status !== "DRAFT") {
+    throw new BomVersionError("Можно удалить только черновик");
+  }
+  return prisma.bom.delete({ where: { id: bomId } });
 }
 
 export async function archiveVersion(bomId: string) {

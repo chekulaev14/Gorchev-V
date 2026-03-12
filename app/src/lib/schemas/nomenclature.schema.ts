@@ -18,6 +18,7 @@ export const updateItemSchema = z.object({
   description: z.string().nullable().optional(),
   pricePerUnit: z.number().min(0, "Цена не может быть отрицательной").nullable().optional(),
   weight: z.number().positive("Вес должен быть положительным").nullable().optional(),
+  hasRecipe: z.boolean().optional(),
 });
 
 export type CreateItemInput = z.infer<typeof createItemSchema>;

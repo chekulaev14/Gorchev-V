@@ -17,6 +17,7 @@ export interface NomenclatureItem {
   images?: string[];
   pricePerUnit?: number;
   weight?: number | null;
+  hasRecipe?: boolean;
   isDeleted?: boolean;
 }
 
