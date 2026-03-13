@@ -15,11 +15,11 @@ export function WarehouseNav() {
 
   let navItems = [...baseItems];
   if (editMode) {
-    navItems.push({ href: "/warehouse/bom", label: "Состав" });
+    // navItems.push({ href: "/warehouse/bom", label: "Состав" }); // скрыто — пока используются только маршруты
     navItems.push({ href: "/warehouse/routing", label: "Маршруты" });
     navItems.push({ href: "/warehouse/setup", label: "Массовая загрузка" });
   }
-  if (session?.role === "DIRECTOR") {
+  if (session?.role === "DIRECTOR" || session?.role === "ADMIN") {
     navItems.push({ href: "/warehouse/production", label: "Выработка" });
   }
 

@@ -30,7 +30,7 @@ export default function ProductionPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.role !== "DIRECTOR") return;
+    if (session?.role !== "DIRECTOR" && session?.role !== "ADMIN") return;
     setLoading(true);
     api.get<{ logs: LogEntry[]; summary: WorkerSummary[] }>(`/api/terminal/logs?days=${days}`, { silent: true })
       .then((data) => {
@@ -41,7 +41,7 @@ export default function ProductionPage() {
       .finally(() => setLoading(false));
   }, [days, session]);
 
-  if (session?.role !== "DIRECTOR") {
+  if (session?.role !== "DIRECTOR" && session?.role !== "ADMIN") {
     return <p className="text-muted-foreground text-sm">Нет доступа</p>;
   }
 
