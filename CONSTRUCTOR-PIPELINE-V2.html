@@ -567,9 +567,9 @@ function PropsPanel({ items, selectedId, collapsed, onToggle, onUpdateItem, onUp
                 </div>
               </div>
             `}
-            <div className="prop-group" style=${{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--gray-100)' }}>
+            ${type !== 'product' && html`<div className="prop-group" style=${{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--gray-100)' }}>
               <button className="btn btn-danger btn-sm" style=${{ width: '100%' }} onClick=${() => onDeleteItem(item.key)}>Удалить элемент</button>
-            </div>
+            </div>`}
           <//>
         `}
       </div>
@@ -758,7 +758,8 @@ function AppInner() {
   const canRedo = histRef.current.idx < histRef.current.stack.length - 1;
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChangeRaw] = useEdgesState([]);
+  const onEdgesChange = useCallback((changes) => { onEdgesChangeRaw(changes.filter(c => c.type !== 'remove')); }, [onEdgesChangeRaw]);
   const { fitView } = useReactFlow();
 
   // ── Validation ──
@@ -795,9 +796,8 @@ function AppInner() {
       if (position === 'left') {
         const target = prev.find(i => i.key === targetKey);
         if (!target || target.parents.length === 0) return prev;
-        const fp = target.parents[0];
-        const newItem = { key: newKey, name, code: '', parents: [{ itemKey: fp.itemKey, qty: fp.qty }] };
-        return [...prev.map(i => i.key === targetKey ? { ...i, parents: [{ itemKey: newKey, qty }, ...i.parents.slice(1)] } : i), newItem];
+        const newItem = { key: newKey, name, code: '', parents: target.parents.map(p => ({ ...p })) };
+        return [...prev.map(i => i.key === targetKey ? { ...i, parents: [{ itemKey: newKey, qty }] } : i), newItem];
       } else {
         return [...prev.map(i => i.key === targetKey ? { ...i, parents: [...i.parents, { itemKey: newKey, qty }] } : i), { key: newKey, name, code: '', parents: [] }];
       }
@@ -809,11 +809,14 @@ function AppInner() {
   const onUpdateParentQty = useCallback((ck, pk, qty) => { setItems(prev => prev.map(i => i.key === ck ? { ...i, parents: i.parents.map(p => p.itemKey === pk ? { ...p, qty } : p) } : i)); }, [setItems]);
 
   const deleteItem = useCallback((key) => {
+    const type = getItemType(key, items);
+    if (type === 'product') return;
     setItems(prev => prev.filter(i => i.key !== key).map(i => ({ ...i, parents: i.parents.filter(p => p.itemKey !== key) })));
     if (selectedId === key) setSelectedId(null);
-  }, [selectedId, setItems]);
+  }, [selectedId, setItems, items]);
 
   const onNodeClick = useCallback((_, node) => { setSelectedId(node.id); setRightCollapsed(false); }, []);
+  const onEdgeClick = useCallback(() => { setSelectedId(null); }, []);
   const onPaneClick = useCallback(() => { setSelectedId(null); }, []);
   const onTreeSelect = useCallback((key) => { setSelectedId(key); setRightCollapsed(false); }, []);
 
@@ -871,7 +874,7 @@ function AppInner() {
                 nodes=${nodes} edges=${edges}
                 onNodesChange=${onNodesChange} onEdgesChange=${onEdgesChange}
                 nodeTypes=${nodeTypes} edgeTypes=${edgeTypes}
-                onNodeClick=${onNodeClick} onPaneClick=${onPaneClick}
+                onNodeClick=${onNodeClick} onEdgeClick=${onEdgeClick} onPaneClick=${onPaneClick}
                 fitView fitViewOptions=${{ padding: 0.2 }}
                 minZoom=${0.3} maxZoom=${1.5}
                 proOptions=${{ hideAttribution: true }}
