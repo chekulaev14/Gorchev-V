@@ -6,3 +6,7 @@ node_modules/
 .pnpm-debug.log*
 npm-debug.log*
 .playwright-mcp/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
