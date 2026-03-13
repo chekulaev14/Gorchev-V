@@ -6,20 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { SideBadge } from "@/components/ui/side-badge";
 import { SearchableSelect } from "@/components/ui/searchable-select";
-import { itemTypeLabels, typeColors } from "@/lib/constants";
-import type { NomenclatureItem } from "@/lib/types";
+import { itemTypeLabels, typeColors, unitLabels } from "@/lib/constants";
+import type { NomenclatureItem, Unit } from "@/lib/types";
 import type { SideValidationError } from "@/services/helpers/validate-side";
 import type { RoutingData, ProcessGroup, StepPayload } from "./RoutingConstructor";
 
 interface EditInput {
   itemId: string;
-  qty: number;
+  qty: string;
 }
 
 interface EditStep {
   processId: string;
   outputItemId: string;
-  outputQty: number;
+  outputQty: string;
   inputs: EditInput[];
 }
 
@@ -36,12 +36,23 @@ interface Props {
   onDelete: (routingId: string) => void;
 }
 
+function parseQty(value: string): number {
+  const normalized = value.replace(",", ".");
+  const num = Number(normalized);
+  return isNaN(num) || num <= 0 ? 0 : num;
+}
+
+function normalizeQty(value: string): string {
+  const num = parseQty(value);
+  return num > 0 ? String(num) : value;
+}
+
 function stepsToEdit(routing: RoutingData): EditStep[] {
   return routing.steps.map((s) => ({
     processId: s.processId,
     outputItemId: s.outputItemId,
-    outputQty: s.outputQty,
-    inputs: s.inputs.map((inp) => ({ itemId: inp.itemId, qty: inp.qty })),
+    outputQty: String(s.outputQty),
+    inputs: s.inputs.map((inp) => ({ itemId: inp.itemId, qty: String(inp.qty) })),
   }));
 }
 
@@ -50,15 +61,15 @@ function editToPayload(steps: EditStep[]): StepPayload[] {
     stepNo: i + 1,
     processId: s.processId,
     outputItemId: s.outputItemId,
-    outputQty: s.outputQty,
-    inputs: s.inputs.map((inp, j) => ({ itemId: inp.itemId, qty: inp.qty, sortOrder: j })),
+    outputQty: parseQty(s.outputQty) || 1,
+    inputs: s.inputs.map((inp, j) => ({ itemId: inp.itemId, qty: parseQty(inp.qty) || 1, sortOrder: j })),
   }));
 }
 
 const emptyStep = (): EditStep => ({
   processId: "",
   outputItemId: "",
-  outputQty: 1,
+  outputQty: "1",
   inputs: [],
 });
 
@@ -103,7 +114,7 @@ export function RoutingEditor({ item, allItems, routings, processes, loading, si
   const handleAddInput = (stepIdx: number, itemId: string | null) => {
     if (!itemId) return;
     const step = steps[stepIdx];
-    updateStep(stepIdx, { inputs: [...step.inputs, { itemId, qty: 1 }] });
+    updateStep(stepIdx, { inputs: [...step.inputs, { itemId, qty: "1" }] });
   };
 
   const handleRemoveInput = (stepIdx: number, inputIdx: number) => {
@@ -112,11 +123,9 @@ export function RoutingEditor({ item, allItems, routings, processes, loading, si
   };
 
   const handleInputQtyChange = (stepIdx: number, inputIdx: number, value: string) => {
-    const qty = Number(value);
-    if (isNaN(qty)) return;
     const step = steps[stepIdx];
     updateStep(stepIdx, {
-      inputs: step.inputs.map((inp, i) => i === inputIdx ? { ...inp, qty } : inp),
+      inputs: step.inputs.map((inp, i) => i === inputIdx ? { ...inp, qty: value.replace(",", ".") } : inp),
     });
   };
 
@@ -235,15 +244,20 @@ export function RoutingEditor({ item, allItems, routings, processes, loading, si
                     className="text-xs w-48"
                   />
 
-                  <Input
-                    type="number"
-                    min={0.0001}
-                    step="any"
-                    value={step.outputQty}
-                    onChange={(e) => updateStep(stepIdx, { outputQty: Number(e.target.value) || 1 })}
-                    className="h-7 text-xs w-20"
-                    title="Кол-во выхода"
-                  />
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      value={step.outputQty}
+                      onChange={(e) => updateStep(stepIdx, { outputQty: e.target.value.replace(",", ".") })}
+                      onBlur={() => updateStep(stepIdx, { outputQty: normalizeQty(step.outputQty) })}
+                      className="h-7 text-xs w-20"
+                      title="Количество на выходе"
+                    />
+                    <span className="text-[10px] text-muted-foreground shrink-0">
+                      {unitLabels[(allItems.find((i) => i.id === step.outputItemId)?.unit ?? "pcs") as Unit]}
+                    </span>
+                  </div>
 
                   <button
                     className="text-destructive hover:text-destructive/80 text-sm ml-1"
@@ -256,7 +270,7 @@ export function RoutingEditor({ item, allItems, routings, processes, loading, si
 
                 {/* Inputs */}
                 <div className="px-3 py-2 space-y-1">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Входы</span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Расход на {parseQty(step.outputQty) || 1} {unitLabels[(allItems.find((i) => i.id === step.outputItemId)?.unit ?? "pcs") as Unit]} выхода</span>
                   {step.inputs.length === 0 && (
                     <p className="text-xs text-muted-foreground">Нет входов</p>
                   )}
@@ -274,14 +288,19 @@ export function RoutingEditor({ item, allItems, routings, processes, loading, si
                           <SideBadge side={comp?.side} />
                           <span className="text-xs text-foreground truncate">{comp?.name ?? inp.itemId}</span>
                         </div>
-                        <Input
-                          type="number"
-                          min={0.0001}
-                          step="any"
-                          value={inp.qty}
-                          onChange={(e) => handleInputQtyChange(stepIdx, inpIdx, e.target.value)}
-                          className="h-6 text-xs w-20"
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            value={inp.qty}
+                            onChange={(e) => handleInputQtyChange(stepIdx, inpIdx, e.target.value)}
+                            onBlur={() => handleInputQtyChange(stepIdx, inpIdx, normalizeQty(inp.qty))}
+                            className="h-6 text-xs w-20"
+                          />
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {unitLabels[(comp?.unit ?? "pcs") as Unit]}
+                          </span>
+                        </div>
                         <button
                           className="text-destructive hover:text-destructive/80 text-xs"
                           onClick={() => handleRemoveInput(stepIdx, inpIdx)}
