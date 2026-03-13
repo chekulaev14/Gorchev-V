@@ -229,6 +229,12 @@ export async function activateRouting(routingId: string) {
       })),
     );
 
+    // Архивируем текущий ACTIVE (до проверки конфликтов, чтобы не конфликтовать с собой)
+    await tx.routing.updateMany({
+      where: { itemId: routing.itemId, status: "ACTIVE" },
+      data: { status: "ARCHIVED" },
+    });
+
     // Проверка: для каждого outputItemId не должно быть другого ACTIVE producing step
     for (const s of routing.steps) {
       const existing = await tx.routingStep.findMany({
@@ -244,12 +250,6 @@ export async function activateRouting(routingId: string) {
         );
       }
     }
-
-    // Архивируем текущий ACTIVE
-    await tx.routing.updateMany({
-      where: { itemId: routing.itemId, status: "ACTIVE" },
-      data: { status: "ARCHIVED" },
-    });
 
     // Активируем новый
     await tx.routing.update({
