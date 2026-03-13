@@ -37,7 +37,7 @@ Services = domain logic. Prisma = persistence. Сервисы не знают о
 | Что                        | Источник                     | Не источник          |
 |----------------------------|------------------------------|----------------------|
 | Как производить (списание) | Routing + RoutingStep + RoutingStepInput (inputs[]/outputItem/qty) | BomEntry (legacy) |
-| Состав изделия (версии)    | Bom + BomLine                | BomEntry             |
+| Состав изделия (версии)    | Bom + BomLine (⚠️ не используется, UI скрыт) | BomEntry             |
 | Остатки                    | StockMovement (ledger)       | StockBalance (кэш)   |
 | Факт производства          | ProductionOperation          | ProductionLog (legacy)|
 | Выработка рабочих          | ProductionOperationWorker    | ProductionLog (legacy)|
@@ -216,10 +216,11 @@ npx tsx scripts/rebuild-balances.ts rebuild
 - Валидация: side-совместимость, cycle detection (BOM DFS), типы, уникальность кодов, лимиты
 - Import атомарен ($transaction), всё или ничего
 
-### bom-version.service
+### bom-version.service ⚠️ не задействован в production flow
 - Версионирование состава (Bom + BomLine)
 - activateVersion() — DRAFT → ACTIVE, архивирует предыдущий
 - НЕ синхронизирует BomEntry (убрано в Блоке 1)
+- Код, API и UI-конструктор существуют, но скрыты из навигации. Вся работа идёт через маршруты (Routing)
 
 ---
 

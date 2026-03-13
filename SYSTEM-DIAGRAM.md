@@ -127,7 +127,7 @@ Item 1───< Routing 1───< RoutingStep 1───< RoutingStepInput
   │           ├── fromLocationId ─► Location             └──< ProductionOperationWorker >──1 Worker
   │           └── toLocationId   ─► Location
   │
-  ├───< Bom 1───< BomLine
+  ├───< Bom 1───< BomLine          ⚠️ не используется, UI скрыт
   │
   └───< ProductionLog (legacy)
 ```

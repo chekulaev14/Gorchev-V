@@ -67,7 +67,6 @@ QA:
 - После каждого изменения — давать ссылку на локально запущенный сайт (http://localhost:3000).
 - Все изменения — только локально. Не редактировать код на сервере.
 - GitHub: chekulaev14/ERP (публичный)
-- GitHub Pages: https://chekulaev14.github.io/ERP/
 - VPS: 82.22.47.114, папка /root/erp/, порт 8080
 - Автодеплой: push в main → webhook → билд и перезапуск на VPS
 - pm2 процесс: erp (порт 3000), nginx проксирует 8080 → 3000
@@ -93,4 +92,5 @@ QA:
 - [SYSTEM-DIAGRAM.md](SYSTEM-DIAGRAM.md) — визуальная карта: схемы архитектуры, data model, flows
 - [SESSION-REPORT.md](SESSION-REPORT.md) — отчёт последней сессии (что сделано, что проверить)
 - [docker-compose.yml](docker-compose.yml) — app + PostgreSQL для деплоя
+- [CONSTRUCTOR-PIPELINE-V2.html](CONSTRUCTOR-PIPELINE-V2.html) — standalone-прототип конструктора цепочки (React Flow + dagre, план в CONSTRUCTOR-PLAN-V2.md)
 - [.env.example](.env.example) — шаблон переменных окружения
