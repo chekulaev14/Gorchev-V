@@ -1,20 +1,10 @@
-import path from "node:path";
-import fs from "node:fs";
 import pg from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
 function getDatabaseUrl(): string {
-  if (process.env["ERP_DATABASE_URL"]) return process.env["ERP_DATABASE_URL"];
   if (process.env["DATABASE_URL"]) return process.env["DATABASE_URL"];
-
-  const globalEnvPath = path.join(process.env["HOME"] || "", ".env.global");
-  if (fs.existsSync(globalEnvPath)) {
-    const content = fs.readFileSync(globalEnvPath, "utf-8");
-    const match = content.match(/^ERP_DATABASE_URL=(.+)$/m);
-    if (match) return match[1].trim();
-  }
-
+  if (process.env["ERP_DATABASE_URL"]) return process.env["ERP_DATABASE_URL"];
   return "";
 }
 
