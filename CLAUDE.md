@@ -77,6 +77,7 @@ QA:
 - Логи деплоя: /var/log/gorchev-v/deploy.log, бэкапы БД: /var/www/gorchev-v/shared/backups/
 - Firewall (ufw): открыты только 22, 80, 443. PostgreSQL только на localhost.
 - VPN блокирует доступ к серверу. Обход: `sudo route add 82.22.47.114 192.168.1.1`
+- Диагностика Prisma: `app/scripts/prisma-healthcheck.sh` — проверяет env, конфиг, миграции, подключение к БД. Запускать при ошибках деплоя, проблемах с БД, после миграций.
 
 ## Структура проекта
 
