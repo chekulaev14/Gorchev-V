@@ -50,9 +50,8 @@ jobs:
             public \
             prisma \
             package.json \
-            src/generated/prisma \
-            node_modules/prisma \
-            node_modules/@prisma
+            node_modules \
+            src/generated/prisma
 
       - name: Setup SSH
         run: |
