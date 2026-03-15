@@ -1,7 +1,7 @@
 ОБЯЗАТЕЛЬНО в начале каждой сессии, до начала работы над задачей, прочитай РОВНО три файла (Read tool):
-1. PRODUCT.md
-2. SYSTEM-DIAGRAM.md
-3. CORE-ARCHITECTURE.md
+1. docs/PRODUCT.md
+2. docs/SYSTEM-DIAGRAM.md
+3. docs/CORE-ARCHITECTURE.md
 
 ТОЛЬКО эти три файла. Не читай другую документацию до получения задачи от пользователя.
 Не начинай работу, пока не прочитаешь все три.

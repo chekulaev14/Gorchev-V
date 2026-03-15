@@ -4,8 +4,8 @@ globs:
 ---
 
 ОБЯЗАТЕЛЬНО перед любыми изменениями в схеме БД:
-1. Прочитай DB-PRINCIPLES.md (Read tool)
+1. Прочитай docs/DB-PRINCIPLES.md (Read tool)
 2. Прочитай текущую schema.prisma
-3. Прочитай ARCHITECTURE.md (секция БД)
+3. Прочитай docs/ARCHITECTURE.md (секция БД)
 
 Не начинай редактирование, пока не прочитаешь эти файлы.
