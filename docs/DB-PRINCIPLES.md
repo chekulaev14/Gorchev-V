@@ -34,7 +34,7 @@ Float запрещён. Decimal. quantity > 0, направление опред
 
 ## 8. BOM, routing, факт — разные сущности
 
-Не смешивать: справочник операции (Process) / маршрут-норматив (Routing + RoutingStep) / состав (Bom + BomLine) / факт выполнения (ProductionOperation). BomEntry — legacy, не источник production flow. RoutingStep — источник истины для списания (inputItemId, outputItemId, inputQty, outputQty). Один producing step на outputItemId среди ACTIVE routings.
+Не смешивать: справочник операции (Process) / маршрут-норматив (Routing + RoutingStep) / состав (Bom + BomLine) / факт выполнения (ProductionOperation). BomEntry — legacy, не источник production flow. RoutingStep — источник истины для списания. Входы нормализованы в отдельную таблицу RoutingStepInput (itemId, qty, sortOrder), выход — outputItemId + outputQty на самом RoutingStep. Один producing step на outputItemId среди ACTIVE routings.
 
 ## 9. Бизнес-идентификатор != технический id
 

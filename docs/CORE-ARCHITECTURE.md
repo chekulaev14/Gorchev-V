@@ -174,7 +174,7 @@ npx tsx scripts/rebuild-balances.ts rebuild
 | BomEntry (production flow) | RoutingStep                  | Legacy read only, не источник списания |
 | ProductionLog              | ProductionOperationWorker    | Fallback в logs       |
 | POST /api/terminal/output  | POST /api/terminal/produce   | Работает, deprecated  |
-| constructor/ (старый UI)   | bom-constructor/ + routing-constructor/ | Удалён полностью |
+| constructor/ (старый UI)   | bom-constructor/ + routing-constructor/ | Заменён маршрутами. Папка constructor/ существует как заглушка для будущей интеграции конструктора из HTML |
 
 ---
 
@@ -225,6 +225,12 @@ npx tsx scripts/rebuild-balances.ts rebuild
 ---
 
 ## Маппинг движений на Location
+
+Два разных enum — не путать:
+- **MovementType** (StockMovement.type) — тип движения: SUPPLIER_INCOME, ASSEMBLY_WRITE_OFF и т.д.
+- **InventoryOperationType** (InventoryOperation.type) — тип операции: SUPPLIER_RECEIPT, ASSEMBLY, ORDER_COMPLETION и т.д.
+
+Одна операция (InventoryOperation) порождает одно или несколько движений (StockMovement). Например, операция SUPPLIER_RECEIPT создаёт движение SUPPLIER_INCOME.
 
 Названия ASSEMBLY_* — исторические (legacy). Фактически это production movements.
 

@@ -59,8 +59,8 @@
 - [~] парные детали — side: enum (LEFT/RIGHT/NONE), baseItemId, переписать конструктор на side вместо суффиксов (на тестировании)
 - [ ] партии / lot tracking (отложено — нет запроса от клиента)
 - [ ] прослеживаемость (зависит от lot tracking)
-- [ ] ProductionOperation — факт выполнения по шагам маршрута (отложено)
-- [ ] soft delete на все ключевые таблицы (Item, User, Worker, Bom, ProductionOrder, StockMovement)
+- [x] ProductionOperation — факт выполнения по шагам маршрута
+- [x] soft delete — реализовано для Item (deletedAt). Bom и Routing закрыты через архивирование (DRAFT/ACTIVE/ARCHIVED). StockMovement — append-only, удаление запрещено. Остальные (User, Worker, ProductionOrder) — нет потребности пока
 - [ ] cuid() → UUID v7 (при merge данных между клиентами)
 - [ ] партиционирование StockMovement/ProductionLog по createdAt (при больших объёмах)
 - [ ] аналитика: read model → read replica → DWH (по потребности)
