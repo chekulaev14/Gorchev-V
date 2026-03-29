@@ -7,25 +7,27 @@
 ## 1. Общая архитектура
 
 ```
-Terminal UI              Warehouse UI              Setup UI
-     │                        │                        │
-     ▼                        ▼                        ▼
-  API Routes               API Routes              API Routes
-  /terminal/*              /routing, /bom, /stock   /setup/*
-     │                        │                        │
-     └────────────┬───────────┴────────────────────────┘
-                  ▼
-           Domain Services
-   production   routing   stock   bom-version   setup-import
-                  │
-                  ▼
-      Persistence Layer (Prisma / SQL)
-                  │
-                  ▼
-              PostgreSQL
+Terminal UI       Warehouse UI       Setup UI       Documents UI
+     │                 │                │                │
+     ▼                 ▼                ▼                ▼
+  API Routes        API Routes      API Routes       API Routes
+  /terminal/*       /routing, etc   /setup/*         /documents/*
+     │                 │                │                │
+     └────────┬────────┴────────────────┴────────────────┘
+              ▼
+       Domain Services
+ production  routing  stock  bom-version  setup-import  certificate  document
+              │
+              ▼
+  Persistence Layer (Prisma / SQL)
+              │
+              ▼
+          PostgreSQL
 ```
 
 UI → API → Services → Persistence → DB
+
+Модули: Склад+Производство (Terminal, Warehouse, Setup) | Документы (Documents)
 
 ---
 

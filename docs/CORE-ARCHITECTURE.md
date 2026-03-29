@@ -3,28 +3,34 @@
 Как устроена система изнутри. Слои, зависимости, flow данных, границы ответственности.
 Что система делает — в PRODUCT.md. Конвенции и детали реализации — в ARCHITECTURE.md.
 
+Система мультимодульная: общее ядро + модули под разных клиентов.
+- Ядро: auth, users, nomenclature, prisma, UI-компоненты
+- Модуль Склад+Производство: stock, routing, production, terminal, bom (клиент: Горчев, на паузе)
+- Модуль Документы: certificate, document (клиент: СТС, в разработке). Подробности: DOCUMENTS-SPEC.md
+
 ---
 
 ## Слои
 
 ```
-Terminal UI              Warehouse UI
-     │                        │
-     ▼                        ▼
-  API Routes               API Routes
-  /terminal/*              /routing, /bom, /stock, /nomenclature
-     │                        │
-     ▼                        ▼
-  Domain Services          Domain Services
-  production.service       routing.service
-  stock.service            bom-version.service
-                           potential.service
-     │                        │
-     ▼                        ▼
+Terminal UI       Warehouse UI       Documents UI
+     │                 │                  │
+     ▼                 ▼                  ▼
+  API Routes        API Routes         API Routes
+  /terminal/*       /routing, etc      /documents/*
+     │                 │                  │
+     ▼                 ▼                  ▼
+  Domain Services   Domain Services    Domain Services
+  production        routing            certificate
+  stock             bom-version        document
+                    potential
+     │                 │                  │
+     └────────┬────────┴──────────────────┘
+              ▼
   Persistence Layer (Prisma / raw SQL)
-     │
-     ▼
-  PostgreSQL
+              │
+              ▼
+          PostgreSQL
 ```
 
 Правило: Route → Service → Persistence → DB. Route не работает с Prisma напрямую.
