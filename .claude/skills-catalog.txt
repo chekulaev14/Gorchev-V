@@ -1,1 +1,10 @@
-Testing: /test (Playwright)
+# Каталог скилов (обновляется при создании скила из инстинктов)
+save-session — сохранить контекст сессии + извлечь инстинкты
+create-skill — создание и улучшение кастомных скилов
+verify — режим верификации кода
+test — интерактивное тестирование через Playwright
+frontend-app-design — создание web-интерфейсов
+backend-review — аудит backend-кода
+discover — поиск репозиториев на GitHub
+product-discovery — product discovery для новых проектов
+marketing-psychology — психология маркетинга и mental models

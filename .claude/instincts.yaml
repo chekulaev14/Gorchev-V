@@ -1,0 +1,138 @@
+# total: 8 | active: 7 | evolved: 1 | updated: 2026-03-18
+
+---
+id: confirm-dialog-evaluate-workaround
+trigger: "когда в Playwright тесте нужно обработать window.confirm"
+confidence: 0.7
+domain: testing
+source: session-observation
+---
+
+# Evaluate вместо dialog handler в MCP Playwright
+
+## Action
+Вместо page.on('dialog') или browser_handle_dialog использовать page.evaluate(() => { window.confirm = () => true }) перед действием. MCP Playwright proxy конфликтует с page.on('dialog').
+
+## Evidence
+- page.on('dialog') внутри run_code вызывал race condition с MCP proxy (2026-03-16)
+- browser_handle_dialog возвращал "already handled" (2026-03-16)
+- Workaround через evaluate стабильно работает
+
+---
+id: reactflow-layout-structurekey
+trigger: "когда React Flow layout дёргается при data-only изменениях"
+confidence: 0.7
+domain: debugging
+source: session-observation
+evolved: true
+---
+
+# Разделять structural и data-only обновления в React Flow
+
+## Action
+EVOLVED: React Flow убран из проекта. Для визуальных графов с dagre layout использовать useMemo вместо useEffect+setState. Синхронный layout без race condition. См. CONSTRUCTOR-MIGRATION-PLAN.md.
+
+## Evidence
+- Inline edit имени вызывал dagre relayout на каждое нажатие клавиши (2026-03-16)
+- Playwright не мог кликать по узлам из-за постоянных анимаций fitView
+- React Flow handles registration race condition: edges пропадают при добавлении узлов (2026-03-18)
+
+---
+id: makeproject-single-call
+trigger: "когда функция с side effects вызывается несколько раз в одном выражении"
+confidence: 0.5
+domain: debugging
+source: session-observation
+---
+
+# Функции с генерацией ID вызывать один раз
+
+## Action
+Если функция генерирует уникальные ID (genId, uuid и т.п.), результат сохранять в переменную и переиспользовать. Не вызывать повторно — каждый вызов даёт другой ID.
+
+## Evidence
+- makeProject() вызывался 3 раза в onClick: rawSetProject(makeProject()), histRef = makeProject(), setActiveChainId(makeProject().chains[0].chainId). Каждый вызов генерировал новый chainId, activeChainId указывал на несуществующую цепочку (2026-03-16)
+
+---
+id: stop-hook-output-invisible
+trigger: "когда настраиваешь Claude Code hooks для самоанализа"
+confidence: 0.9
+domain: workflow
+source: user-correction
+---
+
+# Stop hook output не виден Claude
+
+## Action
+Не размещать напоминания для Claude на Stop хуке — output уходит в пустоту после завершения ответа. Для напоминаний использовать PreCompact (при сжатии контекста) или UserPromptSubmit (перед каждым сообщением). Либо правила в CLAUDE.md.
+
+## Evidence
+- evaluate-session.sh на Stop хуке выводил "проанализируй сессию" в stderr — Claude не видел (2026-03-17)
+- Автор everything-claude-code в v2 перешёл с Stop на PreToolUse/PostToolUse именно по этой причине
+
+---
+id: session-files-per-project
+trigger: "когда проектируешь систему сохранения контекста между сессиями"
+confidence: 0.8
+domain: workflow
+source: user-correction
+---
+
+# Session файлы хранить в проекте, не глобально
+
+## Action
+Session файлы (.claude/session.tmp) хранить в корне каждого проекта, не в глобальной ~/.claude/sessions/. Корень определяется через git rev-parse --show-toplevel.
+
+## Evidence
+- Глобальная папка ~/.claude/sessions/ вызывала коллизии: один файл на дату, перезаписывался при переключении между проектами (2026-03-17)
+- Пользователь выбрал вариант "хранить рядом с проектом" как самый чистый
+
+---
+id: usememo-over-useeffect-for-layout
+trigger: "когда нужно вычислять layout/позиции элементов на canvas из состояния"
+confidence: 0.4
+domain: debugging
+source: session-observation
+---
+
+# useMemo вместо useEffect для layout графа
+
+## Action
+Для вычисления layout (dagre, grid, tree) использовать useMemo от данных, а не useEffect + setState. useEffect с setState вызывает асинхронность, race condition между несколькими effects, и лишние рендеры. useMemo вычисляет layout синхронно при рендере — детерминированно и без побочных эффектов.
+
+## Evidence
+- Два useEffect (структурный + data-only) в конструкторе цепочки создавали race condition: data-only effect перетирал edges до того как структурный effect успевал их установить (2026-03-18)
+- Фронтенд-агент подтвердил: React Flow handles registration race condition — edges приходят раньше чем узлы монтируются (2026-03-18)
+
+---
+id: verify-external-agent-with-code
+trigger: "когда внешний агент даёт рекомендации по проекту"
+confidence: 0.3
+domain: workflow
+source: session-observation
+---
+
+# Сверять рекомендации внешних агентов с реальным кодом
+
+## Action
+Использовать /verify для работы с внешними агентами. Не принимать рекомендации на веру — открывать код и проверять каждое утверждение. Агенты часто предполагают отсутствие того, что уже реализовано (steps, qty, validation).
+
+## Evidence
+- ERP-агент предложил добавить step-слой, qty на связях, connected graph validation — всё это уже было в normalizeGraph (2026-03-18)
+- Фронтенд-агент правильно диагностировал race condition, но не знал про data-only effect который усложнял фикс (2026-03-18)
+
+---
+id: css-classes-same-element
+trigger: "когда пишешь CSS для компонента где несколько классов на одном div"
+confidence: 0.3
+domain: debugging
+source: session-observation
+---
+
+# CSS классы на одном элементе — не дочерние
+
+## Action
+Если React компонент собирает className из массива ('pipeline-node chain-node blank connect-source'), CSS селектор должен быть `.pipeline-node.connect-source` (оба на одном элементе), а НЕ `.pipeline-node.connect-source .chain-node` (дочерний). Особенно актуально для htm+React где нет JSX и className формируется конкатенацией.
+
+## Evidence
+- connect-source подсветка не работала: `.pipeline-node.connect-source .chain-node` искал дочерний, а все классы были на одном div (2026-03-18)
