@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Металл — Концепция с AI-ассистентом</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #ffffff;
+  --bg-alt: #f8f9fb;
+  --bg-nav: #f3f4f6;
+  --border: #e5e7eb;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --accent: #4f46e5;
+  --accent-light: #eef2ff;
+  --accent-hover: #4338ca;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --success: #22c55e;
+  --success-bg: #f0fdf4;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Layout */
+.app {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg-nav);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.sidebar-logo {
+  padding: 16px 18px 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo svg {
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  padding: 8px 8px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.nav-item:hover {
+  background: rgba(79, 70, 229, 0.06);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.nav-item.active svg {
+  opacity: 1;
+}
+
+.nav-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 12px;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  min-height: 52px;
+}
+
+.topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  padding: 7px 12px 7px 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  outline: none;
+  width: 280px;
+  background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cline x1='11' y1='11' x2='15' y2='15'/%3E%3C/svg%3E") 10px center no-repeat;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: var(--bg);
+  transition: all 0.15s;
+}
+
+.filter-chip:hover, .filter-chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* Table */
+.table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: var(--bg-alt);
+}
+
+th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: var(--bg-alt);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.badge-material { background: #dbeafe; color: #1d4ed8; }
+.badge-blank { background: #fef3c7; color: #92400e; }
+.badge-product { background: #d1fae5; color: #065f46; }
+
+.low-stock {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.low-stock-row td {
+  background: var(--danger-bg);
+}
+
+/* Stats bar */
+.stats-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex: 1;
+  background: var(--bg);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-value.danger { color: var(--danger); }
+
+/* Assistant button */
+.assistant-trigger {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 100;
+}
+
+.assistant-trigger:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.45);
+}
+
+.assistant-trigger.hidden {
+  display: none;
+}
+
+/* Assistant panel */
+.assistant-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.assistant-overlay.open {
+  transform: translateX(0);
+}
+
+.assistant-header {
+  padding: 14px 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.assistant-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.assistant-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.assistant-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--success);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.assistant-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assistant-close:hover {
+  background: var(--bg-alt);
+  color: var(--text);
+}
+
+.assistant-context {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  background: var(--bg-alt);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.assistant-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.assistant-tab {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.assistant-tab:hover {
+  color: var(--text);
+}
+
+.assistant-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Chat */
+.assistant-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+
+.chat-message {
+  margin-bottom: 14px;
+}
+
+.chat-message.user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.chat-bubble {
+  max-width: 92%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.chat-message.user .chat-bubble {
+  background: var(--accent);
+  color: white;
+  border-bottom-right-radius: 3px;
+}
+
+.chat-message.assistant .chat-bubble {
+  background: var(--bg-alt);
+  color: var(--text);
+  border-bottom-left-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.chat-bubble ul {
+  margin: 4px 0 4px 16px;
+  padding: 0;
+}
+
+.chat-bubble li {
+  margin-bottom: 2px;
+}
+
+.chat-bubble .summary {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.chat-bubble .recommend {
+  margin-top: 8px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Chat input */
+.assistant-footer {
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 6px 4px 12px;
+  background: var(--bg);
+  transition: border-color 0.15s;
+}
+
+.chat-input-wrap:focus-within {
+  border-color: var(--accent);
+}
+
+.chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.chat-input::placeholder {
+  color: var(--text-muted);
+}
+
+.chat-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.chat-btn-mic {
+  background: none;
+  color: var(--text-muted);
+}
+
+.chat-btn-mic:hover {
+  background: var(--bg-alt);
+}
+
+.chat-btn-send {
+  background: var(--accent);
+  color: white;
+}
+
+.chat-btn-send:hover {
+  background: var(--accent-hover);
+}
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.quick-chip {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.quick-chip:hover {
+  border-color: var(--accent);
+}
+
+.assistant-model {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 4px 16px 8px;
+}
+
+/* Agents tab */
+.agents-content {
+  display: none;
+}
+
+.agents-content.visible {
+  display: block;
+}
+
+.chat-content.hidden {
+  display: none;
+}
+
+.agents-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.agent-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--bg);
+}
+
+.agent-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.agent-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.agent-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Toggle switch */
+.toggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle.on {
+  background: var(--accent);
+}
+
+.toggle::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.toggle.on::after {
+  transform: translateX(16px);
+}
+
+.agent-create-btn {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: default;
+  margin-top: 4px;
+}
+
+/* Page hidden */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Earn column */
+.earn { color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V8l7-5 7 5v12"/><path d="M9 20v-6h6v6"/></svg>
+      ERP Металл
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Дашборд
+      </div>
+      <div class="nav-item" data-page="nomenclature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Номенклатура
+      </div>
+      <div class="nav-item active" data-page="stock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        Склад (остатки)
+      </div>
+      <div class="nav-item" data-page="production">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Производство
+      </div>
+      <div class="nav-item" data-page="">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Маршруты
+      </div>
+      <div class="nav-item" data-page="">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Рабочие
+      </div>
+      <div class="nav-item" data-page="">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Терминал
+      </div>
+      <div class="nav-separator"></div>
+      <div class="nav-item" data-page="">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Настройки
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">Остатки на складе</div>
+      <div class="topbar-right">
+        <div class="topbar-user">
+          <div class="user-avatar">АП</div>
+          Администратор
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Stock page -->
+      <div class="page active" id="page-stock">
+        <div class="stats-bar">
+          <div class="stat-card">
+            <div class="stat-label">Всего позиций</div>
+            <div class="stat-value">9</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Ниже минимума</div>
+            <div class="stat-value danger">3</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Материалы</div>
+            <div class="stat-value">5</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Заготовки / Изделия</div>
+            <div class="stat-value">4</div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <input type="text" class="search-input" placeholder="Поиск по артикулу или наименованию...">
+          <div class="filter-chip active">Все</div>
+          <div class="filter-chip">Материалы</div>
+          <div class="filter-chip">Заготовки</div>
+          <div class="filter-chip">Изделия</div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Артикул</th>
+                <th>Наименование</th>
+                <th>Тип</th>
+                <th style="text-align:right">Остаток</th>
+                <th>Ед.изм</th>
+                <th style="text-align:right">Мин.запас</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>МАТ-001</td>
+                <td>Лист стальной 2мм 1250x2500</td>
+                <td><span class="badge badge-material">материал</span></td>
+                <td style="text-align:right">450</td>
+                <td>кг</td>
+                <td style="text-align:right">200</td>
+              </tr>
+              <tr>
+                <td>МАТ-002</td>
+                <td>Профиль 40x20x2</td>
+                <td><span class="badge badge-material">материал</span></td>
+                <td style="text-align:right">280</td>
+                <td>кг</td>
+                <td style="text-align:right">100</td>
+              </tr>
+              <tr>
+                <td>МАТ-003</td>
+                <td>Болт М10x50 DIN 933</td>
+                <td><span class="badge badge-material">материал</span></td>
+                <td style="text-align:right">1 200</td>
+                <td>шт</td>
+                <td style="text-align:right">500</td>
+              </tr>
+              <tr class="low-stock-row">
+                <td>МАТ-004</td>
+                <td>Гайка М12 DIN 934</td>
+                <td><span class="badge badge-material">материал</span></td>
+                <td style="text-align:right" class="low-stock">78</td>
+                <td>шт</td>
+                <td style="text-align:right">200</td>
+              </tr>
+              <tr>
+                <td>ЗАГ-001</td>
+                <td>Кронштейн К-01 Левый</td>
+                <td><span class="badge badge-blank">заготовка</span></td>
+                <td style="text-align:right">45</td>
+                <td>шт</td>
+                <td style="text-align:right">—</td>
+              </tr>
+              <tr>
+                <td>ЗАГ-002</td>
+                <td>Кронштейн К-01 Правый</td>
+                <td><span class="badge badge-blank">заготовка</span></td>
+                <td style="text-align:right">38</td>
+                <td>шт</td>
+                <td style="text-align:right">—</td>
+              </tr>
+              <tr class="low-stock-row">
+                <td>МАТ-005</td>
+                <td>Подшипник 6205-2RS</td>
+                <td><span class="badge badge-material">материал</span></td>
+                <td style="text-align:right" class="low-stock">45</td>
+                <td>шт</td>
+                <td style="text-align:right">100</td>
+              </tr>
+              <tr class="low-stock-row">
+                <td>МАТ-006</td>
+                <td>Шпилька М16x120</td>
+                <td><span class="badge badge-material">материал</span></td>
+                <td style="text-align:right" class="low-stock">23</td>
+                <td>шт</td>
+                <td style="text-align:right">50</td>
+              </tr>
+              <tr>
+                <td>ИЗД-001</td>
+                <td>Основание Б-03</td>
+                <td><span class="badge badge-product">изделие</span></td>
+                <td style="text-align:right">120</td>
+                <td>шт</td>
+                <td style="text-align:right">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Nomenclature page -->
+      <div class="page" id="page-nomenclature">
+        <div class="stats-bar">
+          <div class="stat-card">
+            <div class="stat-label">Всего позиций</div>
+            <div class="stat-value">12</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Материалы</div>
+            <div class="stat-value">7</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Заготовки</div>
+            <div class="stat-value">3</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Изделия</div>
+            <div class="stat-value">2</div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <input type="text" class="search-input" placeholder="Поиск по коду или наименованию...">
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Код</th>
+                <th>Наименование</th>
+                <th>Тип</th>
+                <th>Ед.изм</th>
+                <th style="text-align:right">Тариф, ₽</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>МАТ-001</td><td>Лист стальной 2мм 1250x2500</td><td><span class="badge badge-material">материал</span></td><td>кг</td><td style="text-align:right">—</td></tr>
+              <tr><td>МАТ-002</td><td>Профиль 40x20x2</td><td><span class="badge badge-material">материал</span></td><td>кг</td><td style="text-align:right">—</td></tr>
+              <tr><td>МАТ-003</td><td>Болт М10x50 DIN 933</td><td><span class="badge badge-material">материал</span></td><td>шт</td><td style="text-align:right">—</td></tr>
+              <tr><td>МАТ-004</td><td>Гайка М12 DIN 934</td><td><span class="badge badge-material">материал</span></td><td>шт</td><td style="text-align:right">—</td></tr>
+              <tr><td>МАТ-005</td><td>Подшипник 6205-2RS</td><td><span class="badge badge-material">материал</span></td><td>шт</td><td style="text-align:right">—</td></tr>
+              <tr><td>МАТ-006</td><td>Шпилька М16x120</td><td><span class="badge badge-material">материал</span></td><td>шт</td><td style="text-align:right">—</td></tr>
+              <tr><td>МАТ-007</td><td>Втулка бронзовая 20x30</td><td><span class="badge badge-material">материал</span></td><td>шт</td><td style="text-align:right">—</td></tr>
+              <tr><td>ЗАГ-001</td><td>Кронштейн К-01 Левый</td><td><span class="badge badge-blank">заготовка</span></td><td>шт</td><td style="text-align:right">45.00</td></tr>
+              <tr><td>ЗАГ-002</td><td>Кронштейн К-01 Правый</td><td><span class="badge badge-blank">заготовка</span></td><td>шт</td><td style="text-align:right">45.00</td></tr>
+              <tr><td>ЗАГ-003</td><td>Планка усилительная</td><td><span class="badge badge-blank">заготовка</span></td><td>шт</td><td style="text-align:right">30.00</td></tr>
+              <tr><td>ИЗД-001</td><td>Основание Б-03</td><td><span class="badge badge-product">изделие</span></td><td>шт</td><td style="text-align:right">120.00</td></tr>
+              <tr><td>ИЗД-002</td><td>Рама сварная Р-10</td><td><span class="badge badge-product">изделие</span></td><td>шт</td><td style="text-align:right">250.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Production page -->
+      <div class="page" id="page-production">
+        <div class="stats-bar">
+          <div class="stat-card">
+            <div class="stat-label">Операций за неделю</div>
+            <div class="stat-value">24</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Выпущено деталей</div>
+            <div class="stat-value">485</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Начислено, ₽</div>
+            <div class="stat-value">34 250</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Рабочих активно</div>
+            <div class="stat-value">3</div>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <input type="text" class="search-input" placeholder="Поиск по рабочему или номенклатуре...">
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Рабочий</th>
+                <th>Номенклатура</th>
+                <th style="text-align:right">Кол-во</th>
+                <th style="text-align:right">Заработок, ₽</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>15.03.2026</td><td>Иванов А.С.</td><td>Кронштейн К-01 Левый</td><td style="text-align:right">25</td><td style="text-align:right" class="earn">1 125</td></tr>
+              <tr><td>15.03.2026</td><td>Петров В.И.</td><td>Кронштейн К-01 Правый</td><td style="text-align:right">20</td><td style="text-align:right" class="earn">900</td></tr>
+              <tr><td>15.03.2026</td><td>Сидоров К.Н.</td><td>Основание Б-03</td><td style="text-align:right">15</td><td style="text-align:right" class="earn">1 800</td></tr>
+              <tr><td>14.03.2026</td><td>Иванов А.С.</td><td>Кронштейн К-01 Левый</td><td style="text-align:right">30</td><td style="text-align:right" class="earn">1 350</td></tr>
+              <tr><td>14.03.2026</td><td>Иванов А.С.</td><td>Кронштейн К-01 Правый</td><td style="text-align:right">20</td><td style="text-align:right" class="earn">900</td></tr>
+              <tr><td>14.03.2026</td><td>Петров В.И.</td><td>Основание Б-03</td><td style="text-align:right">12</td><td style="text-align:right" class="earn">1 440</td></tr>
+              <tr><td>13.03.2026</td><td>Сидоров К.Н.</td><td>Кронштейн К-01 Левый</td><td style="text-align:right">35</td><td style="text-align:right" class="earn">1 575</td></tr>
+              <tr><td>13.03.2026</td><td>Иванов А.С.</td><td>Основание Б-03</td><td style="text-align:right">18</td><td style="text-align:right" class="earn">2 160</td></tr>
+              <tr><td>12.03.2026</td><td>Петров В.И.</td><td>Кронштейн К-01 Левый</td><td style="text-align:right">28</td><td style="text-align:right" class="earn">1 260</td></tr>
+              <tr><td>12.03.2026</td><td>Сидоров К.Н.</td><td>Кронштейн К-01 Правый</td><td style="text-align:right">22</td><td style="text-align:right" class="earn">990</td></tr>
+              <tr><td>11.03.2026</td><td>Иванов А.С.</td><td>Кронштейн К-01 Левый</td><td style="text-align:right">22</td><td style="text-align:right" class="earn">990</td></tr>
+              <tr><td>11.03.2026</td><td>Петров В.И.</td><td>Кронштейн К-01 Правый</td><td style="text-align:right">25</td><td style="text-align:right" class="earn">1 125</td></tr>
+              <tr><td>10.03.2026</td><td>Иванов А.С.</td><td>Кронштейн К-01 Правый</td><td style="text-align:right">25</td><td style="text-align:right" class="earn">1 125</td></tr>
+              <tr><td>10.03.2026</td><td>Сидоров К.Н.</td><td>Основание Б-03</td><td style="text-align:right">22</td><td style="text-align:right" class="earn">2 640</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Assistant trigger -->
+<button class="assistant-trigger" id="assistantTrigger" onclick="openAssistant()">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<!-- Assistant panel -->
+<div class="assistant-overlay" id="assistantPanel">
+  <div class="assistant-header">
+    <div class="assistant-header-top">
+      <div>
+        <div class="assistant-title">AI-ассистент</div>
+        <div class="assistant-status"><span class="status-dot"></span> онлайн</div>
+      </div>
+      <button class="assistant-close" onclick="closeAssistant()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="assistant-context" id="assistantContext">&#128205; Склад &#8594; Остатки</div>
+    <div class="assistant-tabs">
+      <button class="assistant-tab active" onclick="switchTab('chat')">Чат</button>
+      <button class="assistant-tab" onclick="switchTab('agents')">Агенты</button>
+    </div>
+  </div>
+
+  <!-- Chat content -->
+  <div class="assistant-body chat-content" id="chatContent">
+    <div class="chat-message user">
+      <div class="chat-bubble">Какие позиции на складе меньше 100 штук?</div>
+    </div>
+    <div class="chat-message assistant">
+      <div class="chat-bubble">
+        Позиции с остатком менее 100 шт:
+        <ul>
+          <li>Гайка М12 — 78 шт (мин. запас: 200)</li>
+          <li>Подшипник 6205 — 45 шт (мин. запас: 100)</li>
+          <li>Шпилька М16x120 — 23 шт (мин. запас: 50)</li>
+          <li>Кронштейн К-01 Правый — 38 шт</li>
+          <li>Кронштейн К-01 Левый — 45 шт</li>
+        </ul>
+        <div class="recommend">Рекомендую сформировать заявку на закупку сырья. Сделать?</div>
+      </div>
+    </div>
+    <div class="chat-message user">
+      <div class="chat-bubble">Покажи выработку Иванова за эту неделю</div>
+    </div>
+    <div class="chat-message assistant">
+      <div class="chat-bubble">
+        Выработка Иванова А.С. за 10–15 марта:
+        <ul>
+          <li>Кронштейн К-01 Левый — 120 шт</li>
+          <li>Кронштейн К-01 Правый — 95 шт</li>
+          <li>Основание Б-03 — 40 шт</li>
+        </ul>
+        <div class="summary">Итого начислено: 12 750 ₽</div>
+        Средняя выработка: 42.5 шт/день
+      </div>
+    </div>
+  </div>
+
+  <!-- Agents content -->
+  <div class="assistant-body agents-content" id="agentsContent">
+    <div class="agents-desc">Агенты автоматизируют рутинные задачи</div>
+
+    <div class="agent-card">
+      <div class="agent-card-top">
+        <div class="agent-name">Контроль остатков</div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="agent-desc">Следит за минимальными запасами, уведомляет когда остаток ниже нормы</div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-card-top">
+        <div class="agent-name">Отчёт по выработке</div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="agent-desc">Ежедневная сводка по рабочим: количество, заработок, отклонения</div>
+    </div>
+
+    <div class="agent-card">
+      <div class="agent-card-top">
+        <div class="agent-name">Планирование закупок</div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="agent-desc">Анализирует расход материалов и предлагает закупки на основе тренда</div>
+    </div>
+
+    <button class="agent-create-btn">+ Создать агента</button>
+  </div>
+
+  <div class="assistant-footer" id="assistantFooter">
+    <div class="chat-input-wrap">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Спросите что-нибудь...">
+      <button class="chat-btn chat-btn-mic">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
+      <button class="chat-btn chat-btn-send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="quick-actions">
+      <span class="quick-chip" onclick="fillInput('Остатки ниже минимума')">Остатки ниже минимума</span>
+      <span class="quick-chip" onclick="fillInput('Выработка за неделю')">Выработка за неделю</span>
+      <span class="quick-chip" onclick="fillInput('Создать приход')">Создать приход</span>
+    </div>
+  </div>
+  <div class="assistant-model">Qwen-Max &bull; DeepSeek API</div>
+</div>
+
+<script>
+const pageMap = {
+  stock: { title: 'Остатки на складе', context: '\u{1F4CD} Склад \u2192 Остатки' },
+  nomenclature: { title: 'Номенклатура', context: '\u{1F4CD} Номенклатура \u2192 Каталог' },
+  production: { title: 'Производственные операции', context: '\u{1F4CD} Производство \u2192 Операции' }
+};
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', function() {
+    const page = this.dataset.page;
+    if (!page || !document.getElementById('page-' + page)) return;
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    this.classList.add('active');
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+
+    const info = pageMap[page];
+    if (info) {
+      document.getElementById('pageTitle').textContent = info.title;
+      document.getElementById('assistantContext').innerHTML = info.context;
+    }
+  });
+});
+
+function openAssistant() {
+  document.getElementById('assistantPanel').classList.add('open');
+  document.getElementById('assistantTrigger').classList.add('hidden');
+}
+
+function closeAssistant() {
+  document.getElementById('assistantPanel').classList.remove('open');
+  document.getElementById('assistantTrigger').classList.remove('hidden');
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.assistant-tab').forEach(t => t.classList.remove('active'));
+  if (tab === 'chat') {
+    document.querySelector('.assistant-tab:first-child').classList.add('active');
+    document.getElementById('chatContent').classList.remove('hidden');
+    document.getElementById('agentsContent').classList.remove('visible');
+    document.getElementById('assistantFooter').style.display = '';
+  } else {
+    document.querySelector('.assistant-tab:last-child').classList.add('active');
+    document.getElementById('chatContent').classList.add('hidden');
+    document.getElementById('agentsContent').classList.add('visible');
+    document.getElementById('assistantFooter').style.display = 'none';
+  }
+}
+
+function fillInput(text) {
+  document.getElementById('chatInput').value = text;
+  document.getElementById('chatInput').focus();
+}
+
+// Filter chips toggle
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

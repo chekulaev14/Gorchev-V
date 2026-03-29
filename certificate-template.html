@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Сертификат качества</title>
+<style>
+  @page {
+    size: A4;
+    margin: 12mm 12mm 12mm 21mm;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.3;
+    color: #000;
+    background: #ccc;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 12mm 12mm 12mm 21mm;
+    margin: 10mm auto;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    position: relative;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .page {
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      page-break-after: always;
+    }
+    .page:last-child { page-break-after: avoid; }
+    .ph { background: none !important; }
+  }
+
+  .header {
+    position: relative;
+    margin-bottom: 6pt;
+  }
+  .header-logo {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .header-skolkovo {
+    position: absolute;
+    top: 2pt;
+    right: 0;
+    width: 60px;
+    height: auto;
+  }
+
+  .center { text-align: center; }
+  .right { text-align: right; }
+  .justify { text-align: justify; }
+  .bold { font-weight: bold; }
+
+  h1 {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 16pt;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 4pt;
+    margin-bottom: 0;
+  }
+  h2 {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 14pt;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 2pt;
+  }
+  .spec-ref {
+    font-size: 9pt;
+    text-decoration: underline;
+    text-align: center;
+    margin-bottom: 8pt;
+  }
+
+  .field { margin-bottom: 1pt; padding-left: 18pt; }
+  .field-value { font-style: italic; }
+
+  .ph {
+    background: #fff59d;
+    font-style: italic;
+    padding: 0 2px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4pt 0;
+    font-size: 10pt;
+  }
+  table th, table td {
+    border: 1px solid #000;
+    padding: 2pt 4pt;
+    vertical-align: top;
+  }
+  table th {
+    text-align: center;
+    font-weight: normal;
+  }
+  td.c { text-align: center; }
+
+  .sig {
+    margin-top: 30pt;
+  }
+  .sig-row {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 12pt;
+  }
+  .sig-title { white-space: nowrap; }
+  .sig-line {
+    flex: 1;
+    border-bottom: 1px solid #000;
+    margin: 0 12pt;
+    min-width: 60pt;
+  }
+  .sig-name { white-space: nowrap; }
+
+  .indent { padding-left: 36pt; }
+  .sub { padding-left: 36pt; margin-bottom: 1pt; }
+  .p { margin-bottom: 2pt; }
+</style>
+</head>
+<body>
+
+<!-- ==================== СТРАНИЦА 1 ==================== -->
+<div class="page">
+
+  <div class="header">
+    <img class="header-logo" src="app/public/images/certificate/sts-header.png" alt="ООО «СТС» — системы технологии строительство | info@stcons.ru | www.stcons.ru | 8-800-500-97-84">
+    <img class="header-skolkovo" src="app/public/images/certificate/skolkovo.png" alt="Skolkovo Resident">
+  </div>
+
+  <h1>СЕРТИФИКАТ КАЧЕСТВА №<span class="ph">{{certificateNumber}}</span></h1>
+  <h2>на стальные конструкции</h2>
+  <div class="spec-ref">к спецификации <span class="ph">{{specReference}}</span></div>
+
+  <div class="field p">Заказчик: <span class="ph">{{customerName}}</span></div>
+  <div class="field p">Наименование объекта: <span class="ph">{{objectName}}</span></div>
+  <div class="field p">Дата начала изготовления: <span class="ph">{{startDate}}</span></div>
+  <div class="field p">Дата окончания изготовления: <span class="ph">{{endDate}}</span></div>
+  <div class="field p">Организация, выполнившая чертежи КМ, шифр проекта, номера чертежей</div>
+  <div class="field indent"><span class="ph">{{kmOrganization}}</span></div>
+  <div class="field p">Организация, выполнившая деталировочные чертежи КМД, шифры и номера чертежей <span class="field-value">ООО «СТС»</span></div>
+  <div class="field p">Нормы проектирования: <span class="ph">{{designStandards}}</span></div>
+  <div class="field p">Нормы на изготовление: <span class="ph">{{manufacturingStandards}}</span></div>
+  <div class="field p">Организация, утвердившая проект <span class="ph">{{approvedByOrganization}}</span></div>
+  <div class="field p">Общая масса конструкций: <span class="ph">{{totalWeight}}</span></div>
+  <div class="field p">Объем контрольной (или общей) сборки</div>
+  <div class="field p">Конструкции изготовлены на основе <span class="field-value">СТО-ГК «Трансстрой»-012-2018</span> из материала следующих заводов:</div>
+
+  <table>
+    <tr><th>Завод-поставщик</th><th>Марка стали</th><th>ГОСТ, СТО</th><th>№ сертификатов</th></tr>
+    <!-- {{#each suppliers}} -->
+    <tr>
+      <td><span class="ph">{{supplierName}}</span></td>
+      <td class="c"><span class="ph">{{steelGrade}}</span></td>
+      <td class="c"><span class="ph">{{gost}}</span></td>
+      <td><span class="ph">{{certNumbers}}</span></td>
+    </tr>
+    <!-- {{/each}} -->
+    <tr>
+      <td><span class="ph">ПАО «Ашинский металлургический завод»</span></td>
+      <td class="c"><span class="ph">09Г2С</span></td>
+      <td class="c"><span class="ph">19281-2014</span></td>
+      <td><span class="ph">2527 от 06.03.2026</span></td>
+    </tr>
+    <tr>
+      <td><span class="ph">ПАО «Ашинский металлургический завод»</span></td>
+      <td class="c"><span class="ph">09Г2С</span></td>
+      <td class="c"><span class="ph">19281-2014</span></td>
+      <td><span class="ph">2568 от 09.03.2026</span></td>
+    </tr>
+    <tr>
+      <td><span class="ph">ПАО «Ашинский металлургический завод»</span></td>
+      <td class="c"><span class="ph">09Г2С</span></td>
+      <td class="c"><span class="ph">19281-2014</span></td>
+      <td><span class="ph">2567 от 09.03.2026</span></td>
+    </tr>
+  </table>
+
+  <div class="field p" style="margin-top: 4pt;">Для сварки применены:</div>
+  <div class="sub">- сварочная проволока: <span class="ph">{{weldingWire}}</span></div>
+  <div class="sub" style="padding-left: 54pt;"><span class="ph">{{weldingWireCertNumber}}</span></div>
+  <div class="sub">- флюс: <span class="ph">{{flux}}</span></div>
+  <div class="sub">- защитные газы: <span class="ph">{{shieldingGas}}</span></div>
+  <div class="sub">- электроды: <span class="ph">{{electrodes}}</span></div>
+
+  <div class="p" style="margin-top: 6pt;">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;13. Сварщики аттестованы согласно:
+  </div>
+  <div class="justify" style="font-style: italic;">
+    Свидетельство о готовности организации-заявителя к применению аттестованной технологии сварки в соответствии с требованиями РД 03-615-03
+  </div>
+  <div style="font-style: italic;">№ АЦСТ-118-02351</div>
+  <div>Удостоверения сварщиков и протоколы аттестации хранятся на предприятии.</div>
+  <div style="font-style: italic;">СВР-9ЦСП-III-13135 от 12.11.2021</div>
+  <div style="padding-left: 36pt;">Удостоверения сварщиков и протоколы аттестации хранятся на предприятии.</div>
+
+  <div class="p" style="margin-top: 6pt;">
+    14. Сварные швы проверены методом ВИК по РД 03-606-03 и замером швов катетомером. Визуальному контролю подлежит не менее 10% длинны сварных соединений согласно РД 03-606-03.
+  </div>
+  <div style="padding-left: 18pt;">Документы, подтверждающие качество сварных швов, хранятся на предприятии.</div>
+
+  <div class="p" style="margin-top: 8pt;">15. Ведомость отгрузки конструкций:</div>
+
+  <table>
+    <tr>
+      <th style="width: 36pt;">№ п/п</th>
+      <th>Наименование конструкций</th>
+      <th>Кол-во/<br>масса, кг</th>
+      <th>Период отгрузки</th>
+      <th>Транспорт</th>
+    </tr>
+    <!-- {{#each shipments}} -->
+    <tr>
+      <td class="c">{{index}}.</td>
+      <td><span class="ph">{{shipmentName}}</span></td>
+      <td class="c"><span class="ph">{{shipmentQtyWeight}}</span></td>
+      <td><span class="ph">{{shipmentPeriod}}</span></td>
+      <td><span class="ph">{{shipmentTransport}}</span></td>
+    </tr>
+    <!-- {{/each}} -->
+    <tr>
+      <td class="c">1.</td>
+      <td><span class="ph">Элемент МИК-П П3а</span></td>
+      <td class="c"><span class="ph">6/19 620</span></td>
+      <td><span class="ph">Март 2026</span></td>
+      <td></td>
+    </tr>
+  </table>
+
+  <div class="p" style="margin-top: 6pt;">
+    16. Металлоконструкции <span class="field-value">СВСиУ</span> элементы <span class="ph">{{constructionType}}</span>
+  </div>
+  <div class="field">защищены от коррозии в соответствии с СП28.13330-2017</div>
+  <div class="indent">материалы: <span class="ph">{{anticorrosionMaterial}}</span></div>
+
+  <div class="justify" style="margin-top: 6pt;">
+    Сертификаты на металл, сварочные и лакокрасочные материалы хранятся на предприятии.
+  </div>
+  <div class="justify" style="margin-top: 3pt;">
+    17. Документы, перечисленные в пунктах 14, 15, 18, а также сертификаты на материалы, перечисленные в Приложении 1 должны быть предоставлены заказчику по первому его требованию.
+  </div>
+  <div style="margin-top: 3pt;">
+    18. Приложения:
+  </div>
+  <div class="field">Сводная ведомость сертификатов на материалы (Приложение 1)</div>
+
+  <div class="sig">
+    <div class="sig-row">
+      <span class="sig-title">Начальник производства ООО «СТС»</span>
+      <span class="sig-line"></span>
+      <span class="sig-name">В.В. Нужнов</span>
+    </div>
+    <div class="sig-row">
+      <span class="sig-title">ОТК</span>
+      <span class="sig-line"></span>
+      <span class="sig-name">И.П. Федорина</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== СТРАНИЦА 2: ПРИЛОЖЕНИЕ 1 ==================== -->
+<div class="page">
+
+  <div class="right" style="margin-bottom: 2pt;">Приложение 1</div>
+  <div class="right">к сертификату качества №<span class="ph">{{certificateNumber}}</span> на стальные конструкции</div>
+  <div class="right" style="margin-bottom: 12pt;">спецификации <span class="ph">{{specReference}}</span></div>
+
+  <div class="center bold" style="margin-bottom: 10pt;">Сводная ведомость сертификатов на материалы</div>
+
+  <table>
+    <tr>
+      <th>Наименование материала</th>
+      <th>Марка материала</th>
+      <th>№ сертификатов</th>
+      <th>Завод-изготовитель</th>
+    </tr>
+    <!-- {{#each materials}} -->
+    <tr>
+      <td class="c"><span class="ph">{{materialName}}</span></td>
+      <td class="c"><span class="ph">{{materialGrade}}</span></td>
+      <td class="c"><span class="ph">{{materialCertNumber}}</span></td>
+      <td class="c"><span class="ph">{{materialManufacturer}}</span></td>
+    </tr>
+    <!-- {{/each}} -->
+    <tr>
+      <td class="c">Сварочная проволока</td>
+      <td class="c">08Г2С 1,2<br>ГОСТ 2246-70</td>
+      <td class="c">СЕРТ-62/25</td>
+      <td class="c">ООО «ЭСАБ»</td>
+    </tr>
+    <tr>
+      <td class="c">Защитный газ</td>
+      <td class="c">СО2 ТУ 20.11.12-001-03066117-2023</td>
+      <td class="c">RU Д-RU.РА06.В62042/23</td>
+      <td class="c">ООО «ПРОМКРИОГЕН»</td>
+    </tr>
+    <tr>
+      <td class="c">Антикоррозионная защита</td>
+      <td class="c">ГОСТ Р 51693-2000</td>
+      <td class="c">POCC RU.Я2331.04ПВК0.Н00587;<br>RU.64.01.02.015.Е.000035.08.11</td>
+      <td class="c">ООО НПП «СПЕКТР-ТП»</td>
+    </tr>
+    <tr>
+      <td class="c"><span class="ph">Проволока 3,0 мм</span></td>
+      <td class="c"><span class="ph">3 Св-10НМА-О<br>ГОСТ 2246-70</span></td>
+      <td class="c"><span class="ph">778/4</span></td>
+      <td class="c"><span class="ph">ООО «Ростовский сталепрокатный завод»</span></td>
+    </tr>
+    <tr>
+      <td class="c"><span class="ph">Флюс</span></td>
+      <td class="c"><span class="ph">OK Flux 10.71<br>ГОСТ Р ИСО 14174</span></td>
+      <td class="c"><span class="ph">23-0270</span></td>
+      <td class="c"><span class="ph">ООО «ЭСАБ»</span></td>
+    </tr>
+  </table>
+
+  <div class="sig">
+    <div class="sig-row">
+      <span class="sig-title">Начальник производства ООО «СТС»</span>
+      <span class="sig-line"></span>
+      <span class="sig-name">В.В. Нужнов</span>
+    </div>
+    <div class="sig-row">
+      <span class="sig-title">ОТК</span>
+      <span class="sig-line"></span>
+      <span class="sig-name">И.П. Федорина</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
