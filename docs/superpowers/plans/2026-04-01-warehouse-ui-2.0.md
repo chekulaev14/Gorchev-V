@@ -284,7 +284,7 @@ export function SlideOverPanel({ open, onClose, title, children }: Props) {
   return (
     <div
       ref={panelRef}
-      className="w-[480px] shrink-0 border-l border-border bg-card overflow-y-auto h-full"
+      className="w-[40%] min-w-[400px] max-w-[560px] shrink-0 border-l border-border bg-card overflow-y-auto h-full"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-card z-10">
         <h2 className="text-foreground text-sm font-semibold truncate">{title}</h2>
@@ -334,6 +334,11 @@ interface FilterConfig {
   allLabel?: string;
 }
 
+interface DateRange {
+  from: string;
+  to: string;
+}
+
 interface Props {
   filters?: FilterConfig[];
   filterValues?: Record<string, string>;
@@ -341,6 +346,8 @@ interface Props {
   searchPlaceholder?: string;
   searchValue: string;
   onSearchChange: (value: string) => void;
+  dateRange?: DateRange;
+  onDateRangeChange?: (range: DateRange) => void;
 }
 
 export function FilterBar({
@@ -350,6 +357,8 @@ export function FilterBar({
   searchPlaceholder = "Поиск...",
   searchValue,
   onSearchChange,
+  dateRange,
+  onDateRangeChange,
 }: Props) {
   const [localSearch, setLocalSearch] = useState(searchValue);
 
@@ -385,6 +394,23 @@ export function FilterBar({
           ))}
         </select>
       ))}
+      {dateRange && onDateRangeChange && (
+        <>
+          <input
+            type="date"
+            value={dateRange.from}
+            onChange={(e) => onDateRangeChange({ ...dateRange, from: e.target.value })}
+            className="h-9 px-2 text-sm rounded-md border border-border bg-background text-foreground"
+          />
+          <span className="text-muted-foreground text-sm">—</span>
+          <input
+            type="date"
+            value={dateRange.to}
+            onChange={(e) => onDateRangeChange({ ...dateRange, to: e.target.value })}
+            className="h-9 px-2 text-sm rounded-md border border-border bg-background text-foreground"
+          />
+        </>
+      )}
     </div>
   );
 }
@@ -546,23 +572,27 @@ export function RoutingPreview({ steps }: Props) {
     <div className="flex items-center gap-1 overflow-x-auto py-2">
       {steps.map((step, idx) => (
         <div key={step.stepNo} className="flex items-center gap-1 shrink-0">
-          {idx === 0 && step.inputs.length > 0 && (
-            <div className="flex flex-col gap-0.5">
-              {step.inputs.map((inp) => (
-                <div
-                  key={inp.itemId}
-                  className="px-2 py-1 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800"
-                >
-                  {inp.itemName}
-                  <span className="text-amber-500 ml-1">
-                    {inp.quantity} {inp.unit}
-                  </span>
-                </div>
-              ))}
-            </div>
+          {step.inputs.length > 0 && (
+            <>
+              <div className="flex flex-col gap-0.5">
+                {step.inputs.map((inp) => (
+                  <div
+                    key={inp.itemId}
+                    className="px-2 py-1 rounded bg-amber-50 border border-amber-200 text-xs text-amber-800"
+                  >
+                    {inp.itemName}
+                    <span className="text-amber-500 ml-1">
+                      {inp.quantity} {inp.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <span className="text-muted-foreground text-xs">→</span>
+            </>
           )}
-          {idx === 0 && <span className="text-muted-foreground text-xs">→</span>}
-          {idx > 0 && <span className="text-muted-foreground text-xs">→</span>}
+          {step.inputs.length === 0 && idx > 0 && (
+            <span className="text-muted-foreground text-xs">→</span>
+          )}
           <div className="px-2 py-1 rounded bg-blue-50 border border-blue-200 text-xs text-blue-800">
             {step.outputItemName}
             <span className="text-blue-500 ml-1">
@@ -1394,25 +1424,50 @@ import { OperationPanel, type ProductionLogEntry } from "../panels/OperationPane
 import { api } from "@/lib/api-client";
 import { formatNumber } from "@/lib/constants";
 
+function defaultDateRange() {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - 30);
+  return {
+    from: from.toISOString().split("T")[0],
+    to: to.toISOString().split("T")[0],
+  };
+}
+
 export function ProductionTab() {
   const [logs, setLogs] = useState<ProductionLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState(defaultDateRange);
   const [selectedEntry, setSelectedEntry] = useState<ProductionLogEntry | null>(null);
+
+  const days = useMemo(() => {
+    const from = new Date(dateRange.from);
+    const to = new Date(dateRange.to);
+    return Math.max(1, Math.ceil((to.getTime() - from.getTime()) / 86400000));
+  }, [dateRange]);
 
   const fetchData = useCallback(async () => {
     try {
       const data = await api.get<{ logs: ProductionLogEntry[] }>(
-        "/api/terminal/logs?days=30",
+        `/api/terminal/logs?days=${days}`,
         { silent: true },
       );
-      setLogs(data.logs);
+      // Filter by date range on client (API only supports days param)
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to + "T23:59:59");
+      setLogs(
+        data.logs.filter((l) => {
+          const d = new Date(l.createdAt);
+          return d >= fromDate && d <= toDate;
+        }),
+      );
     } catch {
       // silent
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [days, dateRange]);
 
   useEffect(() => {
     fetchData();
@@ -1488,6 +1543,8 @@ export function ProductionTab() {
           searchValue={search}
           onSearchChange={setSearch}
           searchPlaceholder="Поиск по рабочему, позиции..."
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
         />
         <div className="flex-1 overflow-auto">
           <DataList
@@ -1556,7 +1613,7 @@ Expected: работает как раньше, без изменений
 - [ ] **Step 4: Финальный commit**
 
 ```bash
-git add -A
+git add app/src/components/warehouse-v2/ app/src/app/warehouse-v2/
 git commit -m "feat(warehouse-v2): complete UI 2.0 — three tabs with master-detail"
 git push
 ```
