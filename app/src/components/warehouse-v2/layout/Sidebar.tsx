@@ -6,8 +6,9 @@ import { usePathname } from 'next/navigation';
 const modules = [
   { href: '/', label: 'Дашборд', icon: '📊' },
   { href: '/warehouse-v2', label: 'Склад', icon: '📦' },
-  { href: '/warehouse', label: 'Склад (v1)', icon: '📋' },
+  { href: '/documents', label: 'Документы', icon: '📄' },
   { href: '/terminal', label: 'Терминал', icon: '🏭' },
+  { href: '/warehouse', label: 'Склад (v1)', icon: '📋' },
 ];
 
 export function Sidebar() {
