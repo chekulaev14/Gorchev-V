@@ -31,15 +31,13 @@ interface Props {
 export function OperationPanel({ entry, allEntries, onClose }: Props) {
   if (!entry) return null;
 
-  const operationWorkers: WorkerEntry[] = allEntries
-    .filter((e) => e.itemName === entry.itemName && e.createdAt === entry.createdAt)
-    .map((e) => ({
-      workerId: e.workerId,
-      workerName: e.workerName,
-      quantity: e.quantity,
-      pricePerUnit: e.pricePerUnit,
-      total: e.total,
-    }));
+  const operationWorkers: WorkerEntry[] = allEntries.map((e) => ({
+    workerId: e.workerId,
+    workerName: e.workerName,
+    quantity: e.quantity,
+    pricePerUnit: e.pricePerUnit,
+    total: e.total,
+  }));
 
   const totalQty = operationWorkers.reduce((sum, w) => sum + w.quantity, 0);
   const totalPay = operationWorkers.reduce((sum, w) => sum + w.total, 0);

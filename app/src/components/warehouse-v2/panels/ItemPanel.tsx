@@ -5,7 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { SlideOverPanel } from '../shared/SlideOverPanel';
 import { RoutingPreview } from '../shared/RoutingPreview';
 import { api } from '@/lib/api-client';
-import { itemTypeLabels, unitLabels, typeColors, formatNumber } from '@/lib/constants';
+import {
+  itemTypeLabels,
+  unitLabels,
+  typeColors,
+  formatNumber,
+  movementTypeLabels,
+} from '@/lib/constants';
 import type { NomenclatureItem, StockMovement } from '@/lib/types';
 
 interface RoutingData {
@@ -28,16 +34,6 @@ interface Props {
   balance: number;
   onClose: () => void;
 }
-
-const movementTypeLabels: Record<string, string> = {
-  SUPPLIER_INCOME: 'Приход',
-  PRODUCTION_INCOME: 'Производство',
-  ASSEMBLY_WRITE_OFF: 'Списание',
-  ASSEMBLY_INCOME: 'Производство',
-  ADJUSTMENT_INCOME: 'Корректировка +',
-  ADJUSTMENT_WRITE_OFF: 'Корректировка −',
-  SHIPMENT_WRITE_OFF: 'Отгрузка',
-};
 
 export function ItemPanel({ item, balance, onClose }: Props) {
   const [routing, setRouting] = useState<RoutingData | null>(null);
@@ -72,12 +68,18 @@ export function ItemPanel({ item, balance, onClose }: Props) {
       stepNo: s.stepNo,
       outputItemName: s.outputItem.name,
       outputQty: Number(s.outputQty),
-      outputUnit: unitLabels[s.outputItem.unit as keyof typeof unitLabels] ?? s.outputItem.unit,
+      outputUnit:
+        s.outputItem.unit in unitLabels
+          ? unitLabels[s.outputItem.unit as keyof typeof unitLabels]
+          : s.outputItem.unit,
       inputs: s.inputs.map((inp) => ({
         itemId: inp.item.id,
         itemName: inp.item.name,
         quantity: Number(inp.quantity),
-        unit: unitLabels[inp.item.unit as keyof typeof unitLabels] ?? inp.item.unit,
+        unit:
+          inp.item.unit in unitLabels
+            ? unitLabels[inp.item.unit as keyof typeof unitLabels]
+            : inp.item.unit,
       })),
     })) ?? [];
 

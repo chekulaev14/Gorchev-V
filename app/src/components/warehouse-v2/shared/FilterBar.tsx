@@ -49,7 +49,10 @@ export function FilterBar({
   }, [localSearch, onSearchChange]);
 
   useEffect(() => {
-    setLocalSearch(searchValue);
+    if (searchValue !== localSearch) {
+      setLocalSearch(searchValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchValue]);
 
   return (

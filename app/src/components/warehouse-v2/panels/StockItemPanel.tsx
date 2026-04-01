@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SlideOverPanel } from '../shared/SlideOverPanel';
 import { api } from '@/lib/api-client';
-import { unitLabels, formatNumber } from '@/lib/constants';
+import { unitLabels, formatNumber, movementTypeLabels } from '@/lib/constants';
 import type { NomenclatureItem, StockMovement } from '@/lib/types';
 import { toast } from 'sonner';
 
@@ -17,16 +17,6 @@ interface Props {
 }
 
 type ActionMode = null | 'income' | 'shipment' | 'adjustment';
-
-const movementTypeLabels: Record<string, string> = {
-  SUPPLIER_INCOME: 'Приход',
-  PRODUCTION_INCOME: 'Производство',
-  ASSEMBLY_WRITE_OFF: 'Списание',
-  ASSEMBLY_INCOME: 'Производство',
-  ADJUSTMENT_INCOME: 'Корректировка +',
-  ADJUSTMENT_WRITE_OFF: 'Корректировка −',
-  SHIPMENT_WRITE_OFF: 'Отгрузка',
-};
 
 export function StockItemPanel({ item, balance, onClose, onRefresh }: Props) {
   const [movements, setMovements] = useState<StockMovement[]>([]);

@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const modules = [
-  { href: '/warehouse-v2', label: 'Склад', icon: '📦', active: true },
-  { href: '/warehouse', label: 'Склад (v1)', icon: '📋', active: true },
-  { href: '/terminal', label: 'Терминал', icon: '🏭', active: true },
+  { href: '/', label: 'Дашборд', icon: '📊' },
+  { href: '/warehouse-v2', label: 'Склад', icon: '📦' },
+  { href: '/warehouse', label: 'Склад (v1)', icon: '📋' },
+  { href: '/terminal', label: 'Терминал', icon: '🏭' },
 ];
 
 export function Sidebar() {
@@ -20,8 +21,10 @@ export function Sidebar() {
       <nav className="flex-1 py-2">
         {modules.map((mod) => {
           const isActive =
-            pathname.startsWith(mod.href) &&
-            (mod.href !== '/warehouse' || !pathname.startsWith('/warehouse-v2'));
+            mod.href === '/'
+              ? pathname === '/'
+              : pathname.startsWith(mod.href) &&
+                (mod.href !== '/warehouse' || !pathname.startsWith('/warehouse-v2'));
           return (
             <Link
               key={mod.href}

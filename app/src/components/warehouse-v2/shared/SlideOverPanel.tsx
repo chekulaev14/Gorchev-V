@@ -44,15 +44,18 @@ export function SlideOverPanel({ open, onClose, title, children }: Props) {
   return (
     <div
       ref={panelRef}
+      role="dialog"
+      aria-modal="true"
       className="w-[40%] min-w-[400px] max-w-[560px] shrink-0 border-l border-border bg-card overflow-y-auto h-full"
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-card z-10">
         <h2 className="text-foreground text-sm font-semibold truncate">{title}</h2>
         <button
           onClick={onClose}
+          aria-label="Закрыть"
           className="text-muted-foreground hover:text-foreground text-lg leading-none"
         >
-          ×
+          ✕
         </button>
       </div>
       <div className="p-4">{children}</div>

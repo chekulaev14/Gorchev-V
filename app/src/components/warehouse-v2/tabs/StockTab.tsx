@@ -8,12 +8,7 @@ import { api } from '@/lib/api-client';
 import { itemTypeLabels, unitLabels, typeColors, formatNumber } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import type { NomenclatureItem } from '@/lib/types';
-
-const typeFilterOptions = [
-  { value: 'material', label: 'Сырьё' },
-  { value: 'blank', label: 'Заготовки' },
-  { value: 'product', label: 'Изделия' },
-];
+import { typeFilterOptions } from '../shared/constants';
 
 export function StockTab() {
   const [items, setItems] = useState<NomenclatureItem[]>([]);

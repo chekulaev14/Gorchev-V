@@ -139,7 +139,14 @@ export function ProductionTab() {
       </div>
       <OperationPanel
         entry={selectedEntry}
-        allEntries={logs}
+        allEntries={
+          selectedEntry
+            ? logs.filter(
+                (e) =>
+                  e.itemName === selectedEntry.itemName && e.createdAt === selectedEntry.createdAt,
+              )
+            : []
+        }
         onClose={() => setSelectedEntry(null)}
       />
     </div>

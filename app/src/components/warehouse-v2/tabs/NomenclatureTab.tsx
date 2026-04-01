@@ -8,12 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api-client';
 import { itemTypeLabels, unitLabels, typeColors, formatNumber } from '@/lib/constants';
 import type { NomenclatureItem } from '@/lib/types';
-
-const typeFilterOptions = [
-  { value: 'material', label: 'Сырьё' },
-  { value: 'blank', label: 'Заготовки' },
-  { value: 'product', label: 'Изделия' },
-];
+import { typeFilterOptions } from '../shared/constants';
 
 export function NomenclatureTab() {
   const [items, setItems] = useState<NomenclatureItem[]>([]);
@@ -86,6 +81,16 @@ export function NomenclatureTab() {
         render: (item: NomenclatureItem) => (
           <span className="font-mono text-foreground">
             {formatNumber(balances[item.id] ?? 0)} {unitLabels[item.unit]}
+          </span>
+        ),
+      },
+      {
+        key: 'hasRoute',
+        header: 'Маршрут',
+        width: '80px',
+        render: (item: NomenclatureItem) => (
+          <span className={item.hasRecipe ? 'text-emerald-600' : 'text-muted-foreground'}>
+            {item.hasRecipe ? 'Да' : 'Нет'}
           </span>
         ),
       },
