@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Металл 2.0 — Склад + Производство</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fafaf9;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1c1917;
+  --bg-sidebar-hover: #292524;
+  --bg-sidebar-active: #3730a3;
+  --bg-muted: #f5f5f4;
+  --bg-pipeline: #fafaf9;
+  --border: #e7e5e4;
+  --border-light: #f0eeec;
+  --text: #1c1917;
+  --text-secondary: #78716c;
+  --text-muted: #a8a29e;
+  --text-sidebar: #d6d3d1;
+  --text-sidebar-muted: #78716c;
+  --accent: #4338ca;
+  --accent-light: #eef2ff;
+  --accent-hover: #3730a3;
+  --accent-text: #4f46e5;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --yellow: #ca8a04;
+  --yellow-bg: #fefce8;
+  --yellow-border: #fef08a;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+  --font: 'IBM Plex Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Layout */
+.app { display: flex; height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  width: 200px;
+  min-width: 200px;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.sidebar-brand {
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.sidebar-brand-text {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.sidebar-nav { padding: 8px 6px; flex: 1; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text-sidebar);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.12s;
+  user-select: none;
+  margin-bottom: 1px;
+}
+
+.nav-item:hover {
+  background: var(--bg-sidebar-hover);
+  color: #fff;
+}
+
+.nav-item.active {
+  background: var(--bg-sidebar-active);
+  color: #fff;
+}
+
+.nav-item svg { width: 16px; height: 16px; opacity: 0.6; flex-shrink: 0; }
+.nav-item.active svg { opacity: 1; }
+
+.nav-separator {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 6px 10px;
+}
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #44403c;
+  color: #d6d3d1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.sidebar-user {
+  font-size: 12px;
+  color: var(--text-sidebar);
+  font-weight: 500;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.breadcrumb-item { color: var(--text-muted); }
+.breadcrumb-item.current { color: var(--text); font-weight: 600; }
+.breadcrumb-sep { color: var(--text-muted); font-size: 11px; }
+
+.search-global {
+  padding: 6px 10px 6px 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  outline: none;
+  width: 240px;
+  background: var(--bg-muted) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23a8a29e' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='6' cy='6' r='4.5'/%3E%3Cline x1='10' y1='10' x2='13' y2='13'/%3E%3C/svg%3E") 9px center no-repeat;
+  font-family: var(--font);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.search-global:focus {
+  border-color: var(--accent);
+  background-color: var(--bg-card);
+}
+
+.search-global::placeholder { color: var(--text-muted); }
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.topbar-kbd {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-muted);
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+}
+
+/* Content area */
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Module header */
+.module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 0;
+}
+
+.module-actions { display: flex; gap: 6px; }
+
+/* Tabs */
+.tabs-bar {
+  display: flex;
+  gap: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-top: 10px;
+}
+
+.tab-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.12s;
+  position: relative;
+}
+
+.tab-btn:hover { color: var(--text-secondary); }
+
+.tab-btn.active {
+  color: var(--accent-text);
+  border-bottom-color: var(--accent);
+}
+
+.tab-count {
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: 5px;
+  font-family: var(--mono);
+}
+
+.tab-btn.active .tab-count {
+  background: var(--accent-light);
+  color: var(--accent-text);
+}
+
+/* Tab content */
+.tab-content { display: none; flex: 1; overflow: hidden; }
+.tab-content.active { display: flex; }
+
+/* Split layout: list + detail */
+.split-layout {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.list-panel {
+  width: 380px;
+  min-width: 380px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.detail-panel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg);
+  padding: 16px 20px;
+}
+
+/* Pipeline */
+.pipeline {
+  display: flex;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.pipeline-stage {
+  flex: 1;
+  padding: 6px 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.12s;
+  color: var(--text-muted);
+  background: var(--bg-muted);
+}
+
+.pipeline-stage:hover { color: var(--text-secondary); }
+
+.pipeline-stage.active {
+  background: var(--accent-light);
+  color: var(--accent-text);
+}
+
+.pipeline-stage .stage-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  margin-left: 3px;
+  opacity: 0.7;
+}
+
+/* Filters */
+.filters-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: var(--bg-card);
+  font-family: var(--font);
+  transition: all 0.12s;
+}
+
+.filter-chip:hover { border-color: var(--accent); color: var(--accent-text); }
+.filter-chip.active { border-color: var(--accent); color: var(--accent-text); background: var(--accent-light); }
+
+/* List items */
+.list-scroll { flex: 1; overflow-y: auto; }
+
+.list-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.1s;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.list-item:hover { background: var(--bg-muted); }
+.list-item.selected { background: var(--accent-light); border-left: 2px solid var(--accent); }
+
+.list-item-body { flex: 1; min-width: 0; }
+
+.list-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.list-item-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.list-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.list-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.badge-active { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.badge-completed { background: var(--bg-muted); color: var(--text-muted); border: 1px solid var(--border); }
+.badge-draft { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.badge-issued { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.badge-uploaded { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.badge-parsed { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.badge-verified { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+
+/* Type badges for nomenclature */
+.badge-material { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.badge-blank { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.badge-product { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+
+/* Side badges */
+.badge-side-left { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 700; }
+.badge-side-right { background: var(--red-bg); color: var(--red); border: 1px solid #fecaca; font-size: 10px; padding: 1px 5px; border-radius: 4px; font-weight: 700; }
+
+/* Deficit row */
+.low-stock-row { background: var(--red-bg); }
+.low-stock-row:hover { background: #fee2e2; }
+
+.badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Detail view */
+.detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 8px;
+}
+
+.detail-empty svg { opacity: 0.3; }
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.detail-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.detail-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Sections */
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.section-body { padding: 10px 14px; }
+
+/* Mini table in sections */
+.mini-table { width: 100%; }
+
+.mini-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.mini-row + .mini-row { border-top: 1px solid var(--border-light); }
+
+.mini-row-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 60px;
+}
+
+.mini-row-text { flex: 1; color: var(--text-secondary); }
+
+.mini-row-badge { flex-shrink: 0; }
+
+.mini-row-action {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.12s;
+  flex-shrink: 0;
+}
+
+.mini-row-action:hover { color: var(--red); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.12s;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--bg-muted); }
+
+.btn-ghost {
+  background: none;
+  color: var(--text-secondary);
+}
+.btn-ghost:hover { background: var(--bg-muted); color: var(--text); }
+
+.btn-sm { padding: 4px 8px; font-size: 11px; }
+
+.btn-success {
+  background: var(--green);
+  color: #fff;
+}
+.btn-success:hover { opacity: 0.9; }
+
+/* KPI cards */
+.kpi-row {
+  display: flex;
+  gap: 10px;
+  padding: 12px 12px 6px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.kpi-card {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--bg-muted);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.kpi-value {
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.kpi-value.danger { color: var(--red); }
+.kpi-value.accent { color: var(--accent-text); }
+
+.kpi-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Routing chain */
+.routing-chain {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.routing-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.routing-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  background: var(--bg-card);
+  font-size: 11px;
+  min-width: 0;
+}
+
+.routing-block-title {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 11px;
+}
+
+.routing-block-qty {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.routing-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.routing-arrow {
+  font-size: 14px;
+  color: var(--text-muted);
+  padding: 0 6px;
+  flex-shrink: 0;
+}
+
+/* Balance big */
+.balance-big {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.balance-big.deficit { color: var(--red); }
+
+.balance-unit {
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* Status inline */
+.status-ok { color: var(--green); font-weight: 600; font-size: 11px; }
+.status-deficit { color: var(--red); font-weight: 600; font-size: 11px; }
+
+/* Movement rows */
+.movement-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.movement-row + .movement-row { border-top: 1px solid var(--border-light); }
+
+.movement-date {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 50px;
+}
+
+.movement-type {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  min-width: 58px;
+  text-align: center;
+}
+
+.movement-income { background: var(--green-bg); color: var(--green); }
+.movement-writeoff { background: var(--red-bg); color: var(--red); }
+.movement-production { background: #eff6ff; color: #2563eb; }
+
+.movement-qty {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: right;
+}
+
+.movement-qty.plus { color: var(--green); }
+.movement-qty.minus { color: var(--red); }
+
+.movement-route {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+/* Production earning */
+.earning {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+/* Data field rows */
+.data-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 12px;
+}
+
+.data-field + .data-field { border-top: 1px solid var(--border-light); }
+
+.data-label { color: var(--text-muted); font-size: 11px; min-width: 90px; }
+.data-value { color: var(--text); font-weight: 500; flex: 1; text-align: right; }
+
+/* Potential section */
+.potential-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+}
+
+.potential-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.bottleneck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--yellow-bg);
+  border: 1px solid var(--yellow-border);
+  border-radius: var(--radius);
+  font-size: 11px;
+  color: var(--yellow);
+  font-weight: 500;
+}
+
+/* Workers table */
+.worker-row {
+  display: grid;
+  grid-template-columns: 1fr 50px 55px 70px;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 12px;
+  align-items: center;
+}
+
+.worker-row + .worker-row { border-top: 1px solid var(--border-light); }
+.worker-head { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Material movement detail */
+.mat-move {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.mat-move + .mat-move { border-top: 1px solid var(--border-light); }
+
+.mat-move-qty { font-family: var(--mono); font-weight: 600; min-width: 60px; }
+.mat-move-qty.plus { color: var(--green); }
+.mat-move-qty.minus { color: var(--red); }
+
+.mat-move-route { font-size: 11px; color: var(--text-muted); }
+
+/* AI Panel */
+.ai-panel {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+  transform: translateY(calc(100% + 20px));
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.2s;
+}
+
+.ai-panel.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-muted);
+}
+
+.ai-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.ai-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ai-context {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 6px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-light);
+  font-family: var(--mono);
+}
+
+.ai-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+
+.ai-close:hover { background: var(--bg-card); color: var(--text); }
+
+.ai-body { padding: 10px 14px; }
+
+.ai-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+}
+
+.ai-action-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent-text);
+}
+
+.ai-action-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: var(--bg-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ai-action-btn:hover .ai-action-icon {
+  background: var(--accent-light);
+}
+
+.ai-chat-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-chat-divider::before,
+.ai-chat-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.ai-input-wrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 6px 4px 10px;
+}
+
+.ai-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  font-family: var(--font);
+  color: var(--text);
+  background: transparent;
+  padding: 2px 0;
+}
+
+.ai-input::placeholder { color: var(--text-muted); }
+
+.ai-send {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.ai-send:hover { background: var(--accent-hover); }
+
+/* AI Trigger */
+.ai-trigger {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(67, 56, 202, 0.35);
+  z-index: 99;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ai-trigger:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(67, 56, 202, 0.45);
+}
+
+.ai-trigger.hidden { display: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Transition helper */
+.fade-in {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive: tablet */
+@media (max-width: 1024px) {
+  .sidebar { width: 170px; min-width: 170px; }
+  .list-panel { width: 300px; min-width: 300px; }
+  .search-global { width: 180px; }
+}
+
+/* Responsive: mobile */
+@media (max-width: 768px) {
+  .app { flex-direction: column; }
+
+  .sidebar {
+    width: 100%;
+    min-width: unset;
+    flex-direction: row;
+    height: 48px;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sidebar-brand {
+    padding: 0 12px;
+    border-bottom: none;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    min-width: fit-content;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    padding: 4px 6px;
+    gap: 2px;
+    overflow-x: auto;
+    flex: 1;
+  }
+
+  .nav-item {
+    padding: 6px 10px;
+    white-space: nowrap;
+    margin-bottom: 0;
+    font-size: 12px;
+  }
+
+  .nav-item svg { display: none; }
+  .nav-separator { display: none; }
+
+  .sidebar-footer {
+    border-top: none;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    padding: 0 10px;
+    min-width: fit-content;
+  }
+
+  .main { height: calc(100vh - 48px); }
+
+  .topbar { padding: 0 12px; height: 40px; }
+  .search-global { width: 140px; font-size: 11px; }
+  .topbar-kbd { display: none; }
+  .breadcrumb { font-size: 12px; }
+
+  .module-header { padding: 10px 12px 0; }
+  .tabs-bar { padding: 0 12px; }
+
+  .split-layout { flex-direction: column; }
+
+  .list-panel {
+    width: 100%;
+    min-width: unset;
+    max-height: 220px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-panel { padding: 12px; }
+
+  .detail-title { font-size: 14px; }
+
+  .section-body { padding: 8px 10px; }
+  .section-header { padding: 8px 10px; font-size: 10px; }
+
+  .ai-panel { width: calc(100% - 24px); right: 12px; bottom: 12px; }
+  .ai-trigger { bottom: 12px; right: 12px; width: 38px; height: 38px; }
+
+  .filters-bar { padding: 6px 8px; }
+
+  .pipeline { padding: 6px 8px; }
+  .pipeline-stage { padding: 5px 6px; font-size: 10px; }
+
+  .kpi-row { flex-wrap: wrap; }
+  .kpi-card { min-width: 70px; }
+
+  .btn { padding: 5px 10px; font-size: 11px; }
+  .btn-sm { padding: 3px 7px; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">M</div>
+      <div class="sidebar-brand-text">ERP Металл</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" data-module="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Дашборд
+      </div>
+      <div class="nav-item active" data-module="warehouse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Склад
+      </div>
+      <div class="nav-item" data-module="production">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Производство
+      </div>
+      <div class="nav-item" data-module="documents">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Документы
+      </div>
+      <div class="nav-separator"></div>
+      <div class="nav-item" data-module="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Настройки
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">ИА</div>
+      <div class="sidebar-user">Инженер</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">Склад</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-item current" id="breadcrumbCurrent">Номенклатура</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <input type="text" class="search-global" placeholder="Поиск по номенклатуре, остаткам...">
+        <span class="topbar-kbd">&#8984;K</span>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="module-header">
+        <div></div>
+        <div class="module-actions">
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('balances')">Мониторинг</button>
+          <button class="btn btn-primary btn-sm">+ Позиция</button>
+        </div>
+      </div>
+
+      <div class="tabs-bar">
+        <button class="tab-btn active" data-tab="nomenclature" onclick="switchTab('nomenclature')">Номенклатура<span class="tab-count">7</span></button>
+        <button class="tab-btn" data-tab="balances" onclick="switchTab('balances')">Остатки<span class="tab-count">7</span></button>
+        <button class="tab-btn" data-tab="production" onclick="switchTab('production')">Производство<span class="tab-count">4</span></button>
+      </div>
+
+      <!-- TAB: NOMENCLATURE -->
+      <div class="tab-content active" id="tab-nomenclature">
+        <div class="split-layout">
+          <div class="list-panel">
+            <div class="filters-bar">
+              <div class="filter-chip active" data-filter="all">Все</div>
+              <div class="filter-chip" data-filter="material">Материалы</div>
+              <div class="filter-chip" data-filter="blank">Заготовки</div>
+              <div class="filter-chip" data-filter="product">Изделия</div>
+            </div>
+            <div class="list-scroll" id="nomenclature-list">
+              <!-- МАТ-001 -->
+              <div class="list-item selected" data-type="material" onclick="selectNom(this, 'nom-1')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-001</span>
+                    Лист стальной 2мм
+                  </div>
+                  <div class="list-item-sub">1250x2500 &middot; кг</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-material">материал</span>
+                </div>
+              </div>
+              <!-- МАТ-002 -->
+              <div class="list-item" data-type="material" onclick="selectNom(this, 'nom-2')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-002</span>
+                    Профиль 40x20x2
+                  </div>
+                  <div class="list-item-sub">кг</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-material">материал</span>
+                </div>
+              </div>
+              <!-- МАТ-003 -->
+              <div class="list-item" data-type="material" onclick="selectNom(this, 'nom-3')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-003</span>
+                    Болт М10x50 DIN 933
+                  </div>
+                  <div class="list-item-sub">шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-material">материал</span>
+                </div>
+              </div>
+              <!-- МАТ-004 ДЕФИЦИТ -->
+              <div class="list-item low-stock-row" data-type="material" onclick="selectNom(this, 'nom-4')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-004</span>
+                    Гайка М12 DIN 934
+                  </div>
+                  <div class="list-item-sub">шт &middot; <span class="status-deficit">дефицит</span></div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-material">материал</span>
+                </div>
+              </div>
+              <!-- ЗАГ-001 -->
+              <div class="list-item" data-type="blank" onclick="selectNom(this, 'nom-5')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">ЗАГ-001</span>
+                    Кронштейн К-01 Левый
+                    <span class="badge-side-left">Л</span>
+                  </div>
+                  <div class="list-item-sub">шт &middot; 45₽/шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-blank">заготовка</span>
+                </div>
+              </div>
+              <!-- ЗАГ-002 -->
+              <div class="list-item" data-type="blank" onclick="selectNom(this, 'nom-6')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">ЗАГ-002</span>
+                    Кронштейн К-01 Правый
+                    <span class="badge-side-right">П</span>
+                  </div>
+                  <div class="list-item-sub">шт &middot; 45₽/шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-blank">заготовка</span>
+                </div>
+              </div>
+              <!-- ИЗД-001 -->
+              <div class="list-item" data-type="product" onclick="selectNom(this, 'nom-7')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">ИЗД-001</span>
+                    Основание Б-03
+                  </div>
+                  <div class="list-item-sub">шт &middot; 120₽/шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-product">изделие</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-panel" id="nomenclature-detail">
+            <!-- МАТ-001 detail -->
+            <div class="fade-in" id="nom-1">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Лист стальной 2мм 1250x2500</div>
+                  <div class="detail-subtitle">МАТ-001 &middot; материал &middot; кг</div>
+                </div>
+                <span class="badge badge-material" style="font-size:11px;padding:3px 10px">материал</span>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="data-field">
+                    <span class="data-label">Код</span>
+                    <span class="data-value" style="font-family:var(--mono)">МАТ-001</span>
+                  </div>
+                  <div class="data-field">
+                    <span class="data-label">Наименование</span>
+                    <span class="data-value">Лист стальной 2мм 1250x2500</span>
+                  </div>
+                  <div class="data-field">
+                    <span class="data-label">Тип</span>
+                    <span class="data-value">Материал</span>
+                  </div>
+                  <div class="data-field">
+                    <span class="data-label">Ед. измерения</span>
+                    <span class="data-value">кг</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Маршрут</div>
+                <div class="section-body" style="color:var(--text-muted);font-size:12px">
+                  Маршрут не задан
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Остаток</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                    <span class="balance-big">450</span>
+                    <span class="balance-unit">кг</span>
+                  </div>
+                  <div class="data-field">
+                    <span class="data-label">Мин. запас</span>
+                    <span class="data-value" style="font-family:var(--mono)">200 кг</span>
+                  </div>
+                  <div class="data-field">
+                    <span class="data-label">Статус</span>
+                    <span class="data-value status-ok">В норме</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Редактировать</button>
+                <button class="btn btn-primary">Создать приход</button>
+              </div>
+            </div>
+
+            <!-- МАТ-002 detail -->
+            <div id="nom-2" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Профиль 40x20x2</div>
+                  <div class="detail-subtitle">МАТ-002 &middot; материал &middot; кг</div>
+                </div>
+                <span class="badge badge-material" style="font-size:11px;padding:3px 10px">материал</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="data-field"><span class="data-label">Код</span><span class="data-value" style="font-family:var(--mono)">МАТ-002</span></div>
+                  <div class="data-field"><span class="data-label">Наименование</span><span class="data-value">Профиль 40x20x2</span></div>
+                  <div class="data-field"><span class="data-label">Тип</span><span class="data-value">Материал</span></div>
+                  <div class="data-field"><span class="data-label">Ед. измерения</span><span class="data-value">кг</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Маршрут</div>
+                <div class="section-body" style="color:var(--text-muted);font-size:12px">Маршрут не задан</div>
+              </div>
+              <div class="section">
+                <div class="section-header">Остаток</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                    <span class="balance-big">280</span><span class="balance-unit">кг</span>
+                  </div>
+                  <div class="data-field"><span class="data-label">Мин. запас</span><span class="data-value" style="font-family:var(--mono)">100 кг</span></div>
+                  <div class="data-field"><span class="data-label">Статус</span><span class="data-value status-ok">В норме</span></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Редактировать</button>
+                <button class="btn btn-primary">Создать приход</button>
+              </div>
+            </div>
+
+            <!-- МАТ-003 detail -->
+            <div id="nom-3" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Болт М10x50 DIN 933</div>
+                  <div class="detail-subtitle">МАТ-003 &middot; материал &middot; шт</div>
+                </div>
+                <span class="badge badge-material" style="font-size:11px;padding:3px 10px">материал</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="data-field"><span class="data-label">Код</span><span class="data-value" style="font-family:var(--mono)">МАТ-003</span></div>
+                  <div class="data-field"><span class="data-label">Наименование</span><span class="data-value">Болт М10x50 DIN 933</span></div>
+                  <div class="data-field"><span class="data-label">Тип</span><span class="data-value">Материал</span></div>
+                  <div class="data-field"><span class="data-label">Ед. измерения</span><span class="data-value">шт</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Маршрут</div>
+                <div class="section-body" style="color:var(--text-muted);font-size:12px">Маршрут не задан</div>
+              </div>
+              <div class="section">
+                <div class="section-header">Остаток</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                    <span class="balance-big">1 200</span><span class="balance-unit">шт</span>
+                  </div>
+                  <div class="data-field"><span class="data-label">Мин. запас</span><span class="data-value" style="font-family:var(--mono)">500 шт</span></div>
+                  <div class="data-field"><span class="data-label">Статус</span><span class="data-value status-ok">В норме</span></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Редактировать</button>
+                <button class="btn btn-primary">Создать приход</button>
+              </div>
+            </div>
+
+            <!-- МАТ-004 detail (ДЕФИЦИТ) -->
+            <div id="nom-4" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Гайка М12 DIN 934</div>
+                  <div class="detail-subtitle">МАТ-004 &middot; материал &middot; шт</div>
+                </div>
+                <span class="badge badge-material" style="font-size:11px;padding:3px 10px">материал</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="data-field"><span class="data-label">Код</span><span class="data-value" style="font-family:var(--mono)">МАТ-004</span></div>
+                  <div class="data-field"><span class="data-label">Наименование</span><span class="data-value">Гайка М12 DIN 934</span></div>
+                  <div class="data-field"><span class="data-label">Тип</span><span class="data-value">Материал</span></div>
+                  <div class="data-field"><span class="data-label">Ед. измерения</span><span class="data-value">шт</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Маршрут</div>
+                <div class="section-body" style="color:var(--text-muted);font-size:12px">Маршрут не задан</div>
+              </div>
+              <div class="section">
+                <div class="section-header">Остаток</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                    <span class="balance-big deficit">78</span><span class="balance-unit">шт</span>
+                  </div>
+                  <div class="data-field"><span class="data-label">Мин. запас</span><span class="data-value" style="font-family:var(--mono)">200 шт</span></div>
+                  <div class="data-field"><span class="data-label">Статус</span><span class="data-value status-deficit">Дефицит</span></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Редактировать</button>
+                <button class="btn btn-primary">Создать приход</button>
+              </div>
+            </div>
+
+            <!-- ЗАГ-001 detail -->
+            <div id="nom-5" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Кронштейн К-01 Левый <span class="badge-side-left">Л</span></div>
+                  <div class="detail-subtitle">ЗАГ-001 &middot; заготовка &middot; шт</div>
+                </div>
+                <span class="badge badge-blank" style="font-size:11px;padding:3px 10px">заготовка</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="data-field"><span class="data-label">Код</span><span class="data-value" style="font-family:var(--mono)">ЗАГ-001</span></div>
+                  <div class="data-field"><span class="data-label">Наименование</span><span class="data-value">Кронштейн К-01 Левый</span></div>
+                  <div class="data-field"><span class="data-label">Тип</span><span class="data-value">Заготовка</span></div>
+                  <div class="data-field"><span class="data-label">Ед. измерения</span><span class="data-value">шт</span></div>
+                  <div class="data-field"><span class="data-label">Тариф</span><span class="data-value earning">45 ₽/шт</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">
+                  Маршрут
+                  <button class="btn btn-sm btn-secondary">Редактировать маршрут</button>
+                </div>
+                <div class="section-body">
+                  <div class="routing-chain">
+                    <div class="routing-step">
+                      <div class="routing-block">
+                        <div class="routing-block-title">Лист стальной 2мм</div>
+                        <div class="routing-block-qty">0.5 кг</div>
+                      </div>
+                      <span class="routing-arrow">&rarr;</span>
+                      <div class="routing-block" style="border-color:var(--yellow-border);background:var(--yellow-bg)">
+                        <div class="routing-block-title">Кронштейн К-01 Левый</div>
+                        <div class="routing-block-qty">1 шт</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Остаток</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                    <span class="balance-big">45</span><span class="balance-unit">шт</span>
+                  </div>
+                  <div class="data-field"><span class="data-label">Мин. запас</span><span class="data-value" style="font-family:var(--mono)">&mdash;</span></div>
+                  <div class="data-field"><span class="data-label">Статус</span><span class="data-value status-ok">В норме</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Потенциал</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px">
+                    <span class="potential-value">900</span>
+                    <span class="potential-label">шт можно произвести</span>
+                  </div>
+                  <div style="margin-top:4px;font-size:11px;color:var(--text-muted)">Лимит: Лист стальной (450 кг / 0.5 = 900)</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Редактировать</button>
+                <button class="btn btn-primary">Создать приход</button>
+              </div>
+            </div>
+
+            <!-- ЗАГ-002 detail -->
+            <div id="nom-6" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Кронштейн К-01 Правый <span class="badge-side-right">П</span></div>
+                  <div class="detail-subtitle">ЗАГ-002 &middot; заготовка &middot; шт</div>
+                </div>
+                <span class="badge badge-blank" style="font-size:11px;padding:3px 10px">заготовка</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="data-field"><span class="data-label">Код</span><span class="data-value" style="font-family:var(--mono)">ЗАГ-002</span></div>
+                  <div class="data-field"><span class="data-label">Наименование</span><span class="data-value">Кронштейн К-01 Правый</span></div>
+                  <div class="data-field"><span class="data-label">Тип</span><span class="data-value">Заготовка</span></div>
+                  <div class="data-field"><span class="data-label">Ед. измерения</span><span class="data-value">шт</span></div>
+                  <div class="data-field"><span class="data-label">Тариф</span><span class="data-value earning">45 ₽/шт</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">
+                  Маршрут
+                  <button class="btn btn-sm btn-secondary">Редактировать маршрут</button>
+                </div>
+                <div class="section-body">
+                  <div class="routing-chain">
+                    <div class="routing-step">
+                      <div class="routing-block">
+                        <div class="routing-block-title">Лист стальной 2мм</div>
+                        <div class="routing-block-qty">0.5 кг</div>
+                      </div>
+                      <span class="routing-arrow">&rarr;</span>
+                      <div class="routing-block" style="border-color:var(--yellow-border);background:var(--yellow-bg)">
+                        <div class="routing-block-title">Кронштейн К-01 Правый</div>
+                        <div class="routing-block-qty">1 шт</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Остаток</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                    <span class="balance-big">38</span><span class="balance-unit">шт</span>
+                  </div>
+                  <div class="data-field"><span class="data-label">Мин. запас</span><span class="data-value" style="font-family:var(--mono)">&mdash;</span></div>
+                  <div class="data-field"><span class="data-label">Статус</span><span class="data-value status-ok">В норме</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Потенциал</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px">
+                    <span class="potential-value">900</span>
+                    <span class="potential-label">шт можно произвести</span>
+                  </div>
+                  <div style="margin-top:4px;font-size:11px;color:var(--text-muted)">Лимит: Лист стальной (450 кг / 0.5 = 900)</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Редактировать</button>
+                <button class="btn btn-primary">Создать приход</button>
+              </div>
+            </div>
+
+            <!-- ИЗД-001 detail -->
+            <div id="nom-7" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Основание Б-03</div>
+                  <div class="detail-subtitle">ИЗД-001 &middot; изделие &middot; шт</div>
+                </div>
+                <span class="badge badge-product" style="font-size:11px;padding:3px 10px">изделие</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="data-field"><span class="data-label">Код</span><span class="data-value" style="font-family:var(--mono)">ИЗД-001</span></div>
+                  <div class="data-field"><span class="data-label">Наименование</span><span class="data-value">Основание Б-03</span></div>
+                  <div class="data-field"><span class="data-label">Тип</span><span class="data-value">Изделие</span></div>
+                  <div class="data-field"><span class="data-label">Ед. измерения</span><span class="data-value">шт</span></div>
+                  <div class="data-field"><span class="data-label">Тариф</span><span class="data-value earning">120 ₽/шт</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">
+                  Маршрут (сборка)
+                  <button class="btn btn-sm btn-secondary">Редактировать маршрут</button>
+                </div>
+                <div class="section-body">
+                  <div class="routing-chain">
+                    <div class="routing-step">
+                      <div class="routing-inputs">
+                        <div class="routing-block">
+                          <div class="routing-block-title">Кронштейн К-01 Л <span class="badge-side-left" style="font-size:9px">Л</span></div>
+                          <div class="routing-block-qty">2 шт</div>
+                        </div>
+                        <div class="routing-block">
+                          <div class="routing-block-title">Кронштейн К-01 П <span class="badge-side-right" style="font-size:9px">П</span></div>
+                          <div class="routing-block-qty">2 шт</div>
+                        </div>
+                        <div class="routing-block">
+                          <div class="routing-block-title">Болт М10x50</div>
+                          <div class="routing-block-qty">4 шт</div>
+                        </div>
+                        <div class="routing-block">
+                          <div class="routing-block-title">Гайка М12</div>
+                          <div class="routing-block-qty">4 шт</div>
+                        </div>
+                      </div>
+                      <span class="routing-arrow">&rarr;</span>
+                      <div class="routing-block" style="border-color:var(--green-border);background:var(--green-bg)">
+                        <div class="routing-block-title">Основание Б-03</div>
+                        <div class="routing-block-qty">1 шт</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Остаток</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                    <span class="balance-big">120</span><span class="balance-unit">шт</span>
+                  </div>
+                  <div class="data-field"><span class="data-label">Мин. запас</span><span class="data-value" style="font-family:var(--mono)">&mdash;</span></div>
+                  <div class="data-field"><span class="data-label">Статус</span><span class="data-value status-ok">В норме</span></div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Потенциал</div>
+                <div class="section-body">
+                  <div style="display:flex;align-items:baseline;gap:8px">
+                    <span class="potential-value">19</span>
+                    <span class="potential-label">шт можно произвести</span>
+                  </div>
+                  <div class="bottleneck">
+                    <span>&#9888;</span>
+                    <span>Узкое место: Гайка М12 (78 шт / 4 = 19)</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Редактировать</button>
+                <button class="btn btn-primary">Создать приход</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: BALANCES -->
+      <div class="tab-content" id="tab-balances">
+        <div class="split-layout">
+          <div class="list-panel">
+            <div class="kpi-row">
+              <div class="kpi-card">
+                <div class="kpi-value">7</div>
+                <div class="kpi-label">Всего позиций</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-value danger">1</div>
+                <div class="kpi-label">Ниже минимума</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-value">4</div>
+                <div class="kpi-label">Материалов</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-value">3</div>
+                <div class="kpi-label">Загот. / Изд.</div>
+              </div>
+            </div>
+            <div class="pipeline">
+              <div class="pipeline-stage" onclick="filterBalancePipeline(this, 'deficit')">Дефицит<span class="stage-count">1</span></div>
+              <div class="pipeline-stage" onclick="filterBalancePipeline(this, 'ok')">В норме<span class="stage-count">6</span></div>
+              <div class="pipeline-stage active" onclick="filterBalancePipeline(this, 'all')">Все<span class="stage-count">7</span></div>
+            </div>
+            <div class="list-scroll" id="balances-list">
+              <!-- МАТ-001 -->
+              <div class="list-item" data-balance-status="ok" onclick="selectBalance(this, 'bal-1')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-001</span>
+                    Лист стальной 2мм
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="badge badge-material" style="font-size:9px">материал</span>
+                    <span style="font-size:11px;color:var(--text-muted)">мин. 200</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700">450</span>
+                  <span class="status-ok" style="font-size:10px">в норме</span>
+                </div>
+              </div>
+              <!-- МАТ-002 -->
+              <div class="list-item" data-balance-status="ok" onclick="selectBalance(this, 'bal-2')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-002</span>
+                    Профиль 40x20x2
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="badge badge-material" style="font-size:9px">материал</span>
+                    <span style="font-size:11px;color:var(--text-muted)">мин. 100</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700">280</span>
+                  <span class="status-ok" style="font-size:10px">в норме</span>
+                </div>
+              </div>
+              <!-- МАТ-003 -->
+              <div class="list-item" data-balance-status="ok" onclick="selectBalance(this, 'bal-3')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-003</span>
+                    Болт М10x50
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="badge badge-material" style="font-size:9px">материал</span>
+                    <span style="font-size:11px;color:var(--text-muted)">мин. 500</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700">1 200</span>
+                  <span class="status-ok" style="font-size:10px">в норме</span>
+                </div>
+              </div>
+              <!-- МАТ-004 ДЕФИЦИТ -->
+              <div class="list-item low-stock-row selected" data-balance-status="deficit" onclick="selectBalance(this, 'bal-4')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">МАТ-004</span>
+                    Гайка М12
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="badge badge-material" style="font-size:9px">материал</span>
+                    <span style="font-size:11px;color:var(--red)">мин. 200</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--red)">78</span>
+                  <span class="status-deficit" style="font-size:10px">дефицит</span>
+                </div>
+              </div>
+              <!-- ЗАГ-001 -->
+              <div class="list-item" data-balance-status="ok" onclick="selectBalance(this, 'bal-5')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">ЗАГ-001</span>
+                    Кронштейн К-01 Л
+                    <span class="badge-side-left">Л</span>
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="badge badge-blank" style="font-size:9px">заготовка</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700">45</span>
+                  <span class="status-ok" style="font-size:10px">в норме</span>
+                </div>
+              </div>
+              <!-- ЗАГ-002 -->
+              <div class="list-item" data-balance-status="ok" onclick="selectBalance(this, 'bal-6')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">ЗАГ-002</span>
+                    Кронштейн К-01 П
+                    <span class="badge-side-right">П</span>
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="badge badge-blank" style="font-size:9px">заготовка</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700">38</span>
+                  <span class="status-ok" style="font-size:10px">в норме</span>
+                </div>
+              </div>
+              <!-- ИЗД-001 -->
+              <div class="list-item" data-balance-status="ok" onclick="selectBalance(this, 'bal-7')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">ИЗД-001</span>
+                    Основание Б-03
+                  </div>
+                  <div class="list-item-meta">
+                    <span class="badge badge-product" style="font-size:9px">изделие</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span style="font-family:var(--mono);font-size:13px;font-weight:700">120</span>
+                  <span class="status-ok" style="font-size:10px">в норме</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-panel" id="balances-detail">
+            <!-- Balance detail: МАТ-004 (default selected) -->
+            <div class="fade-in" id="bal-4">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Гайка М12 DIN 934</div>
+                  <div class="detail-subtitle">МАТ-004 &middot; материал</div>
+                </div>
+                <span class="status-deficit" style="font-size:12px;padding:4px 10px;background:var(--red-bg);border-radius:var(--radius)">Дефицит</span>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Текущий остаток</div>
+                <div class="section-body" style="text-align:center;padding:16px">
+                  <div class="balance-big deficit" style="font-size:36px">78</div>
+                  <div style="font-size:13px;color:var(--text-muted);margin-top:4px">шт &middot; мин. запас 200</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Последние движения</div>
+                <div class="section-body">
+                  <div class="movement-row">
+                    <span class="movement-date">15.03</span>
+                    <span class="movement-type movement-writeoff">Списание</span>
+                    <span class="movement-qty minus">&minus;60</span>
+                    <span class="movement-route">Склад &rarr; Производство</span>
+                  </div>
+                  <div class="movement-row">
+                    <span class="movement-date">14.03</span>
+                    <span class="movement-type movement-income">Приход</span>
+                    <span class="movement-qty plus">+100</span>
+                    <span class="movement-route">Поставщик &rarr; Склад</span>
+                  </div>
+                  <div class="movement-row">
+                    <span class="movement-date">12.03</span>
+                    <span class="movement-type movement-writeoff">Списание</span>
+                    <span class="movement-qty minus">&minus;40</span>
+                    <span class="movement-route">Склад &rarr; Производство</span>
+                  </div>
+                  <div class="movement-row">
+                    <span class="movement-date">10.03</span>
+                    <span class="movement-type movement-income">Приход</span>
+                    <span class="movement-qty plus">+200</span>
+                    <span class="movement-route">Поставщик &rarr; Склад</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Создать приход</button>
+                <button class="btn btn-secondary">Отгрузка</button>
+                <button class="btn btn-ghost">Корректировка</button>
+              </div>
+            </div>
+
+            <!-- Balance detail: МАТ-001 -->
+            <div id="bal-1" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Лист стальной 2мм 1250x2500</div>
+                  <div class="detail-subtitle">МАТ-001 &middot; материал</div>
+                </div>
+                <span class="status-ok" style="font-size:12px;padding:4px 10px;background:var(--green-bg);border-radius:var(--radius)">В норме</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Текущий остаток</div>
+                <div class="section-body" style="text-align:center;padding:16px">
+                  <div class="balance-big" style="font-size:36px">450</div>
+                  <div style="font-size:13px;color:var(--text-muted);margin-top:4px">кг &middot; мин. запас 200</div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Последние движения</div>
+                <div class="section-body">
+                  <div class="movement-row">
+                    <span class="movement-date">15.03</span>
+                    <span class="movement-type movement-writeoff">Списание</span>
+                    <span class="movement-qty minus">&minus;12.5</span>
+                    <span class="movement-route">Склад &rarr; Производство</span>
+                  </div>
+                  <div class="movement-row">
+                    <span class="movement-date">15.03</span>
+                    <span class="movement-type movement-writeoff">Списание</span>
+                    <span class="movement-qty minus">&minus;15.0</span>
+                    <span class="movement-route">Склад &rarr; Производство</span>
+                  </div>
+                  <div class="movement-row">
+                    <span class="movement-date">14.03</span>
+                    <span class="movement-type movement-income">Приход</span>
+                    <span class="movement-qty plus">+500</span>
+                    <span class="movement-route">Поставщик &rarr; Склад</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Создать приход</button>
+                <button class="btn btn-secondary">Отгрузка</button>
+                <button class="btn btn-ghost">Корректировка</button>
+              </div>
+            </div>
+
+            <!-- Остальные bal-* скрыты, показываем заглушку если выбран другой -->
+            <div id="bal-2" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div><div class="detail-title">Профиль 40x20x2</div><div class="detail-subtitle">МАТ-002 &middot; материал</div></div>
+                <span class="status-ok" style="font-size:12px;padding:4px 10px;background:var(--green-bg);border-radius:var(--radius)">В норме</span>
+              </div>
+              <div class="section"><div class="section-header">Текущий остаток</div><div class="section-body" style="text-align:center;padding:16px"><div class="balance-big" style="font-size:36px">280</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">кг &middot; мин. запас 100</div></div></div>
+              <div class="section"><div class="section-header">Последние движения</div><div class="section-body"><div class="movement-row"><span class="movement-date">13.03</span><span class="movement-type movement-income">Приход</span><span class="movement-qty plus">+280</span><span class="movement-route">Поставщик &rarr; Склад</span></div></div></div>
+              <div style="display:flex;gap:6px;margin-top:4px"><button class="btn btn-primary">Создать приход</button><button class="btn btn-secondary">Отгрузка</button><button class="btn btn-ghost">Корректировка</button></div>
+            </div>
+
+            <div id="bal-3" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div><div class="detail-title">Болт М10x50 DIN 933</div><div class="detail-subtitle">МАТ-003 &middot; материал</div></div>
+                <span class="status-ok" style="font-size:12px;padding:4px 10px;background:var(--green-bg);border-radius:var(--radius)">В норме</span>
+              </div>
+              <div class="section"><div class="section-header">Текущий остаток</div><div class="section-body" style="text-align:center;padding:16px"><div class="balance-big" style="font-size:36px">1 200</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">шт &middot; мин. запас 500</div></div></div>
+              <div class="section"><div class="section-header">Последние движения</div><div class="section-body"><div class="movement-row"><span class="movement-date">15.03</span><span class="movement-type movement-writeoff">Списание</span><span class="movement-qty minus">&minus;60</span><span class="movement-route">Склад &rarr; Производство</span></div><div class="movement-row"><span class="movement-date">11.03</span><span class="movement-type movement-income">Приход</span><span class="movement-qty plus">+500</span><span class="movement-route">Поставщик &rarr; Склад</span></div></div></div>
+              <div style="display:flex;gap:6px;margin-top:4px"><button class="btn btn-primary">Создать приход</button><button class="btn btn-secondary">Отгрузка</button><button class="btn btn-ghost">Корректировка</button></div>
+            </div>
+
+            <div id="bal-5" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div><div class="detail-title">Кронштейн К-01 Левый <span class="badge-side-left">Л</span></div><div class="detail-subtitle">ЗАГ-001 &middot; заготовка</div></div>
+                <span class="status-ok" style="font-size:12px;padding:4px 10px;background:var(--green-bg);border-radius:var(--radius)">В норме</span>
+              </div>
+              <div class="section"><div class="section-header">Текущий остаток</div><div class="section-body" style="text-align:center;padding:16px"><div class="balance-big" style="font-size:36px">45</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">шт</div></div></div>
+              <div class="section"><div class="section-header">Последние движения</div><div class="section-body"><div class="movement-row"><span class="movement-date">15.03</span><span class="movement-type movement-production">Выпуск</span><span class="movement-qty plus">+25</span><span class="movement-route">Производство &rarr; Склад</span></div><div class="movement-row"><span class="movement-date">15.03</span><span class="movement-type movement-writeoff">Списание</span><span class="movement-qty minus">&minus;30</span><span class="movement-route">Склад &rarr; Производство</span></div><div class="movement-row"><span class="movement-date">14.03</span><span class="movement-type movement-production">Выпуск</span><span class="movement-qty plus">+30</span><span class="movement-route">Производство &rarr; Склад</span></div></div></div>
+              <div style="display:flex;gap:6px;margin-top:4px"><button class="btn btn-primary">Создать приход</button><button class="btn btn-secondary">Отгрузка</button><button class="btn btn-ghost">Корректировка</button></div>
+            </div>
+
+            <div id="bal-6" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div><div class="detail-title">Кронштейн К-01 Правый <span class="badge-side-right">П</span></div><div class="detail-subtitle">ЗАГ-002 &middot; заготовка</div></div>
+                <span class="status-ok" style="font-size:12px;padding:4px 10px;background:var(--green-bg);border-radius:var(--radius)">В норме</span>
+              </div>
+              <div class="section"><div class="section-header">Текущий остаток</div><div class="section-body" style="text-align:center;padding:16px"><div class="balance-big" style="font-size:36px">38</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">шт</div></div></div>
+              <div class="section"><div class="section-header">Последние движения</div><div class="section-body"><div class="movement-row"><span class="movement-date">15.03</span><span class="movement-type movement-production">Выпуск</span><span class="movement-qty plus">+20</span><span class="movement-route">Производство &rarr; Склад</span></div><div class="movement-row"><span class="movement-date">15.03</span><span class="movement-type movement-writeoff">Списание</span><span class="movement-qty minus">&minus;30</span><span class="movement-route">Склад &rarr; Производство</span></div></div></div>
+              <div style="display:flex;gap:6px;margin-top:4px"><button class="btn btn-primary">Создать приход</button><button class="btn btn-secondary">Отгрузка</button><button class="btn btn-ghost">Корректировка</button></div>
+            </div>
+
+            <div id="bal-7" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div><div class="detail-title">Основание Б-03</div><div class="detail-subtitle">ИЗД-001 &middot; изделие</div></div>
+                <span class="status-ok" style="font-size:12px;padding:4px 10px;background:var(--green-bg);border-radius:var(--radius)">В норме</span>
+              </div>
+              <div class="section"><div class="section-header">Текущий остаток</div><div class="section-body" style="text-align:center;padding:16px"><div class="balance-big" style="font-size:36px">120</div><div style="font-size:13px;color:var(--text-muted);margin-top:4px">шт</div></div></div>
+              <div class="section"><div class="section-header">Последние движения</div><div class="section-body"><div class="movement-row"><span class="movement-date">15.03</span><span class="movement-type movement-production">Выпуск</span><span class="movement-qty plus">+15</span><span class="movement-route">Производство &rarr; Склад</span></div><div class="movement-row"><span class="movement-date">14.03</span><span class="movement-type movement-writeoff">Списание</span><span class="movement-qty minus">&minus;10</span><span class="movement-route">Склад &rarr; Отгрузка</span></div></div></div>
+              <div style="display:flex;gap:6px;margin-top:4px"><button class="btn btn-primary">Создать приход</button><button class="btn btn-secondary">Отгрузка</button><button class="btn btn-ghost">Корректировка</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: PRODUCTION -->
+      <div class="tab-content" id="tab-production">
+        <div class="split-layout">
+          <div class="list-panel">
+            <div class="kpi-row">
+              <div class="kpi-card">
+                <div class="kpi-value">24</div>
+                <div class="kpi-label">Операций / нед.</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-value">485</div>
+                <div class="kpi-label">Деталей</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-value accent">34 250</div>
+                <div class="kpi-label">Начислено ₽</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-value">3</div>
+                <div class="kpi-label">Рабочих</div>
+              </div>
+            </div>
+            <div class="filters-bar">
+              <div class="filter-chip active">Все</div>
+              <div class="filter-chip">Сегодня</div>
+              <div class="filter-chip">Неделя</div>
+              <div class="filter-chip">Иванов</div>
+              <div class="filter-chip">Петров</div>
+              <div class="filter-chip">Сидоров</div>
+            </div>
+            <div class="list-scroll" id="production-list">
+              <!-- Op 1 -->
+              <div class="list-item selected" onclick="selectProd(this, 'prod-1')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    Кронштейн К-01 Левый <span class="badge-side-left">Л</span>
+                  </div>
+                  <div class="list-item-sub">15.03 &middot; Иванов А.С. &middot; 25 шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="earning">1 125 ₽</span>
+                </div>
+              </div>
+              <!-- Op 2 -->
+              <div class="list-item" onclick="selectProd(this, 'prod-2')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    Кронштейн К-01 Правый <span class="badge-side-right">П</span>
+                  </div>
+                  <div class="list-item-sub">15.03 &middot; Петров В.И. &middot; 20 шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="earning">900 ₽</span>
+                </div>
+              </div>
+              <!-- Op 3 (напарники) -->
+              <div class="list-item" onclick="selectProd(this, 'prod-3')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    Основание Б-03
+                  </div>
+                  <div class="list-item-sub">15.03 &middot; Сидоров К.Н. + 1 &middot; 15 шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="earning">1 800 ₽</span>
+                </div>
+              </div>
+              <!-- Op 4 -->
+              <div class="list-item" onclick="selectProd(this, 'prod-4')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    Кронштейн К-01 Левый <span class="badge-side-left">Л</span>
+                  </div>
+                  <div class="list-item-sub">14.03 &middot; Иванов А.С. &middot; 30 шт</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="earning">1 350 ₽</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-panel" id="production-detail">
+            <!-- Prod 1 detail -->
+            <div class="fade-in" id="prod-1">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Кронштейн К-01 Левый <span class="badge-side-left">Л</span></div>
+                  <div class="detail-subtitle">15.03.2026 &middot; 25 шт</div>
+                </div>
+                <span class="earning" style="font-size:14px">1 125 ₽</span>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Рабочие</div>
+                <div class="section-body">
+                  <div class="worker-row">
+                    <span class="worker-head">Имя</span>
+                    <span class="worker-head" style="text-align:right">Кол-во</span>
+                    <span class="worker-head" style="text-align:right">Тариф</span>
+                    <span class="worker-head" style="text-align:right">Начислено</span>
+                  </div>
+                  <div class="worker-row">
+                    <span>Иванов А.С.</span>
+                    <span style="text-align:right;font-family:var(--mono)">25</span>
+                    <span style="text-align:right;font-family:var(--mono)">45 ₽</span>
+                    <span class="earning" style="text-align:right">1 125 ₽</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Движения материалов</div>
+                <div class="section-body">
+                  <div class="mat-move">
+                    <span class="mat-move-qty minus">&minus;12.5 кг</span>
+                    <span>Лист стальной 2мм</span>
+                    <span class="mat-move-route">(Склад &rarr; Производство)</span>
+                  </div>
+                  <div class="mat-move">
+                    <span class="mat-move-qty plus">+25 шт</span>
+                    <span>Кронштейн К-01 Левый</span>
+                    <span class="mat-move-route">(Производство &rarr; Склад)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prod 2 detail -->
+            <div id="prod-2" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Кронштейн К-01 Правый <span class="badge-side-right">П</span></div>
+                  <div class="detail-subtitle">15.03.2026 &middot; 20 шт</div>
+                </div>
+                <span class="earning" style="font-size:14px">900 ₽</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Рабочие</div>
+                <div class="section-body">
+                  <div class="worker-row">
+                    <span class="worker-head">Имя</span>
+                    <span class="worker-head" style="text-align:right">Кол-во</span>
+                    <span class="worker-head" style="text-align:right">Тариф</span>
+                    <span class="worker-head" style="text-align:right">Начислено</span>
+                  </div>
+                  <div class="worker-row">
+                    <span>Петров В.И.</span>
+                    <span style="text-align:right;font-family:var(--mono)">20</span>
+                    <span style="text-align:right;font-family:var(--mono)">45 ₽</span>
+                    <span class="earning" style="text-align:right">900 ₽</span>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Движения материалов</div>
+                <div class="section-body">
+                  <div class="mat-move">
+                    <span class="mat-move-qty minus">&minus;10.0 кг</span>
+                    <span>Лист стальной 2мм</span>
+                    <span class="mat-move-route">(Склад &rarr; Производство)</span>
+                  </div>
+                  <div class="mat-move">
+                    <span class="mat-move-qty plus">+20 шт</span>
+                    <span>Кронштейн К-01 Правый</span>
+                    <span class="mat-move-route">(Производство &rarr; Склад)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prod 3 detail (напарники) -->
+            <div id="prod-3" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Основание Б-03</div>
+                  <div class="detail-subtitle">15.03.2026 &middot; 15 шт</div>
+                </div>
+                <span class="earning" style="font-size:14px">1 800 ₽</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Рабочие (напарники)</div>
+                <div class="section-body">
+                  <div class="worker-row">
+                    <span class="worker-head">Имя</span>
+                    <span class="worker-head" style="text-align:right">Кол-во</span>
+                    <span class="worker-head" style="text-align:right">Тариф</span>
+                    <span class="worker-head" style="text-align:right">Начислено</span>
+                  </div>
+                  <div class="worker-row">
+                    <span>Сидоров К.Н.</span>
+                    <span style="text-align:right;font-family:var(--mono)">10</span>
+                    <span style="text-align:right;font-family:var(--mono)">120 ₽</span>
+                    <span class="earning" style="text-align:right">1 200 ₽</span>
+                  </div>
+                  <div class="worker-row">
+                    <span>Иванов А.С.</span>
+                    <span style="text-align:right;font-family:var(--mono)">5</span>
+                    <span style="text-align:right;font-family:var(--mono)">120 ₽</span>
+                    <span class="earning" style="text-align:right">600 ₽</span>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Движения материалов</div>
+                <div class="section-body">
+                  <div class="mat-move">
+                    <span class="mat-move-qty minus">&minus;30 шт</span>
+                    <span>Кронштейн К-01 Левый</span>
+                    <span class="mat-move-route">(Склад &rarr; Производство)</span>
+                  </div>
+                  <div class="mat-move">
+                    <span class="mat-move-qty minus">&minus;30 шт</span>
+                    <span>Кронштейн К-01 Правый</span>
+                    <span class="mat-move-route">(Склад &rarr; Производство)</span>
+                  </div>
+                  <div class="mat-move">
+                    <span class="mat-move-qty minus">&minus;60 шт</span>
+                    <span>Болт М10x50</span>
+                    <span class="mat-move-route">(Склад &rarr; Производство)</span>
+                  </div>
+                  <div class="mat-move">
+                    <span class="mat-move-qty minus">&minus;60 шт</span>
+                    <span>Гайка М12</span>
+                    <span class="mat-move-route">(Склад &rarr; Производство)</span>
+                  </div>
+                  <div class="mat-move">
+                    <span class="mat-move-qty plus">+15 шт</span>
+                    <span>Основание Б-03</span>
+                    <span class="mat-move-route">(Производство &rarr; Склад)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Prod 4 detail -->
+            <div id="prod-4" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Кронштейн К-01 Левый <span class="badge-side-left">Л</span></div>
+                  <div class="detail-subtitle">14.03.2026 &middot; 30 шт</div>
+                </div>
+                <span class="earning" style="font-size:14px">1 350 ₽</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Рабочие</div>
+                <div class="section-body">
+                  <div class="worker-row">
+                    <span class="worker-head">Имя</span>
+                    <span class="worker-head" style="text-align:right">Кол-во</span>
+                    <span class="worker-head" style="text-align:right">Тариф</span>
+                    <span class="worker-head" style="text-align:right">Начислено</span>
+                  </div>
+                  <div class="worker-row">
+                    <span>Иванов А.С.</span>
+                    <span style="text-align:right;font-family:var(--mono)">30</span>
+                    <span style="text-align:right;font-family:var(--mono)">45 ₽</span>
+                    <span class="earning" style="text-align:right">1 350 ₽</span>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Движения материалов</div>
+                <div class="section-body">
+                  <div class="mat-move">
+                    <span class="mat-move-qty minus">&minus;15.0 кг</span>
+                    <span>Лист стальной 2мм</span>
+                    <span class="mat-move-route">(Склад &rarr; Производство)</span>
+                  </div>
+                  <div class="mat-move">
+                    <span class="mat-move-qty plus">+30 шт</span>
+                    <span>Кронштейн К-01 Левый</span>
+                    <span class="mat-move-route">(Производство &rarr; Склад)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- AI Trigger -->
+<button class="ai-trigger" id="aiTrigger" onclick="toggleAI()">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a4 4 0 0 0-4 4v4a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"/><path d="M8 14s-1.5 2-4 2"/><path d="M16 14s1.5 2 4 2"/><circle cx="12" cy="20" r="2"/><path d="M12 16v2"/></svg>
+</button>
+
+<!-- AI Panel -->
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-header">
+    <div class="ai-header-left">
+      <span class="ai-dot"></span>
+      <span class="ai-title">AI Ассистент</span>
+    </div>
+    <button class="ai-close" onclick="toggleAI()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ai-context" id="aiContext">Склад &rarr; Номенклатура</div>
+  <div class="ai-body">
+    <div class="ai-actions">
+      <button class="ai-action-btn">
+        <span class="ai-action-icon">&#9888;</span>
+        Показать дефицит
+      </button>
+      <button class="ai-action-btn">
+        <span class="ai-action-icon">&#128200;</span>
+        Выработка за неделю
+      </button>
+      <button class="ai-action-btn">
+        <span class="ai-action-icon">&#9881;</span>
+        Потенциал производства
+      </button>
+    </div>
+    <div class="ai-chat-divider">или спросить</div>
+    <div class="ai-input-wrap">
+      <input type="text" class="ai-input" placeholder="Сколько можно собрать Б-03?">
+      <button class="ai-send">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab switching
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+
+  var names = { nomenclature: 'Номенклатура', balances: 'Остатки', production: 'Производство' };
+  document.getElementById('breadcrumbCurrent').textContent = names[tab] || tab;
+  updateAIContext(tab);
+}
+
+// Generic select helper
+function selectItem(container, listParent, id, prefix) {
+  listParent.querySelectorAll('.list-item').forEach(function(i) { i.classList.remove('selected'); });
+  container.classList.add('selected');
+
+  var panel = listParent.closest('.split-layout').querySelector('.detail-panel');
+  panel.querySelectorAll('[id^="' + prefix + '"]').forEach(function(d) { d.style.display = 'none'; });
+  var target = document.getElementById(id);
+  if (target) {
+    target.style.display = '';
+    target.classList.remove('fade-in');
+    void target.offsetWidth;
+    target.classList.add('fade-in');
+  }
+}
+
+function selectNom(el, id) {
+  selectItem(el, el.closest('.list-panel'), id, 'nom-');
+}
+
+function selectBalance(el, id) {
+  selectItem(el, el.closest('.list-panel'), id, 'bal-');
+}
+
+function selectProd(el, id) {
+  selectItem(el, el.closest('.list-panel'), id, 'prod-');
+}
+
+function updateAIContext(tab) {
+  var ctx = document.getElementById('aiContext');
+  var map = {
+    nomenclature: 'Склад \u2192 Номенклатура',
+    balances: 'Склад \u2192 Остатки',
+    production: 'Склад \u2192 Производство'
+  };
+  if (map[tab]) ctx.textContent = map[tab];
+}
+
+// Pipeline filter (balances)
+function filterBalancePipeline(el, stage) {
+  el.parentElement.querySelectorAll('.pipeline-stage').forEach(function(s) { s.classList.remove('active'); });
+  el.classList.add('active');
+
+  var items = document.querySelectorAll('#balances-list .list-item');
+  items.forEach(function(item) {
+    if (stage === 'all') {
+      item.style.display = '';
+    } else {
+      var status = item.getAttribute('data-balance-status');
+      item.style.display = (status === stage) ? '' : 'none';
+    }
+  });
+}
+
+// Filter chips (nomenclature type filter)
+document.querySelectorAll('.filters-bar').forEach(function(bar) {
+  bar.querySelectorAll('.filter-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      this.parentElement.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+      this.classList.add('active');
+
+      var filter = this.getAttribute('data-filter');
+      if (filter) {
+        var items = document.querySelectorAll('#nomenclature-list .list-item');
+        items.forEach(function(item) {
+          if (!filter || filter === 'all') {
+            item.style.display = '';
+          } else {
+            var type = item.getAttribute('data-type');
+            item.style.display = (type === filter) ? '' : 'none';
+          }
+        });
+      }
+    });
+  });
+});
+
+// AI toggle
+var aiOpen = false;
+function toggleAI() {
+  aiOpen = !aiOpen;
+  document.getElementById('aiPanel').classList.toggle('open', aiOpen);
+  document.getElementById('aiTrigger').classList.toggle('hidden', aiOpen);
+}
+</script>
+</body>
+</html>

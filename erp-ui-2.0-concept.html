@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERP Металл 2.0 — Документы</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #fafaf9;
+  --bg-card: #ffffff;
+  --bg-sidebar: #1c1917;
+  --bg-sidebar-hover: #292524;
+  --bg-sidebar-active: #3730a3;
+  --bg-muted: #f5f5f4;
+  --bg-pipeline: #fafaf9;
+  --border: #e7e5e4;
+  --border-light: #f0eeec;
+  --text: #1c1917;
+  --text-secondary: #78716c;
+  --text-muted: #a8a29e;
+  --text-sidebar: #d6d3d1;
+  --text-sidebar-muted: #78716c;
+  --accent: #4338ca;
+  --accent-light: #eef2ff;
+  --accent-hover: #3730a3;
+  --accent-text: #4f46e5;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --yellow: #ca8a04;
+  --yellow-bg: #fefce8;
+  --yellow-border: #fef08a;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+  --font: 'IBM Plex Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Layout */
+.app { display: flex; height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  width: 200px;
+  min-width: 200px;
+  background: var(--bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.sidebar-brand {
+  padding: 16px 16px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--mono);
+}
+
+.sidebar-brand-text {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.sidebar-nav { padding: 8px 6px; flex: 1; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text-sidebar);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.12s;
+  user-select: none;
+  margin-bottom: 1px;
+}
+
+.nav-item:hover {
+  background: var(--bg-sidebar-hover);
+  color: #fff;
+}
+
+.nav-item.active {
+  background: var(--bg-sidebar-active);
+  color: #fff;
+}
+
+.nav-item svg { width: 16px; height: 16px; opacity: 0.6; flex-shrink: 0; }
+.nav-item.active svg { opacity: 1; }
+
+.nav-separator {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 6px 10px;
+}
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #44403c;
+  color: #d6d3d1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.sidebar-user {
+  font-size: 12px;
+  color: var(--text-sidebar);
+  font-weight: 500;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.breadcrumb-item { color: var(--text-muted); }
+.breadcrumb-item.current { color: var(--text); font-weight: 600; }
+.breadcrumb-sep { color: var(--text-muted); font-size: 11px; }
+
+.search-global {
+  padding: 6px 10px 6px 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  outline: none;
+  width: 240px;
+  background: var(--bg-muted) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%23a8a29e' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='6' cy='6' r='4.5'/%3E%3Cline x1='10' y1='10' x2='13' y2='13'/%3E%3C/svg%3E") 9px center no-repeat;
+  font-family: var(--font);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.search-global:focus {
+  border-color: var(--accent);
+  background-color: var(--bg-card);
+}
+
+.search-global::placeholder { color: var(--text-muted); }
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.topbar-kbd {
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--bg-muted);
+  padding: 2px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+}
+
+/* Content area */
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Module header */
+.module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 0;
+}
+
+.module-actions { display: flex; gap: 6px; }
+
+/* Tabs */
+.tabs-bar {
+  display: flex;
+  gap: 0;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-top: 10px;
+}
+
+.tab-btn {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.12s;
+  position: relative;
+}
+
+.tab-btn:hover { color: var(--text-secondary); }
+
+.tab-btn.active {
+  color: var(--accent-text);
+  border-bottom-color: var(--accent);
+}
+
+.tab-count {
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: 5px;
+  font-family: var(--mono);
+}
+
+.tab-btn.active .tab-count {
+  background: var(--accent-light);
+  color: var(--accent-text);
+}
+
+/* Tab content */
+.tab-content { display: none; flex: 1; overflow: hidden; }
+.tab-content.active { display: flex; }
+
+/* Split layout: list + detail */
+.split-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.list-panel {
+  width: 380px;
+  min-width: 380px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: 16px 20px;
+}
+
+/* Pipeline */
+.pipeline {
+  display: flex;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.pipeline-stage {
+  flex: 1;
+  padding: 6px 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.12s;
+  color: var(--text-muted);
+  background: var(--bg-muted);
+}
+
+.pipeline-stage:hover { color: var(--text-secondary); }
+
+.pipeline-stage.active {
+  background: var(--accent-light);
+  color: var(--accent-text);
+}
+
+.pipeline-stage .stage-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  margin-left: 3px;
+  opacity: 0.7;
+}
+
+/* Filters */
+.filters-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: var(--bg-card);
+  font-family: var(--font);
+  transition: all 0.12s;
+}
+
+.filter-chip:hover { border-color: var(--accent); color: var(--accent-text); }
+.filter-chip.active { border-color: var(--accent); color: var(--accent-text); background: var(--accent-light); }
+
+/* List items */
+.list-scroll { flex: 1; overflow-y: auto; }
+
+.list-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.1s;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.list-item:hover { background: var(--bg-muted); }
+.list-item.selected { background: var(--accent-light); border-left: 2px solid var(--accent); }
+
+.list-item-body { flex: 1; min-width: 0; }
+
+.list-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.list-item-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.list-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.list-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.badge-active { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.badge-completed { background: var(--bg-muted); color: var(--text-muted); border: 1px solid var(--border); }
+.badge-draft { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.badge-issued { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+.badge-uploaded { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.badge-parsed { background: var(--yellow-bg); color: var(--yellow); border: 1px solid var(--yellow-border); }
+.badge-verified { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+
+.badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Confidence */
+.confidence {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.confidence-high { background: var(--green-bg); color: var(--green); }
+.confidence-low { background: var(--yellow-bg); color: var(--yellow); }
+
+/* Detail view */
+.detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 8px;
+}
+
+.detail-empty svg { opacity: 0.3; }
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.detail-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.detail-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Sections */
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.section-body { padding: 10px 14px; }
+
+/* Покрытие */
+.coverage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.coverage-item + .coverage-item { border-top: 1px solid var(--border-light); }
+
+.coverage-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.coverage-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.coverage-ok { background: var(--green-bg); color: var(--green); }
+.coverage-missing { background: var(--bg-muted); color: var(--text-muted); }
+
+.coverage-action {
+  font-size: 11px;
+  color: var(--accent-text);
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.12s;
+}
+
+.coverage-action:hover { opacity: 0.7; }
+
+/* Mini table in sections */
+.mini-table { width: 100%; }
+
+.mini-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.mini-row + .mini-row { border-top: 1px solid var(--border-light); }
+
+.mini-row-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text);
+  min-width: 60px;
+}
+
+.mini-row-text { flex: 1; color: var(--text-secondary); }
+
+.mini-row-badge { flex-shrink: 0; }
+
+.mini-row-action {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.12s;
+  flex-shrink: 0;
+}
+
+.mini-row-action:hover { color: var(--red); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.12s;
+  border: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--bg-muted); }
+
+.btn-ghost {
+  background: none;
+  color: var(--text-secondary);
+}
+.btn-ghost:hover { background: var(--bg-muted); color: var(--text); }
+
+.btn-sm { padding: 4px 8px; font-size: 11px; }
+
+.btn-success {
+  background: var(--green);
+  color: #fff;
+}
+.btn-success:hover { opacity: 0.9; }
+
+/* Actions bar */
+.actions-bar {
+  display: flex;
+  gap: 6px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-muted);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Check items */
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 12px;
+}
+
+.check-icon { font-size: 12px; width: 16px; text-align: center; }
+.check-ok { color: var(--green); }
+.check-warn { color: var(--yellow); }
+.check-text { color: var(--text-secondary); }
+
+/* AI Panel */
+.ai-panel {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 320px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  overflow: hidden;
+  transform: translateY(calc(100% + 20px));
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.2s;
+}
+
+.ai-panel.open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-muted);
+}
+
+.ai-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.ai-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ai-context {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 6px 14px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border-light);
+  font-family: var(--mono);
+}
+
+.ai-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+
+.ai-close:hover { background: var(--bg-card); color: var(--text); }
+
+.ai-body { padding: 10px 14px; }
+
+.ai-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+}
+
+.ai-action-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent-text);
+}
+
+.ai-action-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  background: var(--bg-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ai-action-btn:hover .ai-action-icon {
+  background: var(--accent-light);
+}
+
+.ai-chat-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-chat-divider::before,
+.ai-chat-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.ai-input-wrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 6px 4px 10px;
+}
+
+.ai-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  font-family: var(--font);
+  color: var(--text);
+  background: transparent;
+  padding: 2px 0;
+}
+
+.ai-input::placeholder { color: var(--text-muted); }
+
+.ai-send {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.ai-send:hover { background: var(--accent-hover); }
+
+/* AI Trigger */
+.ai-trigger {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(67, 56, 202, 0.35);
+  z-index: 99;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ai-trigger:hover {
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(67, 56, 202, 0.45);
+}
+
+.ai-trigger.hidden { display: none; }
+
+/* OCR highlight */
+.ocr-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 12px;
+}
+
+.ocr-field + .ocr-field { border-top: 1px solid var(--border-light); }
+
+.ocr-label { color: var(--text-muted); font-size: 11px; min-width: 80px; }
+
+.ocr-value { color: var(--text); font-weight: 500; flex: 1; }
+
+.ocr-warn {
+  color: var(--yellow);
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+/* PDF preview placeholder */
+.pdf-preview {
+  background: var(--bg-muted);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  gap: 6px;
+}
+
+/* Used-in list */
+.used-in-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.used-in-item + .used-in-item { border-top: 1px solid var(--border-light); }
+
+.used-in-code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+.used-in-code:hover { text-decoration: underline; }
+
+/* Shipment row */
+.shipment-row {
+  display: grid;
+  grid-template-columns: 1fr 50px 60px;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 12px;
+  align-items: center;
+}
+
+.shipment-row + .shipment-row { border-top: 1px solid var(--border-light); }
+.shipment-head { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Transition helper */
+.fade-in {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive: tablet */
+@media (max-width: 1024px) {
+  .sidebar { width: 170px; min-width: 170px; }
+  .list-panel { width: 300px; min-width: 300px; }
+  .search-global { width: 180px; }
+}
+
+/* Responsive: mobile */
+@media (max-width: 768px) {
+  .app { flex-direction: column; }
+
+  .sidebar {
+    width: 100%;
+    min-width: unset;
+    flex-direction: row;
+    height: 48px;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sidebar-brand {
+    padding: 0 12px;
+    border-bottom: none;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    min-width: fit-content;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    padding: 4px 6px;
+    gap: 2px;
+    overflow-x: auto;
+    flex: 1;
+  }
+
+  .nav-item {
+    padding: 6px 10px;
+    white-space: nowrap;
+    margin-bottom: 0;
+    font-size: 12px;
+  }
+
+  .nav-item svg { display: none; }
+  .nav-separator { display: none; }
+
+  .sidebar-footer {
+    border-top: none;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    padding: 0 10px;
+    min-width: fit-content;
+  }
+
+  .main { height: calc(100vh - 48px); }
+
+  .topbar { padding: 0 12px; height: 40px; }
+  .search-global { width: 140px; font-size: 11px; }
+  .topbar-kbd { display: none; }
+  .breadcrumb { font-size: 12px; }
+
+  .module-header { padding: 10px 12px 0; }
+  .tabs-bar { padding: 0 12px; }
+
+  .split-layout { flex-direction: column; }
+
+  .list-panel {
+    width: 100%;
+    min-width: unset;
+    max-height: 220px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-panel { padding: 12px; }
+
+  .detail-title { font-size: 14px; }
+
+  .section-body { padding: 8px 10px; }
+  .section-header { padding: 8px 10px; font-size: 10px; }
+
+  .ai-panel { width: calc(100% - 24px); right: 12px; bottom: 12px; }
+  .ai-trigger { bottom: 12px; right: 12px; width: 38px; height: 38px; }
+
+  .filters-bar { padding: 6px 8px; }
+
+  .pipeline { padding: 6px 8px; }
+  .pipeline-stage { padding: 5px 6px; font-size: 10px; }
+
+  .btn { padding: 5px 10px; font-size: 11px; }
+  .btn-sm { padding: 3px 7px; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">M</div>
+      <div class="sidebar-brand-text">ERP Металл</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" data-module="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Дашборд
+      </div>
+      <div class="nav-item" data-module="warehouse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Склад
+      </div>
+      <div class="nav-item" data-module="production">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Производство
+      </div>
+      <div class="nav-item active" data-module="documents">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Документы
+      </div>
+      <div class="nav-separator"></div>
+      <div class="nav-item" data-module="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Настройки
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">ИА</div>
+      <div class="sidebar-user">Инженер</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb">
+          <span class="breadcrumb-item">Документы</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-item current" id="breadcrumbCurrent">Заказы</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <input type="text" class="search-global" placeholder="Поиск по заказам, сертификатам...">
+        <span class="topbar-kbd">&#8984;K</span>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="module-header">
+        <div></div>
+        <div class="module-actions">
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('certificates')">+ Сертификат</button>
+          <button class="btn btn-primary btn-sm" onclick="switchTab('orders')">+ Заказ</button>
+        </div>
+      </div>
+
+      <div class="tabs-bar">
+        <button class="tab-btn active" data-tab="orders" onclick="switchTab('orders')">Заказы<span class="tab-count">3</span></button>
+        <button class="tab-btn" data-tab="certificates" onclick="switchTab('certificates')">Сертификаты<span class="tab-count">8</span></button>
+        <button class="tab-btn" data-tab="documents" onclick="switchTab('documents')">Документы<span class="tab-count">5</span></button>
+      </div>
+
+      <!-- TAB: ORDERS -->
+      <div class="tab-content active" id="tab-orders">
+        <div class="split-layout">
+          <div class="list-panel">
+            <div class="filters-bar">
+              <div class="filter-chip active">Все</div>
+              <div class="filter-chip">Активен</div>
+              <div class="filter-chip">Завершён</div>
+            </div>
+            <div class="list-scroll">
+              <div class="list-item selected" onclick="selectOrder(this, 'order-1')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:12px">#001</span>
+                    ООО Стройком
+                  </div>
+                  <div class="list-item-meta">
+                    <span style="font-size:11px;color:var(--text-muted)">3 документа</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-active"><span class="badge-dot"></span> Активен</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectOrder(this, 'order-2')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:12px">#002</span>
+                    ООО МеталлПро
+                  </div>
+                  <div class="list-item-meta">
+                    <span style="font-size:11px;color:var(--text-muted)">1 документ</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-active"><span class="badge-dot"></span> Активен</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectOrder(this, 'order-3')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:12px">#003</span>
+                    ИП Сидоров К.Н.
+                  </div>
+                  <div class="list-item-meta">
+                    <span style="font-size:11px;color:var(--text-muted)">2 документа</span>
+                  </div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-completed">Завершён</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-panel" id="orders-detail">
+            <!-- Order #001 detail -->
+            <div class="fade-in" id="order-1">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Заказ #001</div>
+                  <div class="detail-subtitle">ООО Стройком &middot; Активен</div>
+                </div>
+                <span class="badge badge-active" style="font-size:11px;padding:3px 10px"><span class="badge-dot"></span> Активен</span>
+              </div>
+
+              <!-- Documents -->
+              <div class="section">
+                <div class="section-header">
+                  Документы
+                  <button class="btn btn-sm btn-secondary">+ Создать</button>
+                </div>
+                <div class="section-body">
+                  <div class="mini-row">
+                    <span class="mini-row-code">Док-001</span>
+                    <span class="mini-row-text">v1 &middot; 3 сертификата</span>
+                    <span class="badge badge-draft" style="font-size:9px">Черновик</span>
+                    <span class="mini-row-action" style="color:var(--accent-text)" onclick="switchTab('documents')">открыть</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">Док-002</span>
+                    <span class="mini-row-text">v2 &middot; 4 сертификата</span>
+                    <span class="badge badge-issued" style="font-size:9px">Выпущен</span>
+                    <span class="mini-row-action" style="color:var(--accent-text)">открыть</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">Док-003</span>
+                    <span class="mini-row-text">v1 &middot; 2 сертификата</span>
+                    <span class="badge badge-draft" style="font-size:9px">Черновик</span>
+                    <span class="mini-row-action" style="color:var(--accent-text)">открыть</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Покрытие -->
+              <div class="section">
+                <div class="section-header">
+                  Покрытие
+                </div>
+                <div class="section-body">
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-ok">&#10003;</div>
+                      <span>металл</span>
+                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">(3)</span>
+                    </div>
+                    <span class="coverage-action">посмотреть</span>
+                  </div>
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-ok">&#10003;</div>
+                      <span>покрытие</span>
+                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">(1)</span>
+                    </div>
+                    <span class="coverage-action">посмотреть</span>
+                  </div>
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-missing">&#9675;</div>
+                      <span style="color:var(--text-muted)">сварка</span>
+                    </div>
+                    <span class="coverage-action">подобрать</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Primary actions -->
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Собрать пакет</button>
+                <button class="btn btn-secondary">Проверить покрытие</button>
+              </div>
+            </div>
+
+            <div id="order-2" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Заказ #002</div>
+                  <div class="detail-subtitle">ООО МеталлПро &middot; Активен</div>
+                </div>
+                <span class="badge badge-active" style="font-size:11px;padding:3px 10px"><span class="badge-dot"></span> Активен</span>
+              </div>
+              <div class="section">
+                <div class="section-header">
+                  Документы
+                  <button class="btn btn-sm btn-secondary">+ Создать</button>
+                </div>
+                <div class="section-body">
+                  <div class="mini-row">
+                    <span class="mini-row-code">Док-005</span>
+                    <span class="mini-row-text">v1 &middot; 2 сертификата</span>
+                    <span class="badge badge-draft" style="font-size:9px">Черновик</span>
+                    <span class="mini-row-action" style="color:var(--accent-text)">открыть</span>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Покрытие</div>
+                <div class="section-body">
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-ok">&#10003;</div>
+                      <span>металл</span>
+                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">(2)</span>
+                    </div>
+                    <span class="coverage-action">посмотреть</span>
+                  </div>
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-missing">&#9675;</div>
+                      <span style="color:var(--text-muted)">покрытие</span>
+                    </div>
+                    <span class="coverage-action">подобрать</span>
+                  </div>
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-missing">&#9675;</div>
+                      <span style="color:var(--text-muted)">сварка</span>
+                    </div>
+                    <span class="coverage-action">подобрать</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Собрать пакет</button>
+                <button class="btn btn-secondary">Проверить покрытие</button>
+              </div>
+            </div>
+
+            <div id="order-3" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Заказ #003</div>
+                  <div class="detail-subtitle">ИП Сидоров К.Н. &middot; Завершён</div>
+                </div>
+                <span class="badge badge-completed" style="font-size:11px;padding:3px 10px">Завершён</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Документы</div>
+                <div class="section-body">
+                  <div class="mini-row">
+                    <span class="mini-row-code">Док-010</span>
+                    <span class="mini-row-text">v1 &middot; 2 сертификата</span>
+                    <span class="badge badge-issued" style="font-size:9px">Выпущен</span>
+                    <span class="mini-row-action" style="color:var(--accent-text)">открыть</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">Док-011</span>
+                    <span class="mini-row-text">v1 &middot; 3 сертификата</span>
+                    <span class="badge badge-issued" style="font-size:9px">Выпущен</span>
+                    <span class="mini-row-action" style="color:var(--accent-text)">открыть</span>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Покрытие</div>
+                <div class="section-body">
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-ok">&#10003;</div>
+                      <span>металл</span>
+                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">(3)</span>
+                    </div>
+                    <span class="coverage-action">посмотреть</span>
+                  </div>
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-ok">&#10003;</div>
+                      <span>покрытие</span>
+                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">(1)</span>
+                    </div>
+                    <span class="coverage-action">посмотреть</span>
+                  </div>
+                  <div class="coverage-item">
+                    <div class="coverage-left">
+                      <div class="coverage-icon coverage-ok">&#10003;</div>
+                      <span>сварка</span>
+                      <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono)">(1)</span>
+                    </div>
+                    <span class="coverage-action">посмотреть</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: CERTIFICATES -->
+      <div class="tab-content" id="tab-certificates">
+        <div class="split-layout">
+          <div class="list-panel">
+            <div class="pipeline">
+              <div class="pipeline-stage" onclick="filterPipeline(this, 'all')">Все<span class="stage-count">8</span></div>
+              <div class="pipeline-stage active" onclick="filterPipeline(this, 'uploaded')">Загружен<span class="stage-count">2</span></div>
+              <div class="pipeline-stage" onclick="filterPipeline(this, 'parsed')">Распознан<span class="stage-count">3</span></div>
+              <div class="pipeline-stage" onclick="filterPipeline(this, 'verified')">Проверен<span class="stage-count">3</span></div>
+            </div>
+            <div class="filters-bar">
+              <div class="filter-chip">Поставщик</div>
+              <div class="filter-chip">Тип</div>
+              <div class="filter-chip">Марка</div>
+            </div>
+            <div class="list-scroll">
+              <div class="list-item selected" onclick="selectCert(this, 'cert-1')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">СП-2026-001</span>
+                  </div>
+                  <div class="list-item-sub">S355 &middot; НЛМК</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-uploaded">Загружен</span>
+                  <span class="confidence confidence-low">74%</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectCert(this, 'cert-2')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">СП-2026-002</span>
+                  </div>
+                  <div class="list-item-sub">09Г2С &middot; Северсталь</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-parsed">Распознан</span>
+                  <span class="confidence confidence-low">82%</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectCert(this, 'cert-3')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">СП-2026-003</span>
+                  </div>
+                  <div class="list-item-sub">Ст3сп &middot; ММК</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-verified">Проверен</span>
+                  <span class="confidence confidence-high">98%</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectCert(this, 'cert-4')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">СП-2026-004</span>
+                  </div>
+                  <div class="list-item-sub">Эмаль ПФ-115 &middot; Краски РФ</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-uploaded">Загружен</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectCert(this, 'cert-5')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">СП-2026-005</span>
+                  </div>
+                  <div class="list-item-sub">Проволока Св-08Г2С &middot; ESAB</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-verified">Проверен</span>
+                  <span class="confidence confidence-high">96%</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">СП-2026-006</span>
+                  </div>
+                  <div class="list-item-sub">10ХСНД &middot; Северсталь</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-parsed">Распознан</span>
+                  <span class="confidence confidence-high">91%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-panel" id="certs-detail">
+            <div class="fade-in" id="cert-1">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title" style="font-family:var(--mono);font-size:14px">СП-2026-001</div>
+                  <div class="detail-subtitle">металл &middot; Загружен</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span class="confidence confidence-low" style="font-size:11px;padding:3px 8px">OCR 74%</span>
+                  <span class="badge badge-uploaded" style="font-size:11px;padding:3px 10px">Загружен</span>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Данные OCR</div>
+                <div class="section-body">
+                  <div class="ocr-field">
+                    <span class="ocr-label">Тип</span>
+                    <span class="ocr-value">металл</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Марка</span>
+                    <span class="ocr-value">S355 <span class="ocr-warn">&#9888;</span></span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Стандарт</span>
+                    <span class="ocr-value" style="color:var(--text-muted)">&#8212;</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Поставщик</span>
+                    <span class="ocr-value">НЛМК <span style="font-size:11px;color:var(--accent-text);cursor:pointer;margin-left:4px">привязать</span></span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Дата</span>
+                    <span class="ocr-value">12.01.2026</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Файл</div>
+                <div class="section-body">
+                  <div class="pdf-preview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    certificate-scan-001.pdf
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Распознать OCR</button>
+              </div>
+            </div>
+
+            <div id="cert-2" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title" style="font-family:var(--mono);font-size:14px">СП-2026-002</div>
+                  <div class="detail-subtitle">металл &middot; Распознан</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span class="confidence confidence-low" style="font-size:11px;padding:3px 8px">OCR 82%</span>
+                  <span class="badge badge-parsed" style="font-size:11px;padding:3px 10px">Распознан</span>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Данные OCR</div>
+                <div class="section-body">
+                  <div class="ocr-field">
+                    <span class="ocr-label">Тип</span>
+                    <span class="ocr-value">металл</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Марка</span>
+                    <span class="ocr-value">09Г2С</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Стандарт</span>
+                    <span class="ocr-value">ГОСТ 19281-2014 <span class="ocr-warn">&#9888;</span></span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Поставщик</span>
+                    <span class="ocr-value">Северсталь</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Дата</span>
+                    <span class="ocr-value">15.01.2026</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Используется в</div>
+                <div class="section-body">
+                  <div class="used-in-item">
+                    <span class="used-in-code">Док-001</span>
+                    <span>(Заказ #001)</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                  </div>
+                  <div class="used-in-item">
+                    <span class="used-in-code">Док-005</span>
+                    <span>(Заказ #002)</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Файл</div>
+                <div class="section-body">
+                  <div class="pdf-preview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    certificate-scan-002.pdf
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-success">Подтвердить &#10003;</button>
+              </div>
+            </div>
+
+            <div id="cert-3" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title" style="font-family:var(--mono);font-size:14px">СП-2026-003</div>
+                  <div class="detail-subtitle">металл &middot; Проверен</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span class="confidence confidence-high" style="font-size:11px;padding:3px 8px">OCR 98%</span>
+                  <span class="badge badge-verified" style="font-size:11px;padding:3px 10px">Проверен</span>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="ocr-field">
+                    <span class="ocr-label">Тип</span>
+                    <span class="ocr-value">металл</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Марка</span>
+                    <span class="ocr-value">Ст3сп</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Стандарт</span>
+                    <span class="ocr-value">ГОСТ 380-2005</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Поставщик</span>
+                    <span class="ocr-value">ММК</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Дата</span>
+                    <span class="ocr-value">08.02.2026</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Используется в</div>
+                <div class="section-body">
+                  <div class="used-in-item">
+                    <span class="used-in-code">Док-001</span>
+                    <span>(Заказ #001)</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="cert-4" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title" style="font-family:var(--mono);font-size:14px">СП-2026-004</div>
+                  <div class="detail-subtitle">покрытие &middot; Загружен</div>
+                </div>
+                <span class="badge badge-uploaded" style="font-size:11px;padding:3px 10px">Загружен</span>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные OCR</div>
+                <div class="section-body">
+                  <div class="ocr-field">
+                    <span class="ocr-label">Тип</span>
+                    <span class="ocr-value">покрытие</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Марка</span>
+                    <span class="ocr-value" style="color:var(--text-muted)">&#8212;</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Поставщик</span>
+                    <span class="ocr-value">Краски РФ <span style="font-size:11px;color:var(--accent-text);cursor:pointer;margin-left:4px">привязать</span></span>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Файл</div>
+                <div class="section-body">
+                  <div class="pdf-preview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    покрытие-cert-004.pdf
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Распознать OCR</button>
+              </div>
+            </div>
+
+            <div id="cert-5" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title" style="font-family:var(--mono);font-size:14px">СП-2026-005</div>
+                  <div class="detail-subtitle">сварка &middot; Проверен</div>
+                </div>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <span class="confidence confidence-high" style="font-size:11px;padding:3px 8px">OCR 96%</span>
+                  <span class="badge badge-verified" style="font-size:11px;padding:3px 10px">Проверен</span>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Данные</div>
+                <div class="section-body">
+                  <div class="ocr-field">
+                    <span class="ocr-label">Тип</span>
+                    <span class="ocr-value">сварка</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Марка</span>
+                    <span class="ocr-value">Проволока Св-08Г2С</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Стандарт</span>
+                    <span class="ocr-value">ГОСТ 2246-70</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Поставщик</span>
+                    <span class="ocr-value">ESAB</span>
+                  </div>
+                  <div class="ocr-field">
+                    <span class="ocr-label">Дата</span>
+                    <span class="ocr-value">20.02.2026</span>
+                  </div>
+                </div>
+              </div>
+              <div class="section">
+                <div class="section-header">Используется в</div>
+                <div class="section-body" style="color:var(--text-muted);font-size:12px">
+                  Не используется
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: DOCUMENTS -->
+      <div class="tab-content" id="tab-documents">
+        <div class="split-layout">
+          <div class="list-panel">
+            <div class="filters-bar" style="justify-content:space-between">
+              <div style="display:flex;gap:6px">
+                <div class="filter-chip active">Все</div>
+                <div class="filter-chip">Черновик</div>
+                <div class="filter-chip">Выпущен</div>
+              </div>
+              <button class="btn btn-sm btn-primary">+ Документ</button>
+            </div>
+            <div class="list-scroll">
+              <div class="list-item selected" onclick="selectDoc(this, 'doc-1')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">Док-001</span>
+                    <span style="font-size:11px;color:var(--text-muted)">v1</span>
+                  </div>
+                  <div class="list-item-sub">Заказ #001 &middot; 3 сертификата</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-draft">Черновик</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectDoc(this, 'doc-2')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">Док-002</span>
+                    <span style="font-size:11px;color:var(--text-muted)">v2</span>
+                  </div>
+                  <div class="list-item-sub">Заказ #001 &middot; 4 сертификата</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-issued">Выпущен</span>
+                </div>
+              </div>
+              <div class="list-item" onclick="selectDoc(this, 'doc-3')">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">Док-003</span>
+                    <span style="font-size:11px;color:var(--text-muted)">v1</span>
+                  </div>
+                  <div class="list-item-sub">Заказ #001 &middot; 2 сертификата</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-draft">Черновик</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">Док-005</span>
+                    <span style="font-size:11px;color:var(--text-muted)">v1</span>
+                  </div>
+                  <div class="list-item-sub">Заказ #002 &middot; 2 сертификата</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-draft">Черновик</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-item-body">
+                  <div class="list-item-title">
+                    <span style="font-family:var(--mono);font-size:11px">Док-010</span>
+                    <span style="font-size:11px;color:var(--text-muted)">v1</span>
+                  </div>
+                  <div class="list-item-sub">Заказ #003 &middot; 2 сертификата</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="badge badge-issued">Выпущен</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-panel" id="docs-detail">
+            <div class="fade-in" id="doc-1">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Док-001 <span style="font-size:12px;color:var(--text-muted);font-weight:400">v1</span></div>
+                  <div class="detail-subtitle">Заказ #001 &middot; ООО Стройком</div>
+                </div>
+                <span class="badge badge-draft" style="font-size:11px;padding:3px 10px">Черновик</span>
+              </div>
+
+              <!-- Certificates M:N -->
+              <div class="section">
+                <div class="section-header">
+                  Сертификаты
+                  <button class="btn btn-sm btn-secondary">+ Добавить</button>
+                </div>
+                <div class="section-body">
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-001</span>
+                    <span class="mini-row-text">S355 &middot; НЛМК</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                    <span class="mini-row-action">&#10005;</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-002</span>
+                    <span class="mini-row-text">09Г2С &middot; Северсталь</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                    <span class="mini-row-action">&#10005;</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-010</span>
+                    <span class="mini-row-text">Эмаль ПФ-266 &middot; Лакра</span>
+                    <span class="badge badge-draft" style="font-size:9px">покрытие</span>
+                    <span class="mini-row-action">&#10005;</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Shipments -->
+              <div class="section">
+                <div class="section-header">
+                  Ведомость отгрузки
+                  <button class="btn btn-sm btn-secondary">+ Позиция</button>
+                </div>
+                <div class="section-body">
+                  <div class="shipment-row">
+                    <span class="shipment-head">Наименование</span>
+                    <span class="shipment-head" style="text-align:right">Кол</span>
+                    <span class="shipment-head" style="text-align:right">Масса</span>
+                  </div>
+                  <div class="shipment-row">
+                    <span>Балка HEB 200</span>
+                    <span style="text-align:right;font-family:var(--mono)">12</span>
+                    <span style="text-align:right;font-family:var(--mono)">740 кг</span>
+                  </div>
+                  <div class="shipment-row">
+                    <span>Швеллер 16П</span>
+                    <span style="text-align:right;font-family:var(--mono)">8</span>
+                    <span style="text-align:right;font-family:var(--mono)">320 кг</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pre-issue check -->
+              <div class="section">
+                <div class="section-header">Проверка перед выпуском</div>
+                <div class="section-body">
+                  <div class="check-item">
+                    <span class="check-icon check-ok">&#10003;</span>
+                    <span class="check-text">металл &#8212; покрыт (2 сертификата)</span>
+                  </div>
+                  <div class="check-item">
+                    <span class="check-icon check-ok">&#10003;</span>
+                    <span class="check-text">покрытие &#8212; покрыт (1 сертификат)</span>
+                  </div>
+                  <div class="check-item">
+                    <span class="check-icon check-warn">&#9888;</span>
+                    <span class="check-text">сварка &#8212; нет сертификата</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Result -->
+              <div class="section">
+                <div class="section-header">Результат</div>
+                <div class="section-body">
+                  <div class="pdf-preview">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Предпросмотр PDF
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Сформировать PDF</button>
+                <button class="btn btn-success">Выпустить &#10003;</button>
+                <button class="btn btn-secondary">Копия &#8594; v2</button>
+              </div>
+            </div>
+
+            <div id="doc-2" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Док-002 <span style="font-size:12px;color:var(--text-muted);font-weight:400">v2</span></div>
+                  <div class="detail-subtitle">Заказ #001 &middot; ООО Стройком</div>
+                </div>
+                <span class="badge badge-issued" style="font-size:11px;padding:3px 10px">Выпущен</span>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Сертификаты</div>
+                <div class="section-body">
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-001</span>
+                    <span class="mini-row-text">S355 &middot; НЛМК</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-002</span>
+                    <span class="mini-row-text">09Г2С &middot; Северсталь</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-005</span>
+                    <span class="mini-row-text">Св-08Г2С &middot; ESAB</span>
+                    <span class="badge badge-draft" style="font-size:9px">сварка</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-010</span>
+                    <span class="mini-row-text">Эмаль ПФ-266 &middot; Лакра</span>
+                    <span class="badge badge-draft" style="font-size:9px">покрытие</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-header">Проверка</div>
+                <div class="section-body">
+                  <div class="check-item">
+                    <span class="check-icon check-ok">&#10003;</span>
+                    <span class="check-text">металл &#8212; покрыт</span>
+                  </div>
+                  <div class="check-item">
+                    <span class="check-icon check-ok">&#10003;</span>
+                    <span class="check-text">покрытие &#8212; покрыт</span>
+                  </div>
+                  <div class="check-item">
+                    <span class="check-icon check-ok">&#10003;</span>
+                    <span class="check-text">сварка &#8212; покрыт</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-secondary">Копия &#8594; v3</button>
+              </div>
+            </div>
+
+            <div id="doc-3" style="display:none" class="fade-in">
+              <div class="detail-header">
+                <div>
+                  <div class="detail-title">Док-003 <span style="font-size:12px;color:var(--text-muted);font-weight:400">v1</span></div>
+                  <div class="detail-subtitle">Заказ #001 &middot; ООО Стройком</div>
+                </div>
+                <span class="badge badge-draft" style="font-size:11px;padding:3px 10px">Черновик</span>
+              </div>
+
+              <div class="section">
+                <div class="section-header">
+                  Сертификаты
+                  <button class="btn btn-sm btn-secondary">+ Добавить</button>
+                </div>
+                <div class="section-body">
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-003</span>
+                    <span class="mini-row-text">Ст3сп &middot; ММК</span>
+                    <span class="badge badge-draft" style="font-size:9px">металл</span>
+                    <span class="mini-row-action">&#10005;</span>
+                  </div>
+                  <div class="mini-row">
+                    <span class="mini-row-code">СП-010</span>
+                    <span class="mini-row-text">Эмаль ПФ-266 &middot; Лакра</span>
+                    <span class="badge badge-draft" style="font-size:9px">покрытие</span>
+                    <span class="mini-row-action">&#10005;</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn btn-primary">Сформировать PDF</button>
+                <button class="btn btn-success">Выпустить &#10003;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- AI Trigger -->
+<button class="ai-trigger" id="aiTrigger" onclick="toggleAI()">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a4 4 0 0 0-4 4v4a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"/><path d="M8 14s-1.5 2-4 2"/><path d="M16 14s1.5 2 4 2"/><circle cx="12" cy="20" r="2"/><path d="M12 16v2"/></svg>
+</button>
+
+<!-- AI Panel -->
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-header">
+    <div class="ai-header-left">
+      <span class="ai-dot"></span>
+      <span class="ai-title">AI Ассистент</span>
+    </div>
+    <button class="ai-close" onclick="toggleAI()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ai-context" id="aiContext">Заказ #001 &#8594; Док-001 (Черновик)</div>
+  <div class="ai-body">
+    <div class="ai-actions">
+      <button class="ai-action-btn">
+        <span class="ai-action-icon">&#128269;</span>
+        Подобрать сертификаты
+      </button>
+      <button class="ai-action-btn">
+        <span class="ai-action-icon">&#9745;</span>
+        Проверить покрытие
+      </button>
+      <button class="ai-action-btn">
+        <span class="ai-action-icon">&#128230;</span>
+        Собрать пакет
+      </button>
+    </div>
+    <div class="ai-chat-divider">или спросить</div>
+    <div class="ai-input-wrap">
+      <input type="text" class="ai-input" placeholder="Найди сертификаты на 09Г2С...">
+      <button class="ai-send">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Tab switching
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+
+  const names = { orders: 'Заказы', certificates: 'Сертификаты', documents: 'Документы' };
+  document.getElementById('breadcrumbCurrent').textContent = names[tab] || tab;
+}
+
+// Generic select helper
+function selectItem(container, listParent, id) {
+  listParent.querySelectorAll('.list-item').forEach(i => i.classList.remove('selected'));
+  container.classList.add('selected');
+
+  const panel = listParent.closest('.split-layout').querySelector('.detail-panel');
+  panel.querySelectorAll('[id^="order-"], [id^="cert-"], [id^="doc-"]').forEach(d => d.style.display = 'none');
+  const target = document.getElementById(id);
+  if (target) {
+    target.style.display = '';
+    target.classList.remove('fade-in');
+    void target.offsetWidth;
+    target.classList.add('fade-in');
+  }
+}
+
+function selectOrder(el, id) {
+  selectItem(el, el.closest('.list-panel'), id);
+  updateAIContext(id);
+}
+
+function selectCert(el, id) {
+  selectItem(el, el.closest('.list-panel'), id);
+}
+
+function selectDoc(el, id) {
+  selectItem(el, el.closest('.list-panel'), id);
+  updateAIContext(id);
+}
+
+function updateAIContext(id) {
+  const ctx = document.getElementById('aiContext');
+  const map = {
+    'order-1': 'Заказ #001 &#8594; ООО Стройком (Активен)',
+    'order-2': 'Заказ #002 &#8594; ООО МеталлПро (Активен)',
+    'order-3': 'Заказ #003 &#8594; ИП Сидоров (Завершён)',
+    'doc-1': 'Заказ #001 &#8594; Док-001 (Черновик)',
+    'doc-2': 'Заказ #001 &#8594; Док-002 (Выпущен)',
+    'doc-3': 'Заказ #001 &#8594; Док-003 (Черновик)',
+  };
+  if (map[id]) ctx.innerHTML = map[id];
+}
+
+// Pipeline filter
+function filterPipeline(el, stage) {
+  el.parentElement.querySelectorAll('.pipeline-stage').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Filter chips
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// AI toggle
+let aiOpen = false;
+function toggleAI() {
+  aiOpen = !aiOpen;
+  document.getElementById('aiPanel').classList.toggle('open', aiOpen);
+  document.getElementById('aiTrigger').classList.toggle('hidden', aiOpen);
+}
+</script>
+</body>
+</html>
