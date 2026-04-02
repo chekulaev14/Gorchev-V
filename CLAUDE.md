@@ -30,6 +30,8 @@ Backend:
 - ALWAYS оборачивай multi-table операции в $transaction + handleRouteError
 - NEVER выбрасывай ошибку без handleRouteError. Коды: P2002→409, P2025→404, rest→500
 - NEVER создавай складскую операцию без operationKey @unique
+- ALWAYS используй log из '@/lib/logger' вместо console.log/error. В новых сервисах — добавлять логи на старт/конец ключевых операций и ошибки
+- ALWAYS оборачивай новые API routes в withRequestId из '@/lib/logger'
 
 Frontend:
 - NEVER размещай бизнес-логику в UI — расчёты только на backend/orchestrator
@@ -118,7 +120,7 @@ QA:
 - [app/src/components/documents/](app/src/components/documents/) — модуль документов (сертификаты поставщиков, сертификаты качества)
 - [app/src/components/ui/](app/src/components/ui/) — shared: shadcn/ui компоненты
 - [app/src/services/](app/src/services/) — бизнес-логика (auth, user, stock, routing, production, bom, bom-version, nomenclature, product, process, production-order, setup-import). assembly.service — deprecated
-- [app/src/lib/](app/src/lib/) — shared: prisma client, auth (JWT/RBAC), типы, утилиты, schemas (setup-import.schema.ts)
+- [app/src/lib/](app/src/lib/) — shared: prisma client, auth (JWT/RBAC), logger (pino + requestId), типы, утилиты, schemas (setup-import.schema.ts)
 - [app/src/data/](app/src/data/) — статические данные (только для seed)
 - [app/src/app/api/](app/src/app/api/) — API routes по модулям (auth/, users/, config/, terminal/, nomenclature/, stock/, bom/, routing/, setup/, documents/)
 - [app/prisma/](app/prisma/) — Prisma schema и миграции
