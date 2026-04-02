@@ -1,34 +1,33 @@
-import { prisma } from "@/lib/prisma";
-import { ServiceError } from "@/lib/api/handle-route-error";
-import type { MovementType } from "@/lib/types";
-import { toNumber } from "./helpers/serialize";
+import { prisma } from '@/lib/prisma';
+import { ServiceError } from '@/lib/api/handle-route-error';
+import type { MovementType } from '@/lib/types';
+import { toNumber } from './helpers/serialize';
+import { log } from '@/lib/logger';
 
-const DEFAULT_LOCATION = "MAIN";
+const DEFAULT_LOCATION = 'MAIN';
 
 const INCOME_TYPES: MovementType[] = [
-  "SUPPLIER_INCOME",
-  "PRODUCTION_INCOME",
-  "ASSEMBLY_INCOME",
-  "ADJUSTMENT_INCOME",
+  'SUPPLIER_INCOME',
+  'PRODUCTION_INCOME',
+  'ASSEMBLY_INCOME',
+  'ADJUSTMENT_INCOME',
 ];
 
 /** Маппинг from/to Location по типу движения */
 const LOCATION_MAP: Record<string, { from: string; to: string }> = {
-  SUPPLIER_INCOME:      { from: "EXTERNAL",    to: "MAIN" },
-  PRODUCTION_INCOME:    { from: "PRODUCTION",  to: "MAIN" },
-  ASSEMBLY_WRITE_OFF:   { from: "MAIN",        to: "PRODUCTION" },
-  ASSEMBLY_INCOME:      { from: "PRODUCTION",  to: "MAIN" },
-  ADJUSTMENT_INCOME:    { from: "ADJUSTMENT",  to: "MAIN" },
-  ADJUSTMENT_WRITE_OFF: { from: "MAIN",        to: "ADJUSTMENT" },
-  SHIPMENT_WRITE_OFF:   { from: "MAIN",        to: "EXTERNAL" },
+  SUPPLIER_INCOME: { from: 'EXTERNAL', to: 'MAIN' },
+  PRODUCTION_INCOME: { from: 'PRODUCTION', to: 'MAIN' },
+  ASSEMBLY_WRITE_OFF: { from: 'MAIN', to: 'PRODUCTION' },
+  ASSEMBLY_INCOME: { from: 'PRODUCTION', to: 'MAIN' },
+  ADJUSTMENT_INCOME: { from: 'ADJUSTMENT', to: 'MAIN' },
+  ADJUSTMENT_WRITE_OFF: { from: 'MAIN', to: 'ADJUSTMENT' },
+  SHIPMENT_WRITE_OFF: { from: 'MAIN', to: 'EXTERNAL' },
 };
 
-function getLocationsByType(
-  type: MovementType,
-): { fromLocationId: string; toLocationId: string } {
+function getLocationsByType(type: MovementType): { fromLocationId: string; toLocationId: string } {
   const mapping = LOCATION_MAP[type];
   if (!mapping) {
-    return { fromLocationId: "MAIN", toLocationId: "MAIN" };
+    return { fromLocationId: 'MAIN', toLocationId: 'MAIN' };
   }
   return { fromLocationId: mapping.from, toLocationId: mapping.to };
 }
@@ -74,7 +73,7 @@ export async function getAllBalances(): Promise<Record<string, number>> {
 export async function getMovements(itemId?: string, limit = 100) {
   const movements = await prisma.stockMovement.findMany({
     where: itemId ? { itemId } : undefined,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     take: limit,
   });
   return movements.map((m) => ({ ...m, quantity: toNumber(m.quantity) }));
@@ -114,7 +113,10 @@ export async function createMovement(data: {
         WHERE item_id = ${data.itemId} AND location_id = ${locationId}
       `;
       if (toNumber(row.quantity) < data.quantity) {
-        throw new ServiceError(`Недостаточно остатка: ${toNumber(row.quantity)} < ${data.quantity}`, 400);
+        throw new ServiceError(
+          `Недостаточно остатка: ${toNumber(row.quantity)} < ${data.quantity}`,
+          400,
+        );
       }
     }
 
@@ -143,7 +145,7 @@ export async function createMovement(data: {
 }
 
 export async function createIncomeOperation(params: {
-  type: "SUPPLIER_INCOME" | "PRODUCTION_INCOME";
+  type: 'SUPPLIER_INCOME' | 'PRODUCTION_INCOME';
   itemId: string;
   quantity: number;
   workerId?: string;
@@ -152,7 +154,8 @@ export async function createIncomeOperation(params: {
   operationKey?: string;
 }) {
   const { type, itemId, quantity, workerId, createdById, comment, operationKey } = params;
-  const prefix = type === "SUPPLIER_INCOME" ? "si" : "pi";
+  log.info('stock: create operation', { type, itemId, qty: quantity });
+  const prefix = type === 'SUPPLIER_INCOME' ? 'si' : 'pi';
   const opKey = operationKey ?? `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   return prisma.$transaction(async (tx) => {
@@ -174,7 +177,7 @@ export async function createIncomeOperation(params: {
 
     // Создаём операцию (MovementType → InventoryOperationType)
     const operation = await tx.inventoryOperation.create({
-      data: { operationKey: opKey, type: "SUPPLIER_RECEIPT", createdById },
+      data: { operationKey: opKey, type: 'SUPPLIER_RECEIPT', createdById },
     });
 
     // Блокируем строку StockBalance (или создаём)
@@ -216,6 +219,7 @@ export async function createIncomeOperation(params: {
       WHERE item_id = ${itemId} AND location_id = ${DEFAULT_LOCATION}
     `;
 
+    log.info('stock: operation created', { operationId: movement.id });
     return {
       movement: { id: movement.id },
       balance: toNumber(bal.quantity),
@@ -232,6 +236,7 @@ export async function createShipmentOperation(params: {
   operationKey?: string;
 }) {
   const { itemId, quantity, createdById, comment, operationKey } = params;
+  log.info('stock: create operation', { type: 'SHIPMENT', itemId, qty: quantity });
   const opKey = operationKey ?? `sh-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   return prisma.$transaction(async (tx) => {
@@ -273,19 +278,19 @@ export async function createShipmentOperation(params: {
     }
 
     const operation = await tx.inventoryOperation.create({
-      data: { operationKey: opKey, type: "SHIPMENT", createdById },
+      data: { operationKey: opKey, type: 'SHIPMENT', createdById },
     });
 
     const movement = await tx.stockMovement.create({
       data: {
-        type: "SHIPMENT_WRITE_OFF",
+        type: 'SHIPMENT_WRITE_OFF',
         itemId,
         quantity,
         comment,
         createdById,
         operationId: operation.id,
-        fromLocationId: "MAIN",
-        toLocationId: "EXTERNAL",
+        fromLocationId: 'MAIN',
+        toLocationId: 'EXTERNAL',
       },
     });
 
@@ -300,6 +305,7 @@ export async function createShipmentOperation(params: {
       WHERE item_id = ${itemId} AND location_id = ${DEFAULT_LOCATION}
     `;
 
+    log.info('stock: operation created', { operationId: movement.id });
     return {
       movement: { id: movement.id },
       balance: toNumber(bal.quantity),
@@ -316,10 +322,11 @@ export async function createAdjustmentOperation(params: {
   operationKey?: string;
 }) {
   const { itemId, quantity, createdById, comment, operationKey } = params;
+  log.info('stock: create operation', { type: 'ADJUSTMENT', itemId, qty: quantity });
   const opKey = operationKey ?? `adj-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const isIncome = quantity > 0;
   const absQty = Math.abs(quantity);
-  const movementType: MovementType = isIncome ? "ADJUSTMENT_INCOME" : "ADJUSTMENT_WRITE_OFF";
+  const movementType: MovementType = isIncome ? 'ADJUSTMENT_INCOME' : 'ADJUSTMENT_WRITE_OFF';
 
   return prisma.$transaction(async (tx) => {
     const existing = await tx.inventoryOperation.findUnique({
@@ -359,7 +366,7 @@ export async function createAdjustmentOperation(params: {
     }
 
     const operation = await tx.inventoryOperation.create({
-      data: { operationKey: opKey, type: "ADJUSTMENT", createdById },
+      data: { operationKey: opKey, type: 'ADJUSTMENT', createdById },
     });
 
     const { fromLocationId, toLocationId } = getLocationsByType(movementType);
@@ -389,6 +396,7 @@ export async function createAdjustmentOperation(params: {
       WHERE item_id = ${itemId} AND location_id = ${DEFAULT_LOCATION}
     `;
 
+    log.info('stock: operation created', { operationId: movement.id });
     return {
       movement: { id: movement.id },
       balance: toNumber(bal.quantity),
