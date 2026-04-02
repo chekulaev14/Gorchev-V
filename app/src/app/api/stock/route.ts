@@ -83,7 +83,7 @@ export const POST = withRequestId(async (req) => {
       }
     }
   } catch (err) {
-    console.error('[DEBUG stock POST]', err);
+    log.error('POST /api/stock: error', { error: String(err) });
     return handleRouteError(err);
   }
 });
