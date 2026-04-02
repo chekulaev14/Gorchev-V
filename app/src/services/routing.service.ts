@@ -1,26 +1,39 @@
-import { prisma } from "@/lib/prisma";
-import { ServiceError } from "@/lib/api/handle-route-error";
-import { toNumber } from "./helpers/serialize";
-import { validateRoutingStepsSide } from "./helpers/validate-side";
-import type { StepPayload } from "@/lib/schemas/routing.schema";
+import { prisma } from '@/lib/prisma';
+import { ServiceError } from '@/lib/api/handle-route-error';
+import { toNumber } from './helpers/serialize';
+import { validateRoutingStepsSide } from './helpers/validate-side';
+import type { StepPayload } from '@/lib/schemas/routing.schema';
+import { log } from '@/lib/logger';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
-const ITEM_SELECT = { id: true, name: true, code: true, typeId: true, unitId: true, side: true } as const;
+const ITEM_SELECT = {
+  id: true,
+  name: true,
+  code: true,
+  typeId: true,
+  unitId: true,
+  side: true,
+} as const;
 
 const STEP_INCLUDE = {
   process: { select: { id: true, name: true } },
   outputItem: { select: ITEM_SELECT },
   inputs: {
-    orderBy: { sortOrder: "asc" as const },
+    orderBy: { sortOrder: 'asc' as const },
     include: { item: { select: ITEM_SELECT } },
   },
 } as const;
 
 // --- Helpers ---
 
-function serializeStep(s: { outputQty: unknown; normTimeMin: unknown; setupTimeMin: unknown; inputs: { qty: unknown }[] }) {
+function serializeStep(s: {
+  outputQty: unknown;
+  normTimeMin: unknown;
+  setupTimeMin: unknown;
+  inputs: { qty: unknown }[];
+}) {
   return {
     ...s,
     outputQty: toNumber(s.outputQty as number),
@@ -38,8 +51,8 @@ function serializeStep(s: { outputQty: unknown; normTimeMin: unknown; setupTimeM
 /** Найти активный маршрут по конечному изделию */
 export async function getActiveRoutingByItem(itemId: string) {
   const routing = await prisma.routing.findFirst({
-    where: { itemId, status: "ACTIVE" },
-    include: { steps: { orderBy: { stepNo: "asc" }, include: STEP_INCLUDE } },
+    where: { itemId, status: 'ACTIVE' },
+    include: { steps: { orderBy: { stepNo: 'asc' }, include: STEP_INCLUDE } },
   });
   if (!routing) return null;
 
@@ -50,8 +63,8 @@ export async function getActiveRoutingByItem(itemId: string) {
 export async function getRoutingsByItem(itemId: string) {
   const routings = await prisma.routing.findMany({
     where: { itemId },
-    include: { steps: { orderBy: { stepNo: "asc" }, include: STEP_INCLUDE } },
-    orderBy: { version: "desc" },
+    include: { steps: { orderBy: { stepNo: 'asc' }, include: STEP_INCLUDE } },
+    orderBy: { version: 'desc' },
   });
 
   return routings.map((r) => ({ ...r, steps: r.steps.map(serializeStep) }));
@@ -62,29 +75,31 @@ export async function getRoutingsByItem(itemId: string) {
  * Инвариант: ровно один producing step на outputItemId.
  */
 export async function getProducingStep(outputItemId: string, tx?: Tx) {
+  log.info('routing: getProducingStep', { itemId: outputItemId });
   const client = tx ?? prisma;
   const steps = await client.routingStep.findMany({
-    where: { outputItemId, routing: { status: "ACTIVE" } },
+    where: { outputItemId, routing: { status: 'ACTIVE' } },
     include: {
       routing: { select: { id: true, itemId: true, status: true } },
       process: { select: { id: true, name: true } },
       outputItem: { select: { id: true, name: true, code: true } },
       inputs: {
-        orderBy: { sortOrder: "asc" },
+        orderBy: { sortOrder: 'asc' },
         include: { item: { select: { id: true, name: true, code: true } } },
       },
     },
   });
 
-  if (steps.length === 0) return null;
+  if (steps.length === 0) {
+    log.warn('routing: no producingStep found', { itemId: outputItemId });
+    return null;
+  }
   if (steps.length > 1) {
-    throw new ServiceError(
-      `Несколько producing steps для ${outputItemId} — ошибка данных`,
-      500,
-    );
+    throw new ServiceError(`Несколько producing steps для ${outputItemId} — ошибка данных`, 500);
   }
 
   const s = steps[0];
+  log.info('routing: producingStep found', { itemId: outputItemId, stepId: s.id });
   return {
     ...s,
     outputQty: toNumber(s.outputQty),
@@ -100,7 +115,7 @@ export async function getProducingStep(outputItemId: string, tx?: Tx) {
 /** Создать маршрут (DRAFT) */
 export async function createRouting(itemId: string, steps: StepPayload[]) {
   const item = await prisma.item.findUnique({ where: { id: itemId } });
-  if (!item) throw new ServiceError("Позиция не найдена", 404);
+  if (!item) throw new ServiceError('Позиция не найдена', 404);
 
   validateSteps(steps, itemId);
   await validateStepsSideFromPayload(steps);
@@ -115,7 +130,7 @@ export async function createRouting(itemId: string, steps: StepPayload[]) {
     data: {
       itemId,
       version: nextVersion,
-      status: "DRAFT",
+      status: 'DRAFT',
       steps: {
         create: steps.map((s) => ({
           stepNo: s.stepNo,
@@ -135,16 +150,16 @@ export async function createRouting(itemId: string, steps: StepPayload[]) {
         })),
       },
     },
-    include: { steps: { orderBy: { stepNo: "asc" }, include: STEP_INCLUDE } },
+    include: { steps: { orderBy: { stepNo: 'asc' }, include: STEP_INCLUDE } },
   });
 }
 
 /** Обновить шаги черновика (полная перезапись) */
 export async function updateRoutingSteps(routingId: string, steps: StepPayload[]) {
   const routing = await prisma.routing.findUnique({ where: { id: routingId } });
-  if (!routing) throw new ServiceError("Маршрут не найден", 404);
-  if (routing.status !== "DRAFT") {
-    throw new ServiceError("Можно редактировать только черновик", 400);
+  if (!routing) throw new ServiceError('Маршрут не найден', 404);
+  if (routing.status !== 'DRAFT') {
+    throw new ServiceError('Можно редактировать только черновик', 400);
   }
 
   validateSteps(steps, routing.itemId);
@@ -177,13 +192,14 @@ export async function updateRoutingSteps(routingId: string, steps: StepPayload[]
 
     return tx.routing.findUnique({
       where: { id: routingId },
-      include: { steps: { orderBy: { stepNo: "asc" }, include: STEP_INCLUDE } },
+      include: { steps: { orderBy: { stepNo: 'asc' }, include: STEP_INCLUDE } },
     });
   });
 }
 
 /** DRAFT → ACTIVE, архивировать предыдущий */
 export async function activateRouting(routingId: string) {
+  log.info('routing: activating', { routingId });
   return prisma.$transaction(async (tx) => {
     const routing = await tx.routing.findUnique({
       where: { id: routingId },
@@ -192,20 +208,20 @@ export async function activateRouting(routingId: string) {
           include: {
             outputItem: { select: { id: true, name: true, side: true } },
             inputs: {
-              orderBy: { sortOrder: "asc" },
+              orderBy: { sortOrder: 'asc' },
               include: { item: { select: { id: true, name: true, side: true } } },
             },
           },
         },
       },
     });
-    if (!routing) throw new ServiceError("Маршрут не найден", 404);
-    if (routing.status === "ACTIVE") return routing;
-    if (routing.status === "ARCHIVED") {
-      throw new ServiceError("Нельзя активировать архивный маршрут", 400);
+    if (!routing) throw new ServiceError('Маршрут не найден', 404);
+    if (routing.status === 'ACTIVE') return routing;
+    if (routing.status === 'ARCHIVED') {
+      throw new ServiceError('Нельзя активировать архивный маршрут', 400);
     }
     if (routing.steps.length === 0) {
-      throw new ServiceError("Нельзя активировать пустой маршрут", 400);
+      throw new ServiceError('Нельзя активировать пустой маршрут', 400);
     }
 
     // Проверить что все шаги заполнены
@@ -222,17 +238,17 @@ export async function activateRouting(routingId: string) {
     validateRoutingStepsSide(
       routing.steps.map((s) => ({
         stepNo: s.stepNo,
-        outputItem: { name: s.outputItem?.name ?? "", side: s.outputItem?.side ?? "NONE" },
+        outputItem: { name: s.outputItem?.name ?? '', side: s.outputItem?.side ?? 'NONE' },
         inputs: s.inputs.map((inp) => ({
-          item: { name: inp.item?.name ?? "", side: inp.item?.side ?? "NONE" },
+          item: { name: inp.item?.name ?? '', side: inp.item?.side ?? 'NONE' },
         })),
       })),
     );
 
     // Архивируем текущий ACTIVE (до проверки конфликтов, чтобы не конфликтовать с собой)
     await tx.routing.updateMany({
-      where: { itemId: routing.itemId, status: "ACTIVE" },
-      data: { status: "ARCHIVED" },
+      where: { itemId: routing.itemId, status: 'ACTIVE' },
+      data: { status: 'ARCHIVED' },
     });
 
     // Проверка: для каждого outputItemId не должно быть другого ACTIVE producing step
@@ -240,7 +256,7 @@ export async function activateRouting(routingId: string) {
       const existing = await tx.routingStep.findMany({
         where: {
           outputItemId: s.outputItemId,
-          routing: { status: "ACTIVE", id: { not: routingId } },
+          routing: { status: 'ACTIVE', id: { not: routingId } },
         },
       });
       if (existing.length > 0) {
@@ -254,12 +270,13 @@ export async function activateRouting(routingId: string) {
     // Активируем новый
     await tx.routing.update({
       where: { id: routingId },
-      data: { status: "ACTIVE" },
+      data: { status: 'ACTIVE' },
     });
 
+    log.info('routing: activated', { routingId });
     return tx.routing.findUnique({
       where: { id: routingId },
-      include: { steps: { orderBy: { stepNo: "asc" }, include: STEP_INCLUDE } },
+      include: { steps: { orderBy: { stepNo: 'asc' }, include: STEP_INCLUDE } },
     });
   });
 }
@@ -267,22 +284,25 @@ export async function activateRouting(routingId: string) {
 /** Архивировать маршрут */
 export async function archiveRouting(routingId: string) {
   const routing = await prisma.routing.findUnique({ where: { id: routingId } });
-  if (!routing) throw new ServiceError("Маршрут не найден", 404);
-  if (routing.status === "ACTIVE") {
-    throw new ServiceError("Нельзя архивировать активный маршрут — сначала активируйте другой", 400);
+  if (!routing) throw new ServiceError('Маршрут не найден', 404);
+  if (routing.status === 'ACTIVE') {
+    throw new ServiceError(
+      'Нельзя архивировать активный маршрут — сначала активируйте другой',
+      400,
+    );
   }
   return prisma.routing.update({
     where: { id: routingId },
-    data: { status: "ARCHIVED" },
+    data: { status: 'ARCHIVED' },
   });
 }
 
 /** Удалить черновик */
 export async function deleteRouting(routingId: string) {
   const routing = await prisma.routing.findUnique({ where: { id: routingId } });
-  if (!routing) throw new ServiceError("Маршрут не найден", 404);
-  if (routing.status !== "DRAFT") {
-    throw new ServiceError("Можно удалить только черновик", 400);
+  if (!routing) throw new ServiceError('Маршрут не найден', 404);
+  if (routing.status !== 'DRAFT') {
+    throw new ServiceError('Можно удалить только черновик', 400);
   }
   return prisma.routing.delete({ where: { id: routingId } });
 }
@@ -291,7 +311,7 @@ export async function deleteRouting(routingId: string) {
 
 function validateSteps(steps: StepPayload[], itemId: string) {
   if (steps.length === 0) {
-    throw new ServiceError("Маршрут должен содержать хотя бы один шаг", 400);
+    throw new ServiceError('Маршрут должен содержать хотя бы один шаг', 400);
   }
 
   const sorted = [...steps].sort((a, b) => a.stepNo - b.stepNo);
@@ -299,14 +319,20 @@ function validateSteps(steps: StepPayload[], itemId: string) {
   // stepNo непрерывные 1..N
   for (let i = 0; i < sorted.length; i++) {
     if (sorted[i].stepNo !== i + 1) {
-      throw new ServiceError(`stepNo должны быть непрерывными (1..N), нарушение на шаге ${sorted[i].stepNo}`, 400);
+      throw new ServiceError(
+        `stepNo должны быть непрерывными (1..N), нарушение на шаге ${sorted[i].stepNo}`,
+        400,
+      );
     }
   }
 
   // Последний шаг: outputItem = itemId маршрута
   const lastStep = sorted[sorted.length - 1];
   if (lastStep.outputItemId !== itemId) {
-    throw new ServiceError("Выход последнего шага должен совпадать с конечным изделием маршрута", 400);
+    throw new ServiceError(
+      'Выход последнего шага должен совпадать с конечным изделием маршрута',
+      400,
+    );
   }
 
   // outputItemId уникален в маршруте
@@ -380,10 +406,10 @@ async function validateStepsSideFromPayload(steps: StepPayload[]) {
       const outputItem = itemMap.get(s.outputItemId);
       return {
         stepNo: s.stepNo,
-        outputItem: { name: outputItem?.name ?? "", side: outputItem?.side ?? "NONE" },
+        outputItem: { name: outputItem?.name ?? '', side: outputItem?.side ?? 'NONE' },
         inputs: s.inputs.map((inp) => {
           const item = itemMap.get(inp.itemId);
-          return { item: { name: item?.name ?? "", side: item?.side ?? "NONE" } };
+          return { item: { name: item?.name ?? '', side: item?.side ?? 'NONE' } };
         }),
       };
     }),
