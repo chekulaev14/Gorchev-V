@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server";
-import { produce } from "@/services/production.service";
-import { terminalProduceSchema } from "@/lib/schemas/terminal-produce.schema";
-import { parseBody } from "@/lib/schemas/helpers";
-import { getAuthContext } from "@/lib/auth-helper";
-import { handleRouteError } from "@/lib/api/handle-route-error";
+import { NextResponse } from 'next/server';
+import { produce } from '@/services/production.service';
+import { terminalProduceSchema } from '@/lib/schemas/terminal-produce.schema';
+import { parseBody } from '@/lib/schemas/helpers';
+import { getAuthContext } from '@/lib/auth-helper';
+import { handleRouteError } from '@/lib/api/handle-route-error';
+import { withRequestId, log } from '@/lib/logger';
 
-export async function POST(request: Request) {
+export const POST = withRequestId(async (req) => {
+  log.info('POST /api/terminal/produce: start');
   try {
-    const auth = getAuthContext(request);
-    const body = await request.json();
+    const auth = getAuthContext(req);
+    const body = await req.json();
     const parsed = parseBody(terminalProduceSchema, body);
     if (!parsed.success) return parsed.response;
 
@@ -18,16 +20,20 @@ export async function POST(request: Request) {
       itemId,
       workers,
       clientOperationKey,
-      createdById: auth.role === "WORKER" ? undefined : (auth.actorId || undefined),
+      createdById: auth.role === 'WORKER' ? undefined : auth.actorId || undefined,
     });
 
-    return NextResponse.json({
-      ok: true,
-      productionOperationId: result.productionOperationId,
-      balance: result.balance,
-      workers: result.workers,
-    }, { status: 201 });
+    log.info('POST /api/terminal/produce: done');
+    return NextResponse.json(
+      {
+        ok: true,
+        productionOperationId: result.productionOperationId,
+        balance: result.balance,
+        workers: result.workers,
+      },
+      { status: 201 },
+    );
   } catch (err) {
     return handleRouteError(err);
   }
-}
+});
