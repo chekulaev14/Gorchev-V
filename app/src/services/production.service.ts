@@ -1,9 +1,10 @@
-import { prisma } from "@/lib/prisma";
-import { ServiceError } from "@/lib/api/handle-route-error";
-import { getProducingStep } from "./routing.service";
-import { toNumber } from "./helpers/serialize";
+import { prisma } from '@/lib/prisma';
+import { ServiceError } from '@/lib/api/handle-route-error';
+import { getProducingStep } from './routing.service';
+import { toNumber } from './helpers/serialize';
+import { log } from '@/lib/logger';
 
-const DEFAULT_LOCATION = "MAIN";
+const DEFAULT_LOCATION = 'MAIN';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
@@ -44,11 +45,17 @@ function roundHalfUp(value: number, decimals: number): number {
 export async function produce(params: ProduceParams): Promise<ProduceResult> {
   const { itemId, workers, clientOperationKey, createdById } = params;
 
+  log.info('produce: start', {
+    itemId,
+    quantity: workers.reduce((s, w) => s + w.quantity, 0),
+    workersCount: workers.length,
+  });
+
   // Валидация
-  if (workers.length === 0) throw new ServiceError("Нужен хотя бы один рабочий", 400);
+  if (workers.length === 0) throw new ServiceError('Нужен хотя бы один рабочий', 400);
 
   const totalQty = workers.reduce((sum, w) => sum + w.quantity, 0);
-  if (totalQty <= 0) throw new ServiceError("Общее количество должно быть > 0", 400);
+  if (totalQty <= 0) throw new ServiceError('Общее количество должно быть > 0', 400);
 
   for (const w of workers) {
     if (w.quantity <= 0) throw new ServiceError(`Количество рабочего должно быть > 0`, 400);
@@ -57,19 +64,20 @@ export async function produce(params: ProduceParams): Promise<ProduceResult> {
   // Нет дублей workerId
   const workerIds = new Set(workers.map((w) => w.workerId));
   if (workerIds.size !== workers.length) {
-    throw new ServiceError("Один рабочий не может быть добавлен дважды", 400);
+    throw new ServiceError('Один рабочий не может быть добавлен дважды', 400);
   }
 
   // Найти producing step
   const step = await getProducingStep(itemId);
   if (!step) {
-    throw new ServiceError("Нет маршрута для этой номенклатуры", 400);
+    throw new ServiceError('Нет маршрута для этой номенклатуры', 400);
   }
 
   // Собираем itemId для начальной блокировки (root + direct inputs)
   const allItemIds = collectItemIds(itemId, step.inputs);
 
-  const opKey = clientOperationKey ?? `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const opKey =
+    clientOperationKey ?? `prod-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   const result = await prisma.$transaction(async (tx) => {
     // Idempotency по clientOperationKey
@@ -78,14 +86,18 @@ export async function produce(params: ProduceParams): Promise<ProduceResult> {
         where: { clientOperationKey },
         include: {
           workers: { select: { workerId: true, quantity: true, pricePerUnit: true, total: true } },
-          inventoryOperation: { include: { movements: { select: { id: true, type: true, itemId: true } } } },
+          inventoryOperation: {
+            include: { movements: { select: { id: true, type: true, itemId: true } } },
+          },
         },
       });
       if (existingOp) {
         const incomeMovement = existingOp.inventoryOperation.movements.find(
-          (m) => m.type === "ASSEMBLY_INCOME" && m.itemId === itemId,
+          (m) => m.type === 'ASSEMBLY_INCOME' && m.itemId === itemId,
         );
-        const writeOffs = existingOp.inventoryOperation.movements.filter((m) => m.type === "ASSEMBLY_WRITE_OFF");
+        const writeOffs = existingOp.inventoryOperation.movements.filter(
+          (m) => m.type === 'ASSEMBLY_WRITE_OFF',
+        );
         const bal = await tx.stockBalance.findUnique({
           where: { itemId_locationId: { itemId, locationId: DEFAULT_LOCATION } },
         });
@@ -114,7 +126,7 @@ export async function produce(params: ProduceParams): Promise<ProduceResult> {
         where: { itemId_locationId: { itemId, locationId: DEFAULT_LOCATION } },
       });
       return {
-        productionOperationId: "",
+        productionOperationId: '',
         incomeMovementId: existing.id,
         writeOffIds: [],
         balance: bal ? toNumber(bal.quantity) : 0,
@@ -125,7 +137,7 @@ export async function produce(params: ProduceParams): Promise<ProduceResult> {
 
     // Создаём InventoryOperation
     const operation = await tx.inventoryOperation.create({
-      data: { operationKey: opKey, type: "ASSEMBLY", createdById },
+      data: { operationKey: opKey, type: 'ASSEMBLY', createdById },
     });
 
     // Ensure StockBalance rows exist
@@ -165,12 +177,12 @@ export async function produce(params: ProduceParams): Promise<ProduceResult> {
     // Приход готового изделия
     const income = await tx.stockMovement.create({
       data: {
-        type: "ASSEMBLY_INCOME",
+        type: 'ASSEMBLY_INCOME',
         itemId,
         quantity: totalQty,
         createdById,
         operationId: operation.id,
-        fromLocationId: "PRODUCTION",
+        fromLocationId: 'PRODUCTION',
         toLocationId: DEFAULT_LOCATION,
         comment: `Производство ${totalQty} шт`,
       },
@@ -202,7 +214,7 @@ export async function produce(params: ProduceParams): Promise<ProduceResult> {
     const pricePerUnit = item?.pricePerUnit ? toNumber(item.pricePerUnit) : 0;
 
     // Создаём ProductionOperationWorker для каждого рабочего
-    const workerResults: ProduceResult["workers"] = [];
+    const workerResults: ProduceResult['workers'] = [];
     for (const w of workers) {
       const total = w.quantity * pricePerUnit;
       await tx.productionOperationWorker.create({
@@ -232,6 +244,7 @@ export async function produce(params: ProduceParams): Promise<ProduceResult> {
     };
   });
 
+  log.info('produce: done', { itemId, quantity: result.balance });
   return result;
 }
 
@@ -256,7 +269,7 @@ async function produceRecursive(
 
   const visitKey = `${itemId}:${step.routing.id}`;
   if (ctx.visited.has(visitKey)) {
-    throw new ServiceError("Обнаружен цикл между маршрутами", 400);
+    throw new ServiceError('Обнаружен цикл между маршрутами', 400);
   }
   ctx.visited.add(visitKey);
 
@@ -285,6 +298,7 @@ async function produceRecursive(
 
     if (available < needed) {
       const deficit = needed - available;
+      log.info('produce: deficit, recursing', { inputItemId: input.itemId, needed, available });
       const inputStep = await getProducingStep(input.itemId, tx);
       if (inputStep) {
         await produceRecursive(tx, input.itemId, deficit, ctx);
@@ -292,12 +306,12 @@ async function produceRecursive(
         // Приход промежуточного
         await tx.stockMovement.create({
           data: {
-            type: "ASSEMBLY_INCOME",
+            type: 'ASSEMBLY_INCOME',
             itemId: input.itemId,
             quantity: deficit,
             createdById: ctx.createdById,
             operationId: ctx.operationId,
-            fromLocationId: "PRODUCTION",
+            fromLocationId: 'PRODUCTION',
             toLocationId: DEFAULT_LOCATION,
             comment: `Автосборка ${deficit} шт`,
           },
@@ -313,13 +327,13 @@ async function produceRecursive(
     // Списать вход
     const writeOff = await tx.stockMovement.create({
       data: {
-        type: "ASSEMBLY_WRITE_OFF",
+        type: 'ASSEMBLY_WRITE_OFF',
         itemId: input.itemId,
         quantity: needed,
         createdById: ctx.createdById,
         operationId: ctx.operationId,
         fromLocationId: DEFAULT_LOCATION,
-        toLocationId: "PRODUCTION",
+        toLocationId: 'PRODUCTION',
         comment: `Списание на производство`,
       },
     });
