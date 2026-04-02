@@ -30,3 +30,14 @@ export const log = {
   error: (msg: string, data?: Record<string, unknown>) =>
     logger.error({ requestId: getRequestId(), ...data }, msg),
 };
+
+import type { NextRequest } from 'next/server';
+
+type RouteHandler = (req: NextRequest) => Promise<Response>;
+
+export function withRequestId(handler: RouteHandler): RouteHandler {
+  return async (req) => {
+    const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
+    return runWithRequestId(requestId, () => handler(req));
+  };
+}
