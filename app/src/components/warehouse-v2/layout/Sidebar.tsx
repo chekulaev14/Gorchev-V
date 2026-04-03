@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ConstructorOverlay } from '../constructor/ConstructorOverlay';
 
 const modules = [
   { href: '/', label: 'Дашборд', icon: '📊' },
@@ -13,6 +15,7 @@ const modules = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [showConstructor, setShowConstructor] = useState(false);
 
   return (
     <aside className="w-56 shrink-0 border-r border-border bg-card flex flex-col h-screen sticky top-0">
@@ -41,7 +44,15 @@ export function Sidebar() {
             </Link>
           );
         })}
+        <button
+          onClick={() => setShowConstructor(true)}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 w-full text-left"
+        >
+          <span>🔗</span>
+          Конструктор цепочек
+        </button>
       </nav>
+      {showConstructor && <ConstructorOverlay onClose={() => setShowConstructor(false)} />}
     </aside>
   );
 }
