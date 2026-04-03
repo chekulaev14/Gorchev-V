@@ -159,7 +159,7 @@ export function ConstructorOverlay({ onClose }: { onClose: () => void }) {
         await api.put<DraftResponse>(`/api/constructor-drafts/${draftId}`, payload);
       }
 
-      await api.post<PublishResponse>(`/api/constructor-drafts/${draftId}/publish`);
+      await api.post(`/api/constructor-drafts/${draftId}/publish`, {});
       toast.success('Опубликовано');
       await fetchDrafts();
     } catch {

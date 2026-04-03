@@ -284,27 +284,35 @@ export function ConstructorCanvas(props: CanvasProps) {
           </svg>
 
           {centeredNodes.map((n) => {
-            const inc = (incByTarget.get(n.id) ?? []).map((e) => ({
-              edgeId: e.id,
-              name: nodesById.get(e.sourceNodeId)?.draftItem?.name ?? '',
-              qty: e.qty,
-            }));
+            const nType = itemTypes.get(n.id) ?? 'blank';
+            const inc = (incByTarget.get(n.id) ?? []).map((e) => {
+              const srcType = itemTypes.get(e.sourceNodeId) ?? 'material';
+              return {
+                edgeId: e.id,
+                name: nodesById.get(e.sourceNodeId)?.draftItem?.name ?? '',
+                qty: e.qty,
+                unit: srcType === 'material' ? 'кг' : 'шт',
+              };
+            });
             return (
-              <ConstructorNode
+              <div
                 key={n.id}
-                node={n}
-                position={{ x: n.x, y: n.y }}
-                itemType={itemTypes.get(n.id) ?? 'blank'}
-                selected={selectedId === n.id}
-                connectSource={connectFrom === n.id}
-                hasError={(nodeErrors.get(n.id) ?? []).length > 0}
-                errors={nodeErrors.get(n.id) ?? []}
-                inputs={inc}
-                onAddNode={onAddNode}
-                onClick={onNodeClick}
-                onQtyChange={onQtyChange}
-                onDelete={onDeleteNode}
-              />
+                className={connectFrom === n.id ? 'animate-pulse' : ''}
+                style={{ position: 'absolute', left: n.x, top: n.y }}
+              >
+                <ConstructorNode
+                  node={n}
+                  itemType={nType}
+                  selected={selectedId === n.id}
+                  hasError={(nodeErrors.get(n.id) ?? []).length > 0}
+                  errors={nodeErrors.get(n.id) ?? []}
+                  inputs={inc}
+                  onAddNode={onAddNode}
+                  onClick={onNodeClick}
+                  onQtyChange={onQtyChange}
+                  onDelete={onDeleteNode}
+                />
+              </div>
             );
           })}
         </div>

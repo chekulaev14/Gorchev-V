@@ -1,0 +1,48 @@
+# Session: 2026-03-18 (вечер)
+Проект: ERP
+Тема: Миграция конструктора React Flow → SVG Canvas + UX улучшения
+
+## Что делали
+
+Выполнили миграцию конструктора цепочки (CONSTRUCTOR-PIPELINE-V2.html) с React Flow на SVG+div canvas по CONSTRUCTOR-MIGRATION-PLAN.md. Удалили все зависимости React Flow, заменили на: SVG Bezier paths для стрелок, абсолютно позиционированные div для узлов, dagre layout через useMemo (синхронный, без race condition).
+
+После миграции — серия UX улучшений по фидбэку пользователя: фикс stopPropagation для выделения узлов, pin materials на левую колонку, плюсик справа у сырья/заготовок, вертикальное центрирование графа, каскадная очистка disconnected узлов, единственное изделие через computeItemTypes, auto-propagation side на изделие, Shift+клик с пульсирующей подсветкой, inline number input для qty прямо в блоках.
+
+## Что сработало
+- **useMemo layout** — стрелки не пропадают при добавлении узлов, race condition убран
+- **Pin materials** — сырьё всегда в левой колонке + разнос по y при перекрытии
+- **computeItemTypes deepest** — при разрыве связи заготовка не переименовывается в изделие
+- **Shift+клик с пульсацией** — связи создаются, визуальная обратная связь видна
+- **Number input в блоках** — qty редактируется прямо в блоке, удобно
+- **Auto-propagation side** — ставишь L/R на заготовку, изделие обновляется автоматически
+
+## Что НЕ сработало
+- **CSS connect-source как дочерний** — классы на одном div, `.pipeline-node.connect-source .chain-node` не работал
+- **Каскадное удаление поддеревьев** — слишком агрессивно, откатили на удаление только полностью disconnected узлов
+- **Playwright MCP** — не подключился к сессии, нужно настроить автостарт
+
+## Состояние файлов
+| Файл | Статус | Заметки |
+|------|--------|---------|
+| CONSTRUCTOR-PIPELINE-V2.html | in-progress | миграция выполнена, UX улучшения, баг с призрачной стрелкой при "+" top |
+| app/public/constructor.html | in-progress | копия для localhost |
+| CLAUDE.md | done | SVG+div вместо React Flow |
+| CONSTRUCTOR-PLAN-V2.md | done | секции 1.5, 1.6 обновлены |
+| CONSTRUCTOR-SPEC-V2.md | done | reconnect → Shift+клик |
+| debug-edges-bug.md | deleted | |
+| CONSTRUCTOR-MIGRATION-PLAN.md | deleted | |
+
+## Решения
+- **SVG+div canvas** — React Flow убран, layout через useMemo
+- **Pin materials + anti-overlap** — dagre post-processing + разнос по y
+- **Единственное изделие** — deepest terminal node = product
+- **Qty в блоках** — number input с нативными стрелочками
+
+## Блокеры
+- **Призрачная стрелка** — при "+" top у заготовки. Нужна отладка через Playwright
+- **Playwright MCP** — не стартовал, нужно настроить
+
+## Следующий шаг
+1. Перезапустить Claude Code для подключения Playwright MCP
+2. Отладить баг с призрачной стрелкой через __GRAPH_DEBUG__
+3. Деплой конструктора на прод

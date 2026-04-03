@@ -1,8 +1,0 @@
-[    3244ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ https://vk.com/js/api/openapi.js?159:0
-[    3251ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ https://vk.com/js/api/openapi.js?162:0
-[    3273ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ https://top-fwz1.mail.ru/js/code.js:0
-[    3491ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://ssp.bidvol.com/usersync?id=eCtTEfH58O4.AikABlGcxQ--AQ&dspcsid=142:0
-[   11064ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ https://vk.com/js/api/openapi.js?159:0
-[   11064ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ https://vk.com/js/api/openapi.js?162:0
-[   11067ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ https://top-fwz1.mail.ru/js/code.js:0
-[   11535ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://id.ati.su/api/auth/:0
