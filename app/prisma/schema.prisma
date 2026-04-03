@@ -67,6 +67,11 @@ enum Side {
   NONE
 }
 
+enum ConstructorDraftStatus {
+  DRAFT
+  PUBLISHED
+}
+
 // --- Code Generation ---
 
 model CodeCounter {
@@ -110,6 +115,7 @@ model User {
   inventoryOperations  InventoryOperation[]           @relation("OperationCreator")
   createdBoms          Bom[]                          @relation("BomCreator")
   createdProductionOps ProductionOperation[]          @relation("ProductionOpCreator")
+  constructorDrafts    ConstructorDraft[]
 
   @@map("users")
 }
@@ -385,6 +391,7 @@ model Routing {
 
   item  Item          @relation(fields: [itemId], references: [id], onDelete: Restrict)
   steps RoutingStep[]
+  constructorDrafts ConstructorDraft[]
 
   @@unique([itemId, version])
   @@index([itemId, status])
@@ -560,4 +567,21 @@ model ProductionOperationWorker {
   @@unique([productionOperationId, workerId])
   @@index([workerId, createdAt])
   @@map("production_operation_workers")
+}
+
+// Черновики конструктора цепочек
+model ConstructorDraft {
+  id          String                 @id @default(cuid())
+  name        String
+  status      ConstructorDraftStatus @default(DRAFT)
+  state       Json
+  routingId   String?                @map("routing_id")
+  createdById String?                @map("created_by_id")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+
+  routing   Routing? @relation(fields: [routingId], references: [id])
+  createdBy User?    @relation(fields: [createdById], references: [id])
+
+  @@map("constructor_drafts")
 }
