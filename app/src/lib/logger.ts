@@ -33,11 +33,11 @@ export const log = {
 
 import type { NextRequest } from 'next/server';
 
-type RouteHandler = (req: NextRequest) => Promise<Response>;
+type RouteHandler = (req: NextRequest, ctx?: unknown) => Promise<Response>;
 
 export function withRequestId(handler: RouteHandler): RouteHandler {
-  return async (req) => {
+  return async (req, ctx) => {
     const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID();
-    return runWithRequestId(requestId, () => handler(req));
+    return runWithRequestId(requestId, () => handler(req, ctx));
   };
 }
